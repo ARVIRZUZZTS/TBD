@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Administrador</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/administrador.css">
+    <link rel="stylesheet" href="css/generic.css">
+</head>
+<body>
+    <header>
+        <button id="logo"><img src="img/logo.png" alt=""></button>
+        <div id="botones">
+            <button class="shiny" onclick="trabajador()">Trabajadores</button>
+            <button class="shiny" onclick="estudiante()">Estudiantes</button>
+            <button class="shiny" onclick="curso()">Cursos</button>
+            <button class="back" onclick="cerrarSesion()">Cerrar Sesion</button>
+        </div>
+    </header>
+    <main>
+        <div id="top">
+            <h3 id="user"></h3>
+            <img src="img/admin.png" alt="">
+        </div>
+        <div id="dinamic">
+            <h1>¡Bienvenido al Panel de Administracion!</h1>
+            <h2>Selecciones una opcion para iniciar la Administracion!!</h2>
+        </div>
+    </main>
+    <script src="js/administrador.js"></script>
+</body>
+</html>

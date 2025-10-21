@@ -1,0 +1,54 @@
+#titleM {
+    border-radius: 5px;
+    border: 1px solid var(--nigger);
+    padding: 1vh;
+    display: flex;    
+    justify-content: space-between;
+    width: 100%;
+}
+#titleM h4 {
+    margin: 0px;
+}
+#contenido {
+    width: 100%;
+    margin-top: 1vh;
+}
+.maestro {
+    border-radius: 5px;
+    border-bottom: 1px solid var(--nigger);
+    padding: 1vh;
+    display: flex;    
+    justify-content: space-between;
+    width: 100%;
+}
+.maestro h5 {
+    margin: 0px;
+}
+.botones {
+    margin-top: 2vh;
+}
+#rolesBoxi {
+    display: flex;
+    justify-content: space-evenly;
+    padding: 1vh;
+    width: 100%;
+}
+#listRoles {
+    gap: 2vh;
+    height: 50vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-radius: 5px;
+    border: 1px solid var(--nigger);
+}
+#listRoles div {
+    padding: 1vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    gap: 1vh;
+}
+#rolesBoxi div h4 {
+    margin: 0px;
+    width: 30vh;
+}

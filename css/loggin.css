@@ -1,0 +1,74 @@
+body {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+header {
+    background-color: white;
+    width: 50%;
+    height: 100vh;
+    box-shadow: 5px 0px 20px #5C300F;
+}
+#logoBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#logo img {
+    width: 50vh;
+}
+#mae {
+    margin-left: 15vh;
+}
+main {
+    width: 45%;
+    box-sizing: border-box;
+    margin: 5%;
+    padding: 5vh;
+    border-radius: 50px;
+    height: 100%;
+    border: 1px solid #5C300F;
+    box-shadow: 5px 0px 5px #5C300F;
+    margin: auto;
+}
+h2 span, h3 span {
+    color: #ff8e1d;
+}
+main h5 {
+    text-align: right;
+}
+#inireg {
+    display: flex;
+    justify-content: center;
+    margin: auto;
+    align-items: center;
+}
+#bots {
+    transition: 150ms;
+}
+#bots div {
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+}
+.noBack {
+    display: flex;
+    margin: auto;
+    color: #5C300F;
+    margin-top: 2vh;
+}
+.noBack p {
+    margin: 0px;
+}
+.noBack:hover {
+    background-color: #f6a95d !important;
+}
+#formBut {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2vh;
+}
+#formBut button {
+    padding-left: 3vh;
+    padding-right: 3vh;
+}
