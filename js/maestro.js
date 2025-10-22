@@ -29,7 +29,7 @@ async function loadAllCourses() {
     errorElement.style.display = 'none';
     
     try {
-        const response = await fetch('php/cursosGetAll.php');
+        const response = await fetch('php/cursoGetAll.php');
         const data = await response.json();
         
         // Ocultar loading
@@ -121,3 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
         loadAllCourses();
     });
 });
+
+function cerrarSesion() {
+    window.location = "inicio.html";
+}

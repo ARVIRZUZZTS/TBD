@@ -116,3 +116,15 @@ input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+/*--------------------SELECT--------------------*/
+select {
+    border-radius: 5px;
+    border: 1px solid var(--nigger);
+    background-color: var(--inp);
+}
+option {
+  background-color: var(--shinyHover);
+}
+option:hover {
+  background-color: #ff8e1d;
+}
