@@ -1,21 +1,21 @@
 const params = new URLSearchParams(window.location.search);
 let est = params.get("est");
 
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function() {
     setTipo();
 });
 
 function setTipo() {
+    const ini = document.getElementById("ini");
+    const reg = document.getElementById("reg");
+    const bots = document.getElementById("bots");
+
     if (est == "i") {
-        const ini = document.getElementById("ini");
-        const reg = document.getElementById("reg");
-        const bots = document.getElementById("bots");
-        ini.classList.remove("back");
         ini.classList.add("shiny");
-        reg.classList.remove("shiny");
+        ini.classList.remove("back");
         reg.classList.add("back");
+        reg.classList.remove("shiny");
         bots.style.height = "6.5vh";
-        bots.innerHTML = "";
         bots.innerHTML = `
             <div>
                 <input id="getUs" type="text" placeholder="Usuario" maxlength="30" autocomplete="off">
@@ -23,15 +23,11 @@ function setTipo() {
             </div>
         `;
     } else if (est == "r") {
-        const ini = document.getElementById("ini");
-        const reg = document.getElementById("reg");
-        const bots = document.getElementById("bots");
-        reg.classList.remove("back");
         reg.classList.add("shiny");
-        ini.classList.remove("shiny");
+        reg.classList.remove("back");
         ini.classList.add("back");
+        ini.classList.remove("shiny");
         bots.style.height = "28.5vh";
-        bots.innerHTML = "";
         bots.innerHTML = `
             <div>
                 <input id="setNm" type="text" placeholder="Nombres" maxlength="30" autocomplete="off">
@@ -39,10 +35,10 @@ function setTipo() {
             </div>
             <div>
                 <input id="setUs" type="text" placeholder="Nombre de Usuario" maxlength="15" autocomplete="off">
-                <input id="setCi" type="number" placeholder="Carnet de Idetidad" maxlength="10" autocomplete="off">
+                <input id="setCi" type="number" placeholder="Carnet de Identidad" maxlength="10" autocomplete="off">
             </div>
             <div>
-                <input id="setTl" type="number" placeholder="Telefono" maxlength="15" autocomplete="off">
+                <input id="setTl" type="number" placeholder="Teléfono" maxlength="15" autocomplete="off">
                 <input id="setCo" type="email" placeholder="Correo" maxlength="100" autocomplete="off">
             </div>
             <div>
@@ -53,19 +49,22 @@ function setTipo() {
                 <input id="setPass" type="password" placeholder="Contraseña" maxlength="30" autocomplete="off">
                 <input id="setPass2" type="password" placeholder="Confirmar Contraseña" maxlength="30" autocomplete="off">
             </div>
-        `;        
+        `;
     } else {
         window.location = "inicio.html";
     }
 }
+
 function inics() {
     est = "i";
     setTipo();
 }
+
 function regcs() {
     est = "r";
     setTipo();
 }
+
 function estu() {
     if (est == "i") {
         iniciar();
@@ -74,47 +73,93 @@ function estu() {
     } else {
         window.location = "inicio.html";
     }
-    window.location = "estudiante.html";
 }
-function registrar() {
-    let setNm = document.getElementById("setNm");
-    let setAp = document.getElementById("setAp");
-    let setUs = document.getElementById("setUs");
-    let setCi = document.getElementById("setCi");
-    let setTl = document.getElementById("setTl");
-    let setCo = document.getElementById("setCo");
-    let setEd = document.getElementById("setEd");
-    let setGe = document.getElementById("setGe");
-    let setPass = document.getElementById("setPass");
-    let setPass2 = document.getElementById("setPass2");
-    window.location = "estudiante.html";
-}
+
 function iniciar() {
-    let getUs = document.getElementById("getUs");
-    let getPass = document.getElementById("getPass");
-    window.location = "estudiante.html";
+    const username = document.getElementById("getUs").value.trim();
+    const password = document.getElementById("getPass").value.trim();
+
+    if (!username || !password) {
+        alert("Por favor, complete todos los campos.");
+        return;
+    }
+
+    fetch("php/estudianteIngresar.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito) {
+            localStorage.setItem("id_user", data.id_user);
+            window.location = "estudiante.html";
+        }
+    })
+    .catch(err => console.error("Error al iniciar sesión:", err));
 }
+
+function registrar() {
+    const nombre = document.getElementById("setNm").value.trim();
+    const apellido = document.getElementById("setAp").value.trim();
+    const username = document.getElementById("setUs").value.trim();
+    const ci = document.getElementById("setCi").value.trim();
+    const telefono = document.getElementById("setTl").value.trim();
+    const correo = document.getElementById("setCo").value.trim();
+    const edad = document.getElementById("setEd").value.trim();
+    const grado = document.getElementById("setGe").value.trim();
+    const contrasenna = document.getElementById("setPass").value.trim();
+    const contrasenna2 = document.getElementById("setPass2").value.trim();
+
+    if (!nombre || !apellido || !username || !ci || !telefono || !correo || !edad || !grado || !contrasenna || !contrasenna2) {
+        alert("Por favor, complete todos los campos.");
+        return;
+    }
+
+    fetch("php/estudianteRegistrar.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            nombre, apellido, username, ci, telefono, correo, edad, grado,
+            contrasenna, contrasenna2
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito) {
+            localStorage.setItem("id_user", data.id_user);
+            window.location = "estudiante.html";
+        }
+    })
+    .catch(err => console.error("Error al registrar estudiante:", err));
+}
+
 function back() {
     window.location = "inicio.html";
 }
+
 const pressedKeys = new Set();
-document.addEventListener("keydown", function(event){
-    if(event.ctrlKey && event.altKey) {
+document.addEventListener("keydown", function(event) {
+    if (event.ctrlKey && event.altKey) {
         pressedKeys.add(event.key.toLowerCase());
         if (pressedKeys.has("a") && pressedKeys.has("d") && pressedKeys.has("m")) {
             admin();
         }
     }
 });
+
 document.addEventListener("keyup", function(event) {
     pressedKeys.delete(event.key.toLowerCase());
 });
+
 function admin() {
     window.location = "admin.html";
 }
+
 function home() {
     window.location = "inicio.html";
 }
+
 function mae() {
     window.location = "maestro.html";
 }
