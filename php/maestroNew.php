@@ -1,4 +1,4 @@
-<?php
+<?php //modificar para que cada rol que no es maestro estudiante ni admin tenga los table:datos_maestro
 header("Content-Type: application/json");
 include 'conexion.php';
 $data = json_decode(file_get_contents("php://input"), true);
@@ -50,7 +50,7 @@ try {
     $stmt->close();
 
     $conexion->commit();
-    echo json_encode(["exito" => true, "mensaje" => "Maestro registrado exitosamente."]);
+    echo json_encode(["exito" => true, "mensaje" => "Trabajador registrado exitosamente."]);
 
 } catch (Exception $e) {
     $conexion->rollback();

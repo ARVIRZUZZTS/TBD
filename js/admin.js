@@ -5,7 +5,7 @@ function ingresar() {
         alert("Por favor, todos los campos son Obligatorios");
         return;
     }
-    fetch("php/ingresarAdm.php", {
+    fetch("php/adminIngresar.php", {
         method: "POST",
         headers: { "Content-Type": "application/json"},
         body: JSON.stringify({ usuario, pass})
