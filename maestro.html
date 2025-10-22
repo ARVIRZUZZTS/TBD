@@ -2,13 +2,108 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Estudiante</title>
+    <title>Portal Maestros</title>
     <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/generic.css">
+    <link rel="stylesheet" href="css/maestro.css">
 </head>
 <body>
-    <img id="imgAviso" src="img/logo.png" alt="">
-    <h1 id="aviso">PROXIMAMENTE EN EL MODULO 3</h1>
-    <h3 id="avisoh3">Coder MIMIENDO</h3>
-    <p id="avisoP">Es el gato</p>
+    <div class="container">
+        <!-- Panel lateral -->
+        <div class="sidebar">
+            <div class="logo-container">
+                <img src="img/logo.png" alt="Logo Coder MIMIENDO" class="logo-img">
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title">Mis Cursos</h3>
+                <button class="menu-button back" data-section="current-courses">Cursos Actuales</button>
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title">Solicitudes</h3>
+                <button class="menu-button shiny" data-section="other-sections">Solicitar Nuevo Curso</button>
+                <button class="menu-button shiny" data-section="other-sections">Mis Solicitudes</button>
+                <button class="menu-button shiny" data-section="all-courses">Cursos Disponibles</button>
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title">Configuración</h3>
+                <button class="menu-button" data-section="other-sections">Cerrar Sesión</button>
+            </div>
+        </div>
+        
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <div class="header">
+                <h2>Portal de Maestros</h2>
+                <div class="user-info">
+                    <h4>Prof. Juan Pérez</h4>
+                    <div class="user-avatar">JP</div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div id="current-courses">
+                    <h2>Mis Cursos Actuales</h2>
+                    
+                    <div class="course-card">
+                        <h3 class="course-title">Programación Web Avanzada</h3>
+                        <p class="course-info">Código: PW101 | Estudiantes: 25 | Horario: Lunes y Miércoles 14:00-16:00</p>
+                        <div class="action-buttons">
+                            <button class="back">Ver Estudiantes</button>
+                            <button class="back">Subir Material</button>
+                            <button class="back">Calificar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="course-card">
+                        <h3 class="course-title">Base de Datos</h3>
+                        <p class="course-info">Código: BD202 | Estudiantes: 18 | Horario: Martes y Jueves 10:00-12:00</p>
+                        <div class="action-buttons">
+                            <button class="back">Ver Estudiantes</button>
+                            <button class="back">Subir Material</button>
+                            <button class="back">Calificar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="course-card">
+                        <h3 class="course-title">Inteligencia Artificial</h3>
+                        <p class="course-info">Código: IA305 | Estudiantes: 15 | Horario: Viernes 16:00-19:00</p>
+                        <div class="action-buttons">
+                            <button class="back">Ver Estudiantes</button>
+                            <button class="back">Subir Material</button>
+                            <button class="back">Calificar</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="all-courses" style="display: none;">
+                    <h2>Cursos Disponibles</h2>
+                    <div id="courses-loading" class="loading-message">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando cursos disponibles...</p>
+                    </div>
+                    <div id="courses-container" class="courses-grid"></div>
+                    <div id="courses-error" class="error-message" style="display: none;">
+                        <p>Error al cargar los cursos. Por favor, intente nuevamente.</p>
+                        <button class="shiny" id="retry-load-courses">Reintentar</button>
+                    </div>
+                </div>
+
+                <!-- Placeholder para otras secciones -->
+                <div id="other-sections" style="display: none;">
+                    <div class="placeholder-content">
+                        <div class="placeholder-icon">📚</div>
+                        <h2 class="placeholder-text">Contenido no disponible en este momento</h2>
+                        <p>Esta funcionalidad estará disponible próximamente.</p>
+                        <button class="shiny" id="back-to-courses">Volver a Mis Cursos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/maestro.js"></script>
 </body>
 </html>
