@@ -1,0 +1,254 @@
+/* Estilos específicos para la página de maestros */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 25%;
+    height: 100vh;
+    background-color: white;
+    box-shadow: 5px 0px 5px #572D0D;
+    padding: 2vh;
+    box-sizing: border-box;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    width: 75%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    padding: 2vh 5vh;
+    background-color: #ffc994;
+    box-shadow: 0px 5px 5px #572D0D;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.content-area {
+    flex: 1;
+    padding: 5vh;
+    overflow-y: auto;
+    background-color: #FFF9E9;
+}
+
+.menu-section {
+    margin-bottom: 5vh;
+}
+
+.menu-title {
+    font-size: 2.5vh;
+    margin-bottom: 2vh;
+    border-bottom: 1px solid #572D0D;
+    padding-bottom: 1vh;
+    color: #572D0D;
+}
+
+.menu-button {
+    width: 100%;
+    margin-bottom: 2vh;
+    padding: 2vh;
+    text-align: left;
+    font-size: 2vh;
+    background-color: #f6a95d;
+    border-radius: 15px;
+    border: none;
+    color: #FFF9E9;
+    transition: 500ms;
+    cursor: pointer;
+}
+
+.menu-button:hover {
+    background-color: #ffc994;
+    color: white;
+    box-shadow: 0px 0px 5px #572D0D;
+}
+
+.back {
+    background-color: #ffc081;
+}
+
+.back:hover {
+    background-color: #f6a95d;
+}
+
+.shiny {
+    background-color: #ff8e1d;
+}
+
+.shiny:hover {
+    background-color: #ffc994;
+}
+
+.course-card {
+    background-color: #ffc081;
+    border-radius: 15px;
+    padding: 3vh;
+    margin-bottom: 3vh;
+    box-shadow: 0px 3px 5px rgba(0,0,0,0.1);
+}
+
+.course-title {
+    font-size: 2.5vh;
+    margin-bottom: 1vh;
+    color: #572D0D;
+}
+
+.course-info {
+    font-size: 1.8vh;
+    margin-bottom: 1.5vh;
+    color: #572D0D;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1vh;
+}
+
+.action-buttons button {
+    padding: 1vh 2vh;
+    font-size: 1.7vh;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 2vh;
+}
+
+.user-avatar {
+    width: 8vh;
+    height: 8vh;
+    border-radius: 50%;
+    background-color: #f6a95d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.placeholder-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+}
+
+.placeholder-icon {
+    font-size: 15vh;
+    margin-bottom: 3vh;
+    color: #f6a95d;
+}
+
+.placeholder-text {
+    font-size: 3vh;
+    margin-bottom: 3vh;
+    color: #572D0D;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 5vh;
+}
+
+.logo-img {
+    max-width: 80%;
+    height: auto;
+}
+
+/* Estilos para la sección de cursos disponibles */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.available-course {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.available-course .course-title {
+    color: white;
+    font-size: 1.3em;
+    margin-bottom: 15px;
+}
+
+.available-course .course-details {
+    margin-bottom: 15px;
+}
+
+.available-course .course-info {
+    margin: 8px 0;
+    font-size: 0.95em;
+    opacity: 0.9;
+}
+
+.available-course .course-info strong {
+    opacity: 1;
+}
+
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 2s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-message {
+    text-align: center;
+    padding: 40px;
+    background-color: #ffeaa7;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.no-courses-message {
+    text-align: center;
+    padding: 40px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    grid-column: 1 / -1;
+}
+
+.placeholder-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
