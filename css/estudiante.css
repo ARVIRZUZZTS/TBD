@@ -263,45 +263,14 @@ a:hover {
     color: var(--shiny);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    #dinamic {
-        margin: 1vh 2vh;
-        height: calc(100vh - 15vh - 2vh);
-    }
+nav {
+    margin-top: -8vh; /* Sube todos los botones */
+}
+
+/* Solución simple para centrar el nombre */
+#top h3 {
     
-    .content-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5vh;
-    }
-    
-    .content-card {
-        padding: 1.5vh;
-        min-height: 150px;
-    }
-    
-    .profile-info {
-        flex-direction: column;
-        text-align: center;
-        padding: 1.5vh 2vh;
-    }
-    
-    .profile-actions {
-        flex-direction: column;
-        gap: 1vh;
-    }
-    
-    .stat-item {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-        gap: 1vh;
-        padding: 1.5vh;
-    }
-    
-    .nav-btn {
-        font-size: 1.8vh;
-        margin-bottom: 1.5vh;
-        padding: 1.5vh;
-    }
+    position: absolute;
+    left: 60%;
+    transform: translateX(-50%);
 }
