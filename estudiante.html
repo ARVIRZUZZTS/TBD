@@ -2,13 +2,241 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estudiante</title>
     <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/generic.css">
+    <link rel="stylesheet" href="css/estudiante.css">
 </head>
 <body>
-    <img id="imgAviso" src="img/logo.png" alt="">
-    <h1 id="aviso">PROXIMAMENTE EN EL MODULO 3</h1>
-    <h3 id="avisoh3">Coder MIMIENDO</h3>
-    <p id="avisoP">Es el gato</p>
+    <header>
+        <button id="logo" class="noBackgr">
+            <img src="img/logo.png" alt="Logo xd">
+        </button>
+        <nav>
+            <button class="nav-btn active" data-tab="inicio">
+                <span>🏠 Inicio</span>
+            </button>
+            <button class="nav-btn" data-tab="cursos">
+                <span>📚 Mis Cursos</span>
+            </button>
+            <button class="nav-btn" data-tab="progreso">
+                <span>📊 Mi Progreso</span>
+            </button>
+            <button class="nav-btn" data-tab="calificaciones">
+                <span>🎯 Calificaciones</span>
+            </button>
+            <button class="nav-btn" data-tab="recursos">
+                <span>📁 Recursos</span>
+            </button>
+            <button class="nav-btn" data-tab="perfil">
+                <span>👤 Mi Perfil</span>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <div id="top">
+            <h3>Bienvenido, Juan Pérez</h3>
+            <img src="img/logo.png" alt="Logo pequeño">
+        </div>
+        
+        <div id="dinamic">
+            <!-- Sección Inicio -->
+            <div id="inicio" class="tab-content active">
+                <h1>Bienvenido</h1>
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3>📅 Próximas Actividades</h3>
+                        <ul>
+                            <li>Tarea de Matemáticas - 15 de Octubre</li>
+                            <li>Examen de Ciencias - 20 de Octubre</li>
+                            <li>Proyecto Final - 30 de Octubre</li>
+                        </ul>
+                    </div>
+                    <div class="content-card">
+                        <h3>📢 Anuncios Recientes</h3>
+                        <ul>
+                            <li>Nuevo material disponible</li>
+                            <li>Reunión de padres el viernes</li>
+                            <li>Actualización del calendario</li>
+                        </ul>
+                    </div>
+                    <div class="content-card">
+                        <h3>📈 Tu Progreso</h3>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 75%"></div>
+                            </div>
+                            <p>75% completado del semestre</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Cursos -->
+            <div id="cursos" class="tab-content">
+                <h1>Mis Cursos</h1>
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3>Matemáticas</h3>
+                        <p>Profesor: Ana García</p>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 80%"></div>
+                            </div>
+                            <p>80% completado</p>
+                        </div>
+                        <button class="shiny">Acceder al Curso</button>
+                    </div>
+                    <div class="content-card">
+                        <h3>Ciencias</h3>
+                        <p>Profesor: Carlos López</p>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 65%"></div>
+                            </div>
+                            <p>65% completado</p>
+                        </div>
+                        <button class="shiny">Acceder al Curso</button>
+                    </div>
+                    <div class="content-card">
+                        <h3>Historia</h3>
+                        <p>Profesora: María Rodríguez</p>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 90%"></div>
+                            </div>
+                            <p>90% completado</p>
+                        </div>
+                        <button class="shiny">Acceder al Curso</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Progreso -->
+            <div id="progreso" class="tab-content">
+                <h1>Mi Progreso</h1>
+                <div class="progress-stats">
+                    <div class="stat-item">
+                        <h4>Asistencia</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 95%"></div>
+                        </div>
+                        <span>95%</span>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Tareas Entregadas</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 88%"></div>
+                        </div>
+                        <span>88%</span>
+                    </div>
+                    <div class="stat-item">
+                        <h4>Participación</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%"></div>
+                        </div>
+                        <span>75%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Calificaciones -->
+            <div id="calificaciones" class="tab-content">
+                <h1>Calificaciones</h1>
+                <div class="grades-container">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Parcial 1</th>
+                                <th>Parcial 2</th>
+                                <th>Parcial 3</th>
+                                <th>Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Matemáticas</td>
+                                <td>9.0</td>
+                                <td>8.5</td>
+                                <td>9.2</td>
+                                <td>8.9</td>
+                            </tr>
+                            <tr>
+                                <td>Ciencias</td>
+                                <td>8.0</td>
+                                <td>8.8</td>
+                                <td>9.0</td>
+                                <td>8.6</td>
+                            </tr>
+                            <tr>
+                                <td>Historia</td>
+                                <td>9.5</td>
+                                <td>9.0</td>
+                                <td>9.3</td>
+                                <td>9.3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sección Recursos -->
+            <div id="recursos" class="tab-content">
+                <h1>Recursos de Estudio</h1>
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3>Material de Clase</h3>
+                        <ul>
+                            <li><a href="#">Presentación Matemáticas</a></li>
+                            <li><a href="#">Guía de Ciencias</a></li>
+                            <li><a href="#">Línea de Tiempo Historia</a></li>
+                        </ul>
+                    </div>
+                    <div class="content-card">
+                        <h3>Ejercicios Prácticos</h3>
+                        <ul>
+                            <li><a href="#">Problemas Matemáticas</a></li>
+                            <li><a href="#">Experimentos Ciencias</a></li>
+                            <li><a href="#">Análisis de Textos</a></li>
+                        </ul>
+                    </div>
+                    <div class="content-card">
+                        <h3>Enlaces de Interés</h3>
+                        <ul>
+                            <li><a href="#">Biblioteca Virtual</a></li>
+                            <li><a href="#">Plataforma de Videos</a></li>
+                            <li><a href="#">Foro de Estudio</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección Perfil -->
+            <div id="perfil" class="tab-content">
+                <h1>Mi Perfil</h1>
+                <div class="profile-content">
+                    <div class="profile-info">
+                        <div class="avatar">JP</div>
+                        <div class="profile-details">
+                            <h2>Juan Pérez</h2>
+                            <p>Estudiante de 3er Grado</p>
+                            <p>juan.perez@coder.edu</p>
+                            <p>Grupo: A</p>
+                        </div>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="shiny">Editar Perfil</button>
+                        <button class="back">Cambiar Contraseña</button>
+                        <button class="back">Configuración</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/estudiante.js"></script>
 </body>
 </html>
