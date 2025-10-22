@@ -8,7 +8,7 @@ $sql = "
            u.ci, u.telefono, u.correo, u.edad
     FROM usuario u
     INNER JOIN rol_usuario r ON u.id_user = r.id_user
-    WHERE r.id_rol = 2
+    WHERE r.id_rol <> 1 and r.id_rol <> 3
 ";
 
 $result = $conexion->query($sql);

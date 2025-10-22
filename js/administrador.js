@@ -16,13 +16,13 @@ function setUs() {
     const dina = document.getElementById("dinamic");
     dina.style.justifyContent = "center";
 }
-function trabajador() { // agregar un boton trabajador que nos redireccione a este estado
+function trabajador() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="roles()">Roles</button>
         <button class="shiny" onclick="nuevoTra()">Nuevo Trabajador</button>
         <button class="back" onclick="back()">Atrás</button>
-    `;
+    `;  
     fetch("php/maestrosGet.php", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
@@ -32,41 +32,55 @@ function trabajador() { // agregar un boton trabajador que nos redireccione a es
         const dinamic = document.getElementById("dinamic");
         dinamic.style.justifyContent = "flex-start";
         dinamic.innerHTML = "";
+        
         const titleM = document.createElement("div");
         titleM.id = "titleM";
-        titleM.innerHTML = `
-            <h4>Nombre</h4>
-            <h4>Apellido</h4>
-            <h4>CI</h4>
-            <h4>Teléfono</h4>
-            <h4>Correo</h4>
-            <h4>Edad</h4>
-        `;
+        titleM.innerHTML = `<h3>Lista de trabajadores</h3>`;
         dinamic.appendChild(titleM);
-        const contenido = document.createElement("div");
-        contenido.id = "contenido";
-        dinamic.appendChild(contenido);
+        
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+        tableContainer.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>CI</th>
+                        <th>Teléfono</th>
+                        <th>Correo</th>
+                        <th>Edad</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-maestros">
+                    <!-- Los datos se cargarán aquí -->
+                </tbody>
+            </table>
+        `;
+        dinamic.appendChild(tableContainer);
+        
         if (data.exito) {
+            const tbody = document.getElementById("tabla-maestros");
             data.maestros.forEach(m => {
-                const fila = document.createElement("div");
-                fila.classList.add("maestro");
-
+                const fila = document.createElement("tr");
                 fila.innerHTML = `
-                    <h5>${m.nombre}</h5>
-                    <h5>${m.apellido}</h5>
-                    <h5>${m.ci}</h5>
-                    <h5>${m.telefono}</h5>
-                    <h5>${m.correo}</h5>
-                    <h5>${m.edad}</h5>
+                    <td>${m.nombre}</td>
+                    <td>${m.apellido}</td>
+                    <td>${m.ci}</td>
+                    <td>${m.telefono}</td>
+                    <td>${m.correo}</td>
+                    <td>${m.edad}</td>
                 `;
-                contenido.appendChild(fila);
+                tbody.appendChild(fila);
             });
         } else {
-            contenido.innerHTML = `<h4>${data.mensaje}</h4>`;
+            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
         }
     })
     .catch(err => {
         console.error("Error al obtener maestros:", err);
+        const dinamic = document.getElementById("dinamic");
+        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
 }
 function back() {
@@ -198,31 +212,33 @@ function eliminarRol(idRol, nombreRol) {
 
 
 
-function nuevoTra() { // maxlength segun el sql
+function nuevoTra() {
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = `
         <div id="titleM">
             <h3>Registro de Nuevo Maestro</h3>
         </div>
-        <div id="contenido">
+        <div class="form-container">
             <input type="text" id="nombre" placeholder="Nombre" autocomplete="off">
             <input type="text" id="apellido" placeholder="Apellido" autocomplete="off">
             <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">
             <input type="password" id="contrasenna" placeholder="Contraseña" autocomplete="off">
             <input type="text" id="ci" placeholder="Cédula de Identidad" autocomplete="off">
             <input type="text" id="telefono" placeholder="Teléfono" autocomplete="off">
-            <input type="email" id="correo" placeholder="Correo" autocomplete="off">
+            <input type="email" id="correo" placeholder="Correo" autocomplete="off" class="form-full-width">
             <input type="number" id="edad" placeholder="Edad" autocomplete="off">
             <input type="text" id="titulo" placeholder="Título profesional" autocomplete="off">
             <input type="number" id="sueldo" placeholder="Sueldo Porcentual" autocomplete="off">
             <input list="roles" id="rolInput" placeholder="Rol" autocomplete="off">
             <datalist id="roles"></datalist>
-            <div class="botones">
+            <div class="botones-form">
                 <button class="shiny" onclick="nuevoMaestro()">Guardar</button>
                 <button class="back" onclick="trabajador()">Cancelar</button>
             </div>
         </div>
     `;
+    
+    // El resto del código para cargar roles se mantiene igual...
     fetch("php/rolGetFil.php")
         .then(res => res.json())
         .then(data => {

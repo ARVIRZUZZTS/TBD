@@ -1,6 +1,6 @@
 #titleM {
     border-radius: 5px;
-    border: 1px solid var(--nigger);
+    /* border: 1px solid var(--nigger); */
     padding: 1vh;
     display: flex;    
     justify-content: space-between;
@@ -51,4 +51,117 @@
 #rolesBoxi div h4 {
     margin: 0px;
     width: 30vh;
+}
+
+.table-container {
+    width: 100%;
+    margin-top: 1vh;
+    background: var(--usWhite);
+    border-radius: 5px;
+    border: 1px solid var(--nigger);
+    overflow: hidden;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse; 
+}
+
+.data-table thead {
+    background-color: var(--back);
+    color: white;
+}
+
+.data-table th {
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #34495e;
+    background: var(--back) !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: default !important;
+}
+
+.data-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: default !important;
+    transition: none !important;
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--usWhite) !important;
+}
+
+.data-table tbody tr:nth-child(even) {
+    background-color: var(--usWhite) !important;
+}
+
+.data-table tr {
+    background: transparent !important;
+    border: none !important;
+}
+
+.table-container {
+    box-shadow: none !important;
+}
+
+/* Estilos para el formulario de nuevo maestro */
+.form-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    padding: 20px;
+}
+
+.form-container input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.form-full-width {
+    grid-column: 1 / -1;
+}
+
+.botones-form {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Responsive para tablas */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        border: 1px solid #ddd;
+    }
+    
+    .data-table {
+        min-width: 800px;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px 10px;
+        font-size: 0.8em;
+    }
+
+    .form-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 15px;
+    }
 }
