@@ -8,15 +8,30 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
             
-            // Remover clase activa de todos los botones y contenidos
-            navButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(tab => tab.classList.remove('active'));
-            
-            // Agregar clase activa al botón y contenido seleccionados
-            this.classList.add('active');
-            document.getElementById(targetTab).classList.add('active');
+            // Solo procesar botones que tienen data-tab
+            if (targetTab) {
+                // Remover clase activa de todos los botones y contenidos
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(tab => tab.classList.remove('active'));
+                
+                // Agregar clase activa al botón y contenido seleccionados
+                this.classList.add('active');
+                
+                const targetElement = document.getElementById(targetTab);
+                if (targetElement) {
+                    targetElement.classList.add('active');
+                }
+            }
         });
     });
+    
+    // Agregar evento al botón Cerrar Sesión
+    const cerrarSesionBtn = document.querySelector('.cerrar-sesion-btn');
+    if (cerrarSesionBtn) {
+        cerrarSesionBtn.addEventListener('click', function() {
+            window.location.href = "inicio.html";
+        });
+    }
     
     // Efectos hover para tarjetas
     const cards = document.querySelectorAll('.content-card');
