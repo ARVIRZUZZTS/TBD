@@ -238,7 +238,6 @@ function nuevoTra() {
         </div>
     `;
     
-    // El resto del código para cargar roles se mantiene igual...
     fetch("php/rolGetFil.php")
         .then(res => res.json())
         .then(data => {
