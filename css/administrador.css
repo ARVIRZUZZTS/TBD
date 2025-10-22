@@ -142,6 +142,13 @@
     margin-top: 20px;
 }
 
+/* Estilos para scroll en tabla de áreas */
+.table-container-scroll {
+    max-height: 50vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 /* Responsive para tablas */
 @media (max-width: 768px) {
     .table-container {
