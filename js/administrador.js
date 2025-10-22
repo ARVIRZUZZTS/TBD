@@ -676,7 +676,123 @@ function back() {
 }
 
 function estudiante() {
-    // Función pendiente de implementación
+    const botones = document.getElementById("botones");
+    botones.innerHTML = `
+        <button class="shiny" onclick="becas()">Becas</button>
+        <button class="shiny" onclick="ranking()">Ranking</button>
+        <button class="back" onclick="back()">Atrás</button>
+    `;
+
+    fetch("php/estudianteGetAll.php?orden=nombre", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const dinamic = document.getElementById("dinamic");
+        dinamic.style.justifyContent = "flex-start";
+        dinamic.innerHTML = "";
+
+        const titleM = document.createElement("div");
+        titleM.id = "titleM";
+        titleM.innerHTML = `<h3>Lista de Estudiantes</h3>`;
+        dinamic.appendChild(titleM);
+
+        const filtro = document.createElement("div");
+        filtro.className = "selectBox";
+        filtro.innerHTML = `
+            <div>
+                <h4>Ordenar estudiantes según:</h4>
+                <select id="ordenSelect" onchange="cargarEstudiantes()">
+                    <option value="nombre" selected>Nombre (A-Z)</option>
+                    <option value="curso">Cursos Completados</option>
+                    <option value="ranking">Ranking</option>
+                    <option value="promedio">Promedio</option>
+                </select>
+            </div>
+        `;
+        dinamic.appendChild(filtro);
+
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+        tableContainer.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Usuario</th>
+                        <th>Estado</th>
+                        <th>Saldo</th>
+                        <th>Ranking Points</th>
+                        <th>Promedio</th>
+                        <th>Informacion</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-estudiantes">
+                    <!-- Los datos se cargarán aquí -->
+                </tbody>
+            </table>
+        `;
+        dinamic.appendChild(tableContainer);
+
+        if (data.exito) {
+            cargarTablaEstudiantes(data.estudiantes);
+        } else {
+            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
+        }
+    })
+    .catch(err => {
+        console.error("Error al obtener estudiantes:", err);
+        const dinamic = document.getElementById("dinamic");
+        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+    });
+}
+
+function cargarEstudiantes() {
+    const orden = document.getElementById("ordenSelect").value;
+    fetch(`php/estudianteGetAll.php?orden=${orden}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                cargarTablaEstudiantes(data.estudiantes);
+            }
+        })
+        .catch(err => console.error("Error al recargar estudiantes:", err));
+}
+
+function cargarTablaEstudiantes(estudiantes) {
+    const tbody = document.getElementById("tabla-estudiantes");
+    tbody.innerHTML = "";
+
+    estudiantes.forEach(est => {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+            <td>${est.nombre}</td>
+            <td>${est.apellido}</td>
+            <td>${est.username}</td>
+            <td>${est.estado ?? "Activo"}</td>
+            <td>${est.saldo_actual}</td>
+            <td>${est.rankingPoints}</td>
+            <td>${parseFloat(est.promedio).toFixed(2)}</td>
+            <td>
+                <button class="shiny" onclick="info(${est.id_user})">
+                    <img src="img/info.png" alt="info" width="20"> Info
+                </button>
+            </td>
+        `;
+        tbody.appendChild(fila);
+    });
+}
+
+function becas() {
+    
+}
+function ranking() {
+
+}
+function info(id_user) {
+
 }
 
 function cerrarSesion() {

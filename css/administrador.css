@@ -141,6 +141,13 @@
     justify-content: center;
     margin-top: 20px;
 }
+.selectBox div {
+    display: flex;
+    gap: 2vh;
+}
+.selectBox h4 {
+    margin: 0px;
+}
 
 /* Estilos para scroll en tabla de áreas */
 .table-container-scroll {
