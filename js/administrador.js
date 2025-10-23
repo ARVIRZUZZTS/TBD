@@ -18,13 +18,33 @@ function setUs() {
     dina.style.justifyContent = "center";
 }
 
+// ==================== FUNCIONES DE CURSOS ====================
+function curso() {
+    const botones = document.getElementById("botones");
+    botones.innerHTML = `
+        <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
+        <button class="shiny" onclick="verCursos()">Ver Cursos</button>
+        <button class="shiny" onclick="area()">Áreas</button>
+        <button class="back" onclick="back()">Atrás</button>
+    `;  
+    
+    const dinamic = document.getElementById("dinamic");
+    dinamic.style.justifyContent = "flex-start";
+    dinamic.innerHTML = `
+        <div id="titleM">
+            <h3>Gestión de Cursos</h3>
+        </div>
+        <p>Seleccione una opción para gestionar los cursos</p>
+    `;
+}
+
 // ==================== FUNCIONES DE ÁREAS ====================
 function area() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="nuevaArea()">Nueva Área</button>
         <button class="shiny" onclick="verAreas()">Ver Áreas</button>
-        <button class="back" onclick="back()">Atrás</button>
+        <button class="back" onclick="curso()">Atrás</button>
     `;  
     
     const dinamic = document.getElementById("dinamic");
@@ -133,25 +153,6 @@ function verAreas() {
         const dinamic = document.getElementById("dinamic");
         dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
-}
-
-// ==================== FUNCIONES DE CURSOS ====================
-function curso() {
-    const botones = document.getElementById("botones");
-    botones.innerHTML = `
-        <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
-        <button class="shiny" onclick="verCursos()">Ver Cursos</button>
-        <button class="back" onclick="back()">Atrás</button>
-    `;  
-    
-    const dinamic = document.getElementById("dinamic");
-    dinamic.style.justifyContent = "flex-start";
-    dinamic.innerHTML = `
-        <div id="titleM">
-            <h3>Gestión de Cursos</h3>
-        </div>
-        <p>Seleccione una opción para gestionar los cursos</p>
-    `;
 }
 
 function nuevoCurso() {
