@@ -3,7 +3,7 @@ include 'conexion.php';
 
 header('Content-Type: application/json');
 
-$sql = "SELECT id_area, nombre_area FROM area ORDER BY nombre_area";
+$sql = "SELECT id_area, nombre_area FROM area ORDER BY id_area";
 $result = $conexion->query($sql);
 
 if ($result) {
