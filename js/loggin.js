@@ -163,3 +163,5 @@ function home() {
 function mae() {
     window.location = "logginMaestro.html";
 }
+
+localStorage.setItem('id_estudiante', idDelEstudiante);
