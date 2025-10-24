@@ -161,5 +161,5 @@ function home() {
 }
 
 function mae() {
-    window.location = "maestro.html";
+    window.location = "logginMaestro.html";
 }
