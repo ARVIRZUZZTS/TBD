@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Maestro - OnDesK</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/loggin.css">
+</head>
+<body>
+    <header>
+        <div id="logoBox">
+            <button id="logo" onclick="home()"><img src="img/logoW.png" alt=""></button>
+            <h1>OnDesK</h1>
+        </div>
+        <div id="carr"></div>
+        <button id="est" class="back" onclick="est()">¿Eres Estudiante?</button>
+    </header>
+    <main>
+        <h2><span>Impulsa</span> el Aprendizaje.</h2>
+        <h3>Como un Maestro en <span>OnDesK</span></h3>
+        <h5>Gestiona tus cursos y estudiantes!!</h5>
+        
+        <div id="bots">
+            <div>
+                <input id="getUs" type="text" placeholder="Usuario" maxlength="30" autocomplete="off">
+                <input id="getPass" type="password" placeholder="Contraseña" maxlength="30" autocomplete="off">
+            </div>
+        </div>
+        
+        <button class="noBack"><p>¿Olvidaste tu Contraseña?</p></button>
+        
+        <div id="formBut">
+            <button class="back" onclick="back()">Atrás</button>
+            <button class="shiny" onclick="ingresarMaestro()">Ingresar</button>
+        </div>
+    </main>
+    <script src="js/logginMaestro.js" defer></script>
+</body>
+</html>

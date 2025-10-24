@@ -598,7 +598,7 @@ function nuevoTra() {
             <input type="text" id="apellido" placeholder="Apellido" autocomplete="off">
             <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">
             <input type="password" id="contrasenna" placeholder="Contraseña" autocomplete="off">
-            <input type="text" id="ci" placeholder="Cédula de Identity" autocomplete="off">
+            <input type="text" id="ci" placeholder="Cédula de Identidad" autocomplete="off">
             <input type="text" id="telefono" placeholder="Teléfono" autocomplete="off">
             <input type="email" id="correo" placeholder="Correo" autocomplete="off" class="form-full-width">
             <input type="number" id="edad" placeholder="Edad" autocomplete="off">
