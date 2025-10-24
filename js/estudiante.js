@@ -1,6 +1,4 @@
-// Funcionalidad para la vista de estudiante
 document.addEventListener('DOMContentLoaded', function() {
-    // Navegación entre pestañas
     const navButtons = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
@@ -8,13 +6,10 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
             
-            // Solo procesar botones que tienen data-tab
             if (targetTab) {
-                // Remover clase activa de todos los botones y contenidos
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(tab => tab.classList.remove('active'));
                 
-                // Agregar clase activa al botón y contenido seleccionados
                 this.classList.add('active');
                 
                 const targetElement = document.getElementById(targetTab);
@@ -25,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Agregar evento al botón Cerrar Sesión
     const cerrarSesionBtn = document.querySelector('.cerrar-sesion-btn');
     if (cerrarSesionBtn) {
         cerrarSesionBtn.addEventListener('click', function() {
@@ -33,7 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Efectos hover para tarjetas
     const cards = document.querySelectorAll('.content-card');
     cards.forEach(card => {
         card.addEventListener('mouseenter', function() {

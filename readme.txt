@@ -5,3 +5,4 @@ maestroNew.php
 administrador.js
 163: // img guardar y cancelar
 119: //img en editar y eliminar
+hay que agregar las funcionalidades de la lectura de la bd a la parte de estudiantes 
