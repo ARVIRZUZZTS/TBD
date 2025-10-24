@@ -11,7 +11,10 @@ if (!$username || !$password) {
     exit;
 }
 
-$sql = "SELECT id_user, contrasenna FROM usuario WHERE username = ?";
+$sql = "SELECT u.id_user, u.contrasenna 
+        FROM usuario u 
+        INNER JOIN rol_usuario ru ON u.id_user = ru.id_user 
+        WHERE u.username = ? AND ru.id_rol = 3";
 $stmt = $conexion->prepare($sql);
 $stmt->bind_param("s", $username);
 $stmt->execute();

@@ -1,3 +1,6 @@
+const params = new URLSearchParams(window.location.search);
+let usuario = params.get("usuario");
+
 // Funcionalidad básica para cambiar entre secciones
 function showSection(sectionId) {
     // Ocultar todas las secciones

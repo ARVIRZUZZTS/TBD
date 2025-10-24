@@ -18,13 +18,33 @@ function setUs() {
     dina.style.justifyContent = "center";
 }
 
+// ==================== FUNCIONES DE CURSOS ====================
+function curso() {
+    const botones = document.getElementById("botones");
+    botones.innerHTML = `
+        <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
+        <button class="shiny" onclick="verCursos()">Ver Cursos</button>
+        <button class="shiny" onclick="area()">Áreas</button>
+        <button class="back" onclick="back()">Atrás</button>
+    `;  
+    
+    const dinamic = document.getElementById("dinamic");
+    dinamic.style.justifyContent = "flex-start";
+    dinamic.innerHTML = `
+        <div id="titleM">
+            <h3>Gestión de Cursos</h3>
+        </div>
+        <p>Seleccione una opción para gestionar los cursos</p>
+    `;
+}
+
 // ==================== FUNCIONES DE ÁREAS ====================
 function area() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="nuevaArea()">Nueva Área</button>
         <button class="shiny" onclick="verAreas()">Ver Áreas</button>
-        <button class="back" onclick="back()">Atrás</button>
+        <button class="back" onclick="curso()">Atrás</button>
     `;  
     
     const dinamic = document.getElementById("dinamic");
@@ -133,25 +153,6 @@ function verAreas() {
         const dinamic = document.getElementById("dinamic");
         dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
-}
-
-// ==================== FUNCIONES DE CURSOS ====================
-function curso() {
-    const botones = document.getElementById("botones");
-    botones.innerHTML = `
-        <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
-        <button class="shiny" onclick="verCursos()">Ver Cursos</button>
-        <button class="back" onclick="back()">Atrás</button>
-    `;  
-    
-    const dinamic = document.getElementById("dinamic");
-    dinamic.style.justifyContent = "flex-start";
-    dinamic.innerHTML = `
-        <div id="titleM">
-            <h3>Gestión de Cursos</h3>
-        </div>
-        <p>Seleccione una opción para gestionar los cursos</p>
-    `;
 }
 
 function nuevoCurso() {
@@ -597,7 +598,7 @@ function nuevoTra() {
             <input type="text" id="apellido" placeholder="Apellido" autocomplete="off">
             <input type="text" id="username" placeholder="Nombre de usuario" autocomplete="off">
             <input type="password" id="contrasenna" placeholder="Contraseña" autocomplete="off">
-            <input type="text" id="ci" placeholder="Cédula de Identity" autocomplete="off">
+            <input type="text" id="ci" placeholder="Cédula de Identidad" autocomplete="off">
             <input type="text" id="telefono" placeholder="Teléfono" autocomplete="off">
             <input type="email" id="correo" placeholder="Correo" autocomplete="off" class="form-full-width">
             <input type="number" id="edad" placeholder="Edad" autocomplete="off">
@@ -729,9 +730,7 @@ function estudiante() {
                         <th>Informacion</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-estudiantes">
-                    <!-- Los datos se cargarán aquí -->
-                </tbody>
+                <tbody id="tabla-estudiantes"></tbody>
             </table>
         `;
         dinamic.appendChild(tableContainer);
@@ -792,8 +791,91 @@ function ranking() {
 
 }
 function info(id_user) {
+    fetch(`php/estudianteGet.php?id_user=${id_user}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.exito) {
+                alert(data.mensaje || "Error al obtener datos del estudiante");
+                return;
+            }
 
+            const est = data.estudiante;
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
+
+            const datosHTML = `
+                <div id="titleM">
+                    <h3>Datos del estudiante ${id_user}</h3>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>IdEstudiante</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Usuario</th>
+                            <th>CI</th>
+                            <th>Teléfono</th>
+                            <th>Correo</th>
+                            <th>Edad</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                        <td>${est.id_user}</td>
+                        <td>${est.nombre}</td>
+                        <td>${est.apellido}</td>
+                        <td>${est.username}</td>
+                        <td>${est.ci ?? "-"}</td>
+                        <td>${est.telefono ?? "-"}</td>
+                        <td>${est.correo ?? "-"}</td>
+                        <td>${est.edad ?? "-"}</td>
+                        <td>${est.estado}</td>
+                    </table>
+                </div>
+            `;
+
+            const puntosHTML = `
+                <div id="titleM">
+                    <h3>Puntos del estudiante ${id_user}</h3>
+                </div>
+                <div class="table-container">                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Puntos Totales</th>
+                                <th>Puntos Gastados</th>
+                                <th>Saldo Actual</th>
+                                <th>Ranking Points</th>
+                                <th>Rango Actual</th>
+                            </tr>
+                        </thead>
+                            <td>${est.puntos_totales}</td>
+                            <td>${est.puntos_gastados}</td>
+                            <td>${est.saldo_actual}</td>
+                            <td>${est.rankingPoints}</td>
+                            <td>${est.rango_actual}</td>
+                    </table>
+                </div>
+            `;
+
+            const accionesHTML = `
+                <div id="estAcc" style="margin-top: 20px; text-align: center;">
+                    <button class="shiny" onclick="becaEstudiante(${id_user})">Dar Beca</button>
+                    <button class="shiny" onclick="inscripciones(${id_user})">Ver Inscripciones</button>
+                    <button class="back" onclick="darBaja(${id_user})">Dar de baja</button>
+                </div>
+            `;
+
+            dinamic.innerHTML = datosHTML + puntosHTML + accionesHTML;
+        })
+        .catch(err => {
+            console.error("Error al cargar info del estudiante:", err);
+            alert("Error de conexión con el servidor");
+        });
 }
+
 
 function cerrarSesion() {
     window.location = "inicio.html";
