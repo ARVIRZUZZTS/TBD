@@ -129,10 +129,16 @@ function registrar() {
         if (data.exito) {
             localStorage.setItem("id_user", data.id_user);
             window.location = "estudiante.html";
+        } else {
+            alert(data.mensaje || "Error al registrar el estudiante");
         }
     })
-    .catch(err => console.error("Error al registrar estudiante:", err));
+    .catch(err => {
+        console.error("Error al registrar estudiante:", err);
+        alert("Error de conexión con el servidor.");
+    });
 }
+
 
 function back() {
     window.location = "inicio.html";

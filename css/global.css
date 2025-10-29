@@ -132,3 +132,7 @@ option {
 option:hover {
   background-color: #ff8e1d;
 }
+/*--------------------TABLE--------------------*/
+table button {
+    padding: 10px;
+}

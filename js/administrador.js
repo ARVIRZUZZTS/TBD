@@ -28,20 +28,83 @@ function setUs() {
 function curso() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
+        <button class="shiny" onclick="curso()">Cursos</button>
         <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
-        <button class="shiny" onclick="verCursos()">Ver Cursos</button>
         <button class="shiny" onclick="area()">Áreas</button>
         <button class="back" onclick="back()">Atrás</button>
     `;  
     
-    const dinamic = document.getElementById("dinamic");
-    dinamic.style.justifyContent = "flex-start";
-    dinamic.innerHTML = `
-        <div id="titleM">
-            <h3>Gestión de Cursos</h3>
-        </div>
-        <p>Seleccione una opción para gestionar los cursos</p>
-    `;
+    fetch("php/cursoGetAll.php", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const dinamic = document.getElementById("dinamic");
+        dinamic.style.justifyContent = "flex-start";
+        dinamic.innerHTML = "";
+        
+        const titleM = document.createElement("div");
+        titleM.id = "titleM";
+        titleM.innerHTML = `<h3>Lista de Cursos</h3>`;
+        dinamic.appendChild(titleM);
+        
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+        tableContainer.style.overflowY = "auto";
+        tableContainer.style.maxHeight = "50vh";
+        tableContainer.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Título</th>
+                        <th>Duración</th>
+                        <th>Modalidad</th>
+                        <th>Categoría</th>
+                        <th>Área</th>
+                        <th>Grado</th>
+                        <th>Periodo (Inicio-Fin)</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cursos">
+                    <!-- Los datos se cargarán aquí -->
+                </tbody>
+            </table>
+        `;
+        dinamic.appendChild(tableContainer);
+        
+        if (data.success && data.cursos && data.cursos.length > 0) {
+            const tbody = document.getElementById("tabla-cursos");
+            data.cursos.forEach(curso => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${curso.id_curso}</td>
+                    <td>${curso.titulo}</td>
+                    <td>${curso.duracion}</td>
+                    <td>${curso.modalidad}</td>
+                    <td>${curso.categoria}</td>
+                    <td>${curso.area}</td>
+                    <td>${curso.grado}</td>
+                    <td>${curso.periodo}</td>
+                    <td>
+                        <button onclick="masOpciones(this, ${curso.id_curso}, '${curso.titulo.replace(/'/g, "\\'")}')">
+                            <img src="img/masOpciones.png" alt="más" width="20">
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+        } else {
+            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.message || 'No se encontraron cursos'}</p>`;
+        }
+    })
+    .catch(err => {
+        console.error("Error al obtener cursos:", err);
+        const dinamic = document.getElementById("dinamic");
+        dinamic.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+    });
 }
 
 // ==================== FUNCIONES DE ÁREAS ====================
@@ -206,7 +269,6 @@ function nuevoCurso() {
         </div>
     `;
     
-    // Cargar datos para los combobox
     cargarComboboxAreas();
     cargarComboboxGrados();
     cargarComboboxCategorias();
@@ -281,7 +343,6 @@ function guardarCurso() {
         fin_gestion: document.getElementById("fin_gestion").value
     };
     
-    // Validar campos obligatorios
     if (datos.titulo === "" || datos.duracion === "" || datos.id_area === "" || 
         datos.id_grado === "" || datos.id_categoria === "" || datos.modalidad === "" ||
         datos.inicio_gestion === "" || datos.fin_gestion === "") {
@@ -289,7 +350,6 @@ function guardarCurso() {
         return;
     }
     
-    // Validar que la fecha de fin sea mayor a la de inicio
     if (new Date(datos.fin_gestion) <= new Date(datos.inicio_gestion)) {
         alert("La fecha de fin debe ser posterior a la fecha de inicio.");
         return;
@@ -302,7 +362,6 @@ function guardarCurso() {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.mensaje);
         if (data.exito) {
             curso();
         }
@@ -310,81 +369,6 @@ function guardarCurso() {
     .catch(err => {
         console.error("Error al guardar curso:", err);
         alert("Error al guardar el curso");
-    });
-}
-
-function verCursos() {
-    fetch("php/cursoGetAll.php", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" }
-    })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
-        
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de Cursos</h3>`;
-        dinamic.appendChild(titleM);
-        
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.style.overflowY = "auto";
-        tableContainer.style.maxHeight = "50vh";
-        tableContainer.innerHTML = `
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Título</th>
-                        <th>Duración</th>
-                        <th>Modalidad</th>
-                        <th>Categoría</th>
-                        <th>Área</th>
-                        <th>Grado</th>
-                        <th>Periodo</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-cursos">
-                    <!-- Los datos se cargarán aquí -->
-                </tbody>
-            </table>
-        `;
-        dinamic.appendChild(tableContainer);
-        
-        // CORRECCIÓN: Usar 'success' en lugar de 'exito'
-        if (data.success && data.cursos && data.cursos.length > 0) {
-            const tbody = document.getElementById("tabla-cursos");
-            data.cursos.forEach(curso => {
-                const fila = document.createElement("tr");
-                fila.innerHTML = `
-                    <td>${curso.id_curso}</td>
-                    <td>${curso.titulo}</td>
-                    <td>${curso.duracion}</td>
-                    <td>${curso.modalidad}</td>
-                    <td>${curso.categoria}</td>
-                    <td>${curso.area}</td>
-                    <td>${curso.grado}</td>
-                    <td>${curso.periodo}</td>
-                    <td>
-                       <button onclick="masOpciones(this, ${curso.id_curso}, '${curso.titulo.replace(/'/g, "\\'")}')">
-                            <img src="img/masOpciones.png" alt="más" width="20">
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.message || 'No se encontraron cursos'}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener cursos:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
 }
 
@@ -398,15 +382,15 @@ function eliminarCurso(idCurso, titulo) {
     })
     .then(res => res.json())
     .then(data => {
-        alert(data.message); // Cambiado a 'message'
-        if (data.success) { // Cambiado a 'success'
-            verCursos();
+        alert(data.message);
+        if (data.success) {
+            curso();
         }
     })
     .catch(err => console.error("Error al eliminar curso:", err));
 }
 
-// ==================== FUNCIONES DE TRABAJADORES ====================
+// ==================== FUNCIONES DE TRABAJADORES ========================================================================
 function trabajador() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
@@ -942,9 +926,6 @@ function verEstudiantesRanking(ranking) {
         });
 }
 
-
-
-
 function becas() {
     fetch("php/becasGetAll.php", {
         method: "GET",
@@ -1193,7 +1174,6 @@ function guardarBeca(id_user) {
     });
 }
 
-
 function inscripciones(id_user) {
 
 }
@@ -1232,7 +1212,7 @@ function masOpciones(element, idCurso, tituloCurso) {
     const opciones = [
         { texto: 'Editar', accion: 'editarCurso' },
         { texto: 'Eliminar', accion: 'eliminarCurso' },
-        {texto: "añadir Maestro", accion: "añadirMaestro"}
+        {texto: "Asignar Maestro", accion: "asignarMaestro"}
     ];
     
     opciones.forEach(opcion => {
@@ -1271,7 +1251,6 @@ function masOpciones(element, idCurso, tituloCurso) {
 function ejecutarAccion(accion, idCurso, tituloCurso) {
     console.log('Ejecutando:', accion, 'para:', tituloCurso);
     
-    //aqui falta poner que acciones realiza que
     switch(accion) {
         case 'editarCurso':
             alert(`Editando: ${tituloCurso}`);
@@ -1281,8 +1260,8 @@ function ejecutarAccion(accion, idCurso, tituloCurso) {
                 eliminarCurso( idCurso, tituloCurso);
             }
             break;
-        case 'añadirMaestro':
-            añadirMaestro(idCurso, tituloCurso);
+        case 'asignarMaestro':
+            asignarMaestro(idCurso, tituloCurso);
             break;
         default:
             break;
@@ -1292,11 +1271,11 @@ function ejecutarAccion(accion, idCurso, tituloCurso) {
     if (menu) menu.classList.remove('mostrar');
 }
 
-function añadirMaestro(idCurso, tituloCurso) {
+function asignarMaestro(idCurso, tituloCurso) {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="guardarMaestroCurso(${idCurso})">Guardar Maestro</button>
-        <button class="back" onclick="verCursos()">Cancelar</button>
+        <button class="back" onclick="curso()">Cancelar</button>
     `;
 
     fetch("php/maestrosGet.php", {
@@ -1335,9 +1314,7 @@ function añadirMaestro(idCurso, tituloCurso) {
                         <th>Teléfono</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-maestros">
-                    <!-- Los datos se cargarán aquí -->
-                </tbody>
+                <tbody id="tabla-maestros"></tbody>
             </table>
         `;
         dinamic.appendChild(tableContainer);
@@ -1395,7 +1372,7 @@ function guardarMaestroCurso(idCurso) {
         idMaestro: maestroSeleccionadoId
     };
 
-    fetch("", { // aqui falta el php
+    fetch("", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
@@ -1405,7 +1382,7 @@ function guardarMaestroCurso(idCurso) {
         alert(data.mensaje || data.message);
         if (data.exito || data.success) {
             maestroSeleccionadoId = null; 
-            verCursos();
+            curso();
         }
     })
     .catch(err => {
