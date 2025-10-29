@@ -15,22 +15,16 @@
         </button>
         <nav>
             <button class="nav-btn active" data-tab="inicio">
-                <span>🏠 Inicio</span>
+                <span> Inicio</span>
             </button>
             <button class="nav-btn" data-tab="cursos">
-                <span>📚 Mis Cursos</span>
-            </button>
-            <button class="nav-btn" data-tab="progreso">
-                <span>📊 Mi Progreso</span>
+                <span> Mis Cursos</span>
             </button>
             <button class="nav-btn" data-tab="calificaciones">
-                <span>🎯 Calificaciones</span>
-            </button>
-            <button class="nav-btn" data-tab="recursos">
-                <span>📁 Recursos</span>
+                <span> Calificaciones</span>
             </button>
             <button class="nav-btn" data-tab="perfil">
-                <span>👤 Mi Perfil</span>
+                <span>Mi Perfil</span>
             </button>
             <!-- Botón Cerrar Sesión dentro del nav -->
            <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
@@ -50,7 +44,7 @@
                 <h1>Bienvenido</h1>
                 <div class="content-grid">
                     <div class="content-card">
-                        <h3>📅 Próximas Actividades</h3>
+                        <h3> Próximas Actividades</h3>
                         <ul>
                             <li>Tarea de Matemáticas - 15 de Octubre</li>
                             <li>Examen de Ciencias - 20 de Octubre</li>
@@ -58,7 +52,7 @@
                         </ul>
                     </div>
                     <div class="content-card">
-                        <h3>📢 Anuncios Recientes</h3>
+                        <h3> Anuncios Recientes</h3>
                         <ul>
                             <li>Nuevo material disponible</li>
                             <li>Reunión de padres el viernes</li>
@@ -66,7 +60,7 @@
                         </ul>
                     </div>
                     <div class="content-card">
-                        <h3>📈 Tu Progreso</h3>
+                        <h3> Tu Progreso</h3>
                         <div class="progress-container">
                             <div class="progress-bar">
                                 <div class="progress-fill" style="width: 75%"></div>
@@ -77,69 +71,11 @@
                 </div>
             </div>
 
-            <div id="cursos" class="tab-content">
+            <!-- aqui tienes que hacerlo xd -->
+           <div id="cursos" class="tab-content">
                 <h1>Mis Cursos</h1>
                 <div class="content-grid">
-                    <div class="content-card">
-                        <h3>Matemáticas</h3>
-                        <p>Profesor: Ana García</p>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 80%"></div>
-                            </div>
-                            <p>80% completado</p>
-                        </div>
-                        <button class="shiny">Acceder al Curso</button>
-                    </div>
-                    <div class="content-card">
-                        <h3>Ciencias</h3>
-                        <p>Profesor: Carlos López</p>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 65%"></div>
-                            </div>
-                            <p>65% completado</p>
-                        </div>
-                        <button class="shiny">Acceder al Curso</button>
-                    </div>
-                    <div class="content-card">
-                        <h3>Historia</h3>
-                        <p>Profesora: María Rodríguez</p>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 90%"></div>
-                            </div>
-                            <p>90% completado</p>
-                        </div>
-                        <button class="shiny">Acceder al Curso</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="progreso" class="tab-content">
-                <h1>Mi Progreso</h1>
-                <div class="progress-stats">
-                    <div class="stat-item">
-                        <h4>Asistencia</h4>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 95%"></div>
-                        </div>
-                        <span>95%</span>
-                    </div>
-                    <div class="stat-item">
-                        <h4>Tareas Entregadas</h4>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 88%"></div>
-                        </div>
-                        <span>88%</span>
-                    </div>
-                    <div class="stat-item">
-                        <h4>Participación</h4>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 75%"></div>
-                        </div>
-                        <span>75%</span>
-                    </div>
+                    <!-- Los cursos se cargarán dinámicamente aquí -->
                 </div>
             </div>
 
@@ -180,36 +116,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </div>
-
-            <div id="recursos" class="tab-content">
-                <h1>Recursos de Estudio</h1>
-                <div class="content-grid">
-                    <div class="content-card">
-                        <h3>Material de Clase</h3>
-                        <ul>
-                            <li><a href="#">Presentación Matemáticas</a></li>
-                            <li><a href="#">Guía de Ciencias</a></li>
-                            <li><a href="#">Línea de Tiempo Historia</a></li>
-                        </ul>
-                    </div>
-                    <div class="content-card">
-                        <h3>Ejercicios Prácticos</h3>
-                        <ul>
-                            <li><a href="#">Problemas Matemáticas</a></li>
-                            <li><a href="#">Experimentos Ciencias</a></li>
-                            <li><a href="#">Análisis de Textos</a></li>
-                        </ul>
-                    </div>
-                    <div class="content-card">
-                        <h3>Enlaces de Interés</h3>
-                        <ul>
-                            <li><a href="#">Biblioteca Virtual</a></li>
-                            <li><a href="#">Plataforma de Videos</a></li>
-                            <li><a href="#">Foro de Estudio</a></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
 
