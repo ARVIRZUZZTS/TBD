@@ -53,10 +53,58 @@ main p {
 #sec {
     width: 75%;
     margin-left: 25%;
+    padding-bottom: 7vh;
 }
 #fondito {
     position: fixed;
     top: 0px;
     left: 0px;
     height: 100vh;
+}
+/* FOOTER CORREGIDO */
+footer {
+     width: 71.6%; 
+    height: 7vh;
+    background-color: #ff8e1d;
+    color: #FFF9E9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 5px 0px 20px #5C300F;
+    padding: 0 20px;
+    position: fixed;
+    bottom: 0;
+    right: 0; 
+    flex-direction: column; 
+    gap: 5px;
+}
+
+footer .info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+footer .info img {
+    height: 3vh; 
+}
+
+footer .info p {
+    font-size: 2vh;
+    margin: 0;
+}
+
+footer div:last-child {
+    display: flex;
+    gap: 15px;
+}
+
+footer a {
+    color: #FFF9E9;
+    text-decoration: none;
+    font-size: 1.4vh;
+}
+
+footer a:hover {
+    text-decoration: underline;
 }

@@ -1,42 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Incio Web</title>
-    <link rel="stylesheet" href="css/global.css">
-    <link rel="stylesheet" href="css/inicio.css">
-</head>
-<body>
-    <div>
-        <img id="fondito" src="img/fondo.png" alt="">
-    </div>
-    <div id="sec">        
-    <header>
-        <button id="descuentos" onclick="des()">
-            <h4>Aprovecha las ultimas Ofertas - Ten acceso a ¡¡NUEVOS CURSOS AHORA MISMO!!</h4>
-            <img src="img/flechita.png" alt="">
-        </button>
-        <nav>
-            <div>
-                <button id="logo" onclick=""><img src="img/logo.png" alt=""></button>
-                <button onclick="ini()">Inicio</button>
-                <button onclick="cur()">Cursos</button>
-                <button onclick="us()">Sobre Nosotros</button>
-                <button onclick="con()">Contacto</button>
+    <head>
+        <meta charset="UTF-8">
+        <title>Incio Web</title>
+        <link rel="stylesheet" href="css/global.css">
+        <link rel="stylesheet" href="css/inicio.css">
+    </head>
+    <body>
+        <div>
+            <img id="fondito" src="img/fondo.png" alt="">
+        </div>
+        <div id="sec">        
+            <header>
+                <button id="descuentos" onclick="des()">
+                    <h4>Aprovecha las ultimas Ofertas - Ten acceso a ¡¡NUEVOS CURSOS AHORA MISMO!!</h4>
+                    <img src="img/flechita.png" alt="">
+                </button>
+                <nav>
+                    <div>
+                        <button id="logo" onclick=""><img src="img/logo.png" alt=""></button>
+                        <button onclick="cur()">Cursos</button>
+                        <button onclick="us()">Sobre Nosotros</button>
+                    </div>
+                    <div>
+                        <button id="ini" class="shiny" onclick="ini()">Iniciar Sesion</button>
+                        <button onclick="reg()">Registrarse</button>
+                    </div>
+                </nav>
+            </header>
+            <main>
+                <h1><span>Desbloquea</span> tu Potencial</h1>
+                <h3>con OnDesK, aprende todo lo que quieras.</h3>
+                <p>Junto a los mejores del área</p>
+                <button onclick="cur()">Explorar los Cursos</button>
+            </main>
+        </div>
+        <script src="js/inicio.js" defer></script>
+        <footer>
+            <div class="info">
+                <img src="img/logo_blanco.png" alt="">
+                <p>© 2024 OnDesK. Todos los derechos reservados.</p>
             </div>
-            <div>
-                <button id="ini" class="shiny" onclick="ini()">Iniciar Sesion</button>
-                <button onclick="reg()">Registrarse</button>
+            <div class="links">
+                <a href="#">Términos</a>
+                <a href="#">Privacidad</a>
+                <a href="#">Contacto</a>
             </div>
-        </nav>
-    </header>
-    <main>
-        <h1><span>Desbloquea</span> tu Potencial</h1>
-        <h3>con OnDesK, aprende todo lo que quieras.</h3>
-        <p>Junto a los mejores del área</p>
-        <button onclick="cur()">Explorar los Cursos</button>
-    </main>
-    </div>
-    <script src="js/inicio.js" defer></script>
-</body>
+        </footer>
+
+    </body>
 </html>

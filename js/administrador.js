@@ -970,7 +970,7 @@ function añadirMaestro(idCurso, tituloCurso) {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="guardarMaestroCurso(${idCurso})">Guardar Maestro</button>
-        <button class="back" onclick="verCursos()">Cancelar</button>
+        <button class="back" onclick="back()">Cancelar</button>
     `;
 
     fetch("php/maestrosGet.php", {
