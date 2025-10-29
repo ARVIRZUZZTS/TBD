@@ -6,3 +6,4 @@ administrador.js
 163: // img guardar y cancelar
 119: //img en editar y eliminar
 
+administrador linea 1072 falta la ruta para guardar el maestro al curso
