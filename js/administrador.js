@@ -364,8 +364,8 @@ function verCursos() {
                     <td>${curso.grado}</td>
                     <td>${curso.periodo}</td>
                     <td>
-                        <button onclick="eliminarCurso(${curso.id_curso}, '${curso.titulo}')">
-                            <img src="img/eliminar.png" alt="Eliminar" width="20">
+                       <button onclick="masOpciones(this, ${curso.id_curso}, '${curso.titulo.replace(/'/g, "\\'")}')">
+                            <img src="img/masOpciones.png" alt="más" width="20">
                         </button>
                     </td>
                 `;
@@ -713,7 +713,7 @@ function estudiante() {
             </div>
         `;
         dinamic.appendChild(filtro);
-
+ 
         const tableContainer = document.createElement("div");
         tableContainer.className = "table-container";
         tableContainer.innerHTML = `
@@ -879,4 +879,211 @@ function info(id_user) {
 
 function cerrarSesion() {
     window.location = "inicio.html";
+}
+
+function masOpciones(element, idCurso, tituloCurso) {
+    const menuExistente = document.getElementById('opcionesMenu');
+    
+    if (menuExistente && menuExistente.classList.contains('mostrar')) {
+        const rectExistente = menuExistente.getBoundingClientRect();
+        const rectActual = element.getBoundingClientRect();
+        
+        if (Math.abs(rectExistente.top - rectActual.bottom) < 10 && 
+            Math.abs(rectExistente.left - rectActual.left) < 10) {
+            menuExistente.remove();
+            return; 
+        }
+    }
+    
+    if (menuExistente) {
+        menuExistente.remove();
+    }
+    
+    const menu = document.createElement('div');
+    menu.id = 'opcionesMenu';
+    menu.className = 'menu-opciones';
+    
+    const opciones = [
+        { texto: 'Editar', accion: 'editarCurso' },
+        { texto: 'Eliminar', accion: 'eliminarCurso' },
+        {texto: "añadir Maestro", accion: "añadirMaestro"}
+    ];
+    
+    opciones.forEach(opcion => {
+        const botonOpcion = document.createElement('button');
+        botonOpcion.className = 'opcion-menu';
+        botonOpcion.textContent = opcion.texto;
+        botonOpcion.onclick = (e) => {
+            e.stopPropagation();
+            ejecutarAccion(opcion.accion, idCurso, tituloCurso);
+        };
+        menu.appendChild(botonOpcion);
+    });
+    
+    document.body.appendChild(menu);
+    
+    const rect = element.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset;
+    const scrollX = window.scrollX || window.pageXOffset;
+    
+    menu.style.top = (rect.bottom + scrollY) + 'px';
+    menu.style.left = (rect.left + scrollX) + 'px';
+    menu.classList.add('mostrar');
+
+    const cerrarMenu = (e) => {
+        if (!menu.contains(e.target) && e.target !== element) {
+            menu.remove();
+            document.removeEventListener('click', cerrarMenu);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', cerrarMenu);
+    }, 0);
+}
+
+function ejecutarAccion(accion, idCurso, tituloCurso) {
+    console.log('Ejecutando:', accion, 'para:', tituloCurso);
+    
+    //aqui falta poner que acciones realiza que
+    switch(accion) {
+        case 'editarCurso':
+            alert(`Editando: ${tituloCurso}`);
+            break;
+        case 'eliminarCurso':
+            if (confirm(`¿Eliminar ${tituloCurso}?`)) {
+                eliminarCurso( idCurso, tituloCurso);
+            }
+            break;
+        case 'añadirMaestro':
+            añadirMaestro(idCurso, tituloCurso);
+            break;
+        default:
+            break;
+    }
+    
+    const menu = document.getElementById('opcionesMenu');
+    if (menu) menu.classList.remove('mostrar');
+}
+
+function añadirMaestro(idCurso, tituloCurso) {
+    const botones = document.getElementById("botones");
+    botones.innerHTML = `
+        <button class="shiny" onclick="guardarMaestroCurso(${idCurso})">Guardar Maestro</button>
+        <button class="back" onclick="verCursos()">Cancelar</button>
+    `;
+
+    fetch("php/maestrosGet.php", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const dinamic = document.getElementById("dinamic");
+        dinamic.style.justifyContent = "flex-start";
+        dinamic.innerHTML = "";
+
+        const titleM = document.createElement("div");
+        titleM.id = "titleM";
+        titleM.innerHTML = `<h3>Seleccionar Maestro para: ${tituloCurso}</h3>`;
+        dinamic.appendChild(titleM);
+
+        const infoText = document.createElement("p");
+        infoText.innerHTML = `<strong>Selecciona UN maestro para impartir este curso</strong>`;
+        dinamic.appendChild(infoText);
+
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+        tableContainer.style.overflowY = "auto";
+        tableContainer.style.maxHeight = "50vh";
+        tableContainer.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Seleccionar</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Usuario</th>
+                        <th>CI</th>
+                        <th>Correo</th>
+                        <th>Teléfono</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-maestros">
+                    <!-- Los datos se cargarán aquí -->
+                </tbody>
+            </table>
+        `;
+        dinamic.appendChild(tableContainer);
+
+        if (data.exito && data.maestros) {
+            const tbody = document.getElementById("tabla-maestros");
+            tbody.innerHTML = "";
+
+            data.maestros.forEach(maestro => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>
+                        <input type="radio" name="maestroSeleccionado" value="${maestro.id_maestro}" 
+                               class="radio-maestro" onchange="seleccionarMaestro(${maestro.id_maestro})">
+                    </td>
+                    <td>${maestro.nombre || '-'}</td>
+                    <td>${maestro.apellido || '-'}</td>
+                    <td>${maestro.username || '-'}</td>
+                    <td>${maestro.ci || '-'}</td>
+                    <td>${maestro.correo || '-'}</td>
+                    <td>${maestro.telefono || '-'}</td>
+                `;
+                tbody.appendChild(fila);
+            });
+        } else {
+            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje || 'No se encontraron maestros'}</p>`;
+        }
+    })
+    .catch(err => {
+        console.error("Error al obtener maestros:", err);
+        const dinamic = document.getElementById("dinamic");
+        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+    });
+}
+
+let maestroSeleccionadoId = null;
+
+function seleccionarMaestro(idMaestro) {
+    maestroSeleccionadoId = idMaestro;
+    console.log("Maestro seleccionado:", idMaestro);
+}
+
+function guardarMaestroCurso(idCurso) {
+    if (!maestroSeleccionadoId) {
+        alert("Por favor, selecciona un maestro para este curso");
+        return;
+    }
+
+    if (!confirm(`¿Estás seguro de asignar este maestro al curso?`)) {
+        return;
+    }
+
+    const datos = {
+        idCurso: idCurso,
+        idMaestro: maestroSeleccionadoId
+    };
+
+    fetch("", { // aqui falta el php
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.mensaje || data.message);
+        if (data.exito || data.success) {
+            maestroSeleccionadoId = null; 
+            verCursos();
+        }
+    })
+    .catch(err => {
+        console.error("Error al asignar maestro:", err);
+        alert("Error al asignar el maestro al curso");
+    });
 }
