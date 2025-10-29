@@ -39,17 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     cargarDatosEstudiante();
     
-    console.log('Vista de estudiante cargada correctamente');
 });
 
 async function cargarDatosEstudiante() {
-    console.log(" cargarDatosEstudiante() EJECUTÁNDOSE");
     
     try {
-        console.log("=== INICIANDO CARGA DE DATOS ===");
         
         let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
-        console.log("ID encontrado en storage:", idEstudiante);
         
         if (!idEstudiante) {
             console.error(' No se encontró ID de estudiante en el storage');
@@ -57,22 +53,16 @@ async function cargarDatosEstudiante() {
             document.getElementById('nombre-perfil').textContent = 'Estudiante';
             return;
         }
-
-        console.log(" Haciendo fetch a:", `estudianteGet.php?id_user=${idEstudiante}`);
         
         const response = await fetch(`php/estudianteGet.php?id_user=${idEstudiante}`);
-        console.log(" Response status:", response.status, response.ok);
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log(" Datos recibidos del PHP:", data);
-
         if (data.exito && data.estudiante) {
             const estudiante = data.estudiante;
-            console.log(" Estudiante encontrado:", estudiante);
             
             document.getElementById('nombre-estudiante').textContent = 
                 `${estudiante.nombre} ${estudiante.apellido}`;
@@ -86,15 +76,11 @@ async function cargarDatosEstudiante() {
             const iniciales = (estudiante.nombre.charAt(0) + estudiante.apellido.charAt(0)).toUpperCase();
             document.getElementById('avatar-iniciales').textContent = iniciales;
             
-            console.log(" Datos actualizados en la página");
-            
         } else {
-            console.error(' Error en la respuesta:', data.mensaje);
             document.getElementById('nombre-estudiante').textContent = 'Estudiante no encontrado';
             document.getElementById('nombre-perfil').textContent = 'Usuario no encontrado';
         }
     } catch (error) {
-        console.error(' Error al cargar datos del estudiante:', error);
         document.getElementById('nombre-estudiante').textContent = 'Error de conexión';
         document.getElementById('nombre-perfil').textContent = 'Error al cargar datos';
     }
@@ -107,3 +93,100 @@ function cerrarSesion() {
         window.location.href = "inicio.html";
     }
 }
+async function cargarCursosEstudiante() {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        console.log("ID Estudiante desde storage:", idEstudiante);
+        
+        if (!idEstudiante) {
+            console.error('No se encontró ID de estudiante en storage');
+            mostrarCursosVacios();
+            return;
+        }
+        
+        const response = await fetch(`php/cursoEstudianteGet.php?id_estudiante=${idEstudiante}`);
+        
+        //console.log("manden ayuda xd"+"Respuesta del servidor:", response);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("Datos recibidos:", data);
+        
+        if (data.exito && data.cursos && data.cursos.length > 0) {
+            console.log("Cursos encontrados:", data.cursos);
+            mostrarCursos(data.cursos);
+        } else {
+            console.log("No hay cursos o respuesta vacía");
+            mostrarCursosVacios(data.mensaje || "No tienes cursos asignados");
+        }
+    } catch (error) {
+        console.error('Error al cargar cursos:', error);
+        mostrarCursosVacios("Error al cargar los cursos");
+    }
+}
+
+function mostrarCursos(cursos) {
+    const cursosContainer = document.querySelector('#cursos .content-grid');
+    cursosContainer.innerHTML = '';
+    
+    cursos.forEach(curso => {
+        const cursoCard = document.createElement('div');
+        cursoCard.className = 'content-card';
+        cursoCard.innerHTML = `
+            <h3>${curso.nombre_curso}</h3>
+            <p><strong>Profesor:</strong> ${curso.nombre_profesor} ${curso.apellido_profesor}</p>
+            <p><strong>Nota:</strong> ${curso.nota || 'N/A'}</p>
+            <p><strong>Asistencia:</strong> ${curso.asistencia || 0}</p>
+            <p><strong>Desk Points:</strong> ${curso.deskPoints || 0}</p>
+            <p><strong>Ranking Points:</strong> ${curso.rankingPoints || 0}</p>
+            <button class="shiny">Acceder al Curso</button>
+        `;
+        cursosContainer.appendChild(cursoCard);
+    });
+}
+
+function mostrarCursosVacios(mensaje = "No tienes cursos asignados") {
+    const cursosContainer = document.querySelector('#cursos .content-grid');
+    cursosContainer.innerHTML = `
+        <div class="content-card">
+            <h3>${mensaje}</h3>
+            <p>Contacta con administración para más información.</p>
+        </div>
+    `;
+}
+// Modificar el evento DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM completamente cargado");
+    
+    const navButtons = document.querySelectorAll('.nav-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    navButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            if (targetTab) {
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(tab => tab.classList.remove('active'));
+                
+                this.classList.add('active');
+                
+                const targetElement = document.getElementById(targetTab);
+                if (targetElement) {
+                    targetElement.classList.add('active');
+                }
+                
+                // Cargar cursos cuando se hace clic en la pestaña de cursos
+                if (targetTab === 'cursos') {
+                    cargarCursosEstudiante();
+                }
+            }
+        });
+    });
+    
+    cargarDatosEstudiante();
+});

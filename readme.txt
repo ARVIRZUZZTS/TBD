@@ -17,3 +17,6 @@ maestro.js
 
 administrador linea 1072 falta la ruta para guardar el maestro al curso
 
+//SQL
+modificar USUARIO añadiendo Grado
+modificar MATERIAL con fecha emision y hora emision 

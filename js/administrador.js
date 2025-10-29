@@ -1186,7 +1186,7 @@ function cerrarSesion() {
     window.location = "inicio.html";
 }
 
-
+//---------------------------------------------------------------------------------------
 function masOpciones(element, idCurso, tituloCurso) {
     const menuExistente = document.getElementById('opcionesMenu');
     
@@ -1275,7 +1275,7 @@ function asignarMaestro(idCurso, tituloCurso) {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="guardarMaestroCurso(${idCurso})">Guardar Maestro</button>
-        <button class="back" onclick="curso()">Cancelar</button>
+        <button class="back" onclick="back()">Cancelar</button>
     `;
 
     fetch("php/maestrosGet.php", {
@@ -1327,8 +1327,8 @@ function asignarMaestro(idCurso, tituloCurso) {
                 const fila = document.createElement("tr");
                 fila.innerHTML = `
                     <td>
-                        <input type="radio" name="maestroSeleccionado" value="${maestro.id_maestro}" 
-                               class="radio-maestro" onchange="seleccionarMaestro(${maestro.id_maestro})">
+                        <input type="radio" name="maestroSeleccionado" value="${maestro.id_user}" class="radio-maestro">
+
                     </td>
                     <td>${maestro.nombre || '-'}</td>
                     <td>${maestro.apellido || '-'}</td>
@@ -1350,29 +1350,23 @@ function asignarMaestro(idCurso, tituloCurso) {
     });
 }
 
-let maestroSeleccionadoId = null;
-
-function seleccionarMaestro(idMaestro) {
-    maestroSeleccionadoId = idMaestro;
-    console.log("Maestro seleccionado:", idMaestro);
-}
-
 function guardarMaestroCurso(idCurso) {
-    if (!maestroSeleccionadoId) {
+    const radioSeleccionado = document.querySelector('input[name="maestroSeleccionado"]:checked');
+    
+    if (!radioSeleccionado) {
         alert("Por favor, selecciona un maestro para este curso");
         return;
     }
 
-    if (!confirm(`¿Estás seguro de asignar este maestro al curso?`)) {
+    const idMaestro = Number(radioSeleccionado.value);
+    console.log(idMaestro, idCurso);
+    if (!confirm("¿Estás seguro de asignar este maestro al curso?")) {
         return;
     }
 
-    const datos = {
-        idCurso: idCurso,
-        idMaestro: maestroSeleccionadoId
-    };
+    const datos = { idCurso, idMaestro };
 
-    fetch("", {
+    fetch("php/pcAsignarMaestro.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
@@ -1380,14 +1374,10 @@ function guardarMaestroCurso(idCurso) {
     .then(res => res.json())
     .then(data => {
         alert(data.mensaje || data.message);
-        if (data.exito || data.success) {
-            maestroSeleccionadoId = null; 
-            curso();
-        }
+        if (data.exito || data.success) curso();
     })
     .catch(err => {
         console.error("Error al asignar maestro:", err);
         alert("Error al asignar el maestro al curso");
     });
 }
-
