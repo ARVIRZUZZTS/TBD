@@ -16,5 +16,13 @@ maestro.js
 // cambiar el uso de getParams a localStorageadministrador linea 1072 falta la ruta para guardar el maestro al curso
 // falta añadir funcionalidad al boton editar para que se pueda editar el titulo de los contenidos del curso
 // falta añadir materiales (pdf, powerpoints) para subir a temas y tambien para subir a evaluaciones y tareas
+--Arvi-NOtes
+-añadir en fecha emision y hora emision automaticamente no se puede mover
+-puntos es una funcion de f(nig)=nota*0.3
 
 administrador linea 1072 falta la ruta para guardar el maestro al curso
+
+//SQL
+modificar USUARIO añadiendo Grado
+modificar MATERIAL con fecha emision y hora emision 
+
