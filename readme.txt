@@ -6,4 +6,8 @@ administrador.js
 163: // img guardar y cancelar
 119: //img en editar y eliminar
 
+maestro.js 
+// incluir el nomnbre dinamicamente del maestro en lugar de Juan Perez
+// cambiar el uso de getParams a localStorageadministrador linea 1072 falta la ruta para guardar el maestro al curso
+
 administrador linea 1072 falta la ruta para guardar el maestro al curso
