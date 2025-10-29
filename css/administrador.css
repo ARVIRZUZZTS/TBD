@@ -149,33 +149,8 @@
     margin: 0px;
 }
 
-/* Estilos para scroll en tabla de áreas */
 .table-container-scroll {
     max-height: 50vh;
     overflow-y: auto;
     overflow-x: hidden;
-}
-
-/* Responsive para tablas */
-@media (max-width: 768px) {
-    .table-container {
-        overflow-x: auto;
-        border: 1px solid #ddd;
-    }
-    
-    .data-table {
-        min-width: 800px;
-    }
-    
-    .data-table th,
-    .data-table td {
-        padding: 8px 10px;
-        font-size: 0.8em;
-    }
-
-    .form-container {
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 15px;
-    }
 }

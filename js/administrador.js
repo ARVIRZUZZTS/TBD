@@ -1,7 +1,13 @@
-const params = new URLSearchParams(window.location.search);
-let usuario = params.get("usuario");
 let botonesOriginal = "";
 let contenidoOriginal = "";
+
+const id_actual = sessionStorage.getItem("id_actual");
+const usuario = sessionStorage.getItem("usuario");
+
+if (!id_actual || !usuario) {
+    alert("Sesión no iniciada");
+    window.location = "inicio.html";
+}
 
 document.addEventListener("DOMContentLoaded", function(){
     const botones = document.getElementById("botones");
@@ -679,6 +685,7 @@ function back() {
 function estudiante() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
+        <button class="shiny" onclick="estudiante()">Estudiante</button>
         <button class="shiny" onclick="becas()">Becas</button>
         <button class="shiny" onclick="ranking()">Ranking</button>
         <button class="back" onclick="back()">Atrás</button>
@@ -775,7 +782,7 @@ function cargarTablaEstudiantes(estudiantes) {
             <td>${est.rankingPoints}</td>
             <td>${parseFloat(est.promedio).toFixed(2)}</td>
             <td>
-                <button class="shiny" onclick="info(${est.id_user})">
+                <button class="shiny" onclick="infoEst(${est.id_user})">
                     <img src="img/info.png" alt="info" width="20"> Info
                 </button>
             </td>
@@ -784,13 +791,226 @@ function cargarTablaEstudiantes(estudiantes) {
     });
 }
 
-function becas() {
-    
-}
 function ranking() {
+    fetch("php/rankingGetAll.php", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const dinamic = document.getElementById("dinamic");
+        dinamic.style.justifyContent = "flex-start";
+        dinamic.innerHTML = "";
 
+        const titleM = document.createElement("div");
+        titleM.id = "titleM";
+        titleM.innerHTML = `<h3>Lista de Rangos</h3>`;
+        dinamic.appendChild(titleM);
+
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+        dinamic.appendChild(tableContainer);
+
+        if (!data.exito || !data.rankings || data.rankings.length === 0) {
+            tableContainer.innerHTML = `
+                <p style="padding: 20px; text-align: center; color: gray;">
+                    No se encontraron rangos
+                </p>
+            `;
+            return;
+        }
+
+        tableContainer.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Ranking</th>
+                        <th>Límite Inferior</th>
+                        <th>Límite Superior</th>
+                        <th>N° de Estudiantes</th>
+                        <th>Información</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-ranking"></tbody>
+            </table>
+        `;
+
+        const tbody = document.getElementById("tabla-ranking");
+        tbody.innerHTML = "";
+
+        data.rankings.forEach(r => {
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+                <td>${r.ranking}</td>
+                <td>${r.limite_inferior}</td>
+                <td>${r.limite_superior}</td>
+                <td>${r.total_estudiantes}</td>
+                <td>
+                    <button class="shiny" onclick="verEstudiantesRanking('${r.ranking}')">
+                        <img src="img/info.png" alt="info" width="20"> Info
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(fila);
+        });
+    })
+    .catch(err => {
+        console.error("Error al obtener rankings:", err);
+        const dinamic = document.getElementById("dinamic");
+        dinamic.innerHTML += `
+            <p style="color: red; padding: 20px; text-align: center;">
+                Error al cargar los datos
+            </p>
+        `;
+    });
 }
-function info(id_user) {
+
+
+function verEstudiantesRanking(ranking) {
+    fetch(`php/estudianteRanking.php?ranking=${encodeURIComponent(ranking)}`)
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML = "";
+
+            const title = document.createElement("div");
+            title.id = "titleM";
+            title.innerHTML = `<h3>Estudiantes del rango: ${ranking}</h3>`;
+            dinamic.appendChild(title);
+
+
+            if (!data.exito) {
+                const msg = document.createElement("p");
+                msg.style.textAlign = "center";
+                msg.style.padding = "20px";
+                msg.style.color = "gray";
+                msg.textContent = data.mensaje || "No hay estudiantes en este rango.";
+                dinamic.appendChild(msg);
+
+                dinamic.innerHTML += `
+                    <button class="back" onclick="ranking()">← Volver</button>
+                `;
+                return;
+            }
+
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID Usuario</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Ranking Points</th>
+                            <th>Información</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-estudiantes-ranking"></tbody>
+                </table>
+            `;
+            dinamic.appendChild(tableContainer);
+
+            const tbody = document.getElementById("tabla-estudiantes-ranking");
+            data.estudiantes.forEach(est => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${est.id_user}</td>
+                    <td>${est.nombre}</td>
+                    <td>${est.apellido}</td>
+                    <td>${est.rankingPoints}</td>
+                    <td>
+                        <button class="shiny" onclick="infoEst(${est.id_user})">
+                            <img src="img/info.png" alt="info" width="20"> Info
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+            dinamic.innerHTML += `
+                <button class="back" onclick="ranking()">← Volver</button>
+            `;
+        })
+        .catch(err => {
+            console.error("Error al obtener estudiantes del ranking:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML = `
+                <p style="color:red; text-align:center; padding:20px;">
+                    Error al cargar los estudiantes del ranking.
+                </p>
+            `;
+        });
+}
+
+
+
+
+function becas() {
+    fetch("php/becasGetAll.php", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const dinamic = document.getElementById("dinamic");
+        dinamic.style.justifyContent = "flex-start";
+        dinamic.innerHTML = "";
+
+        const titleM = document.createElement("div");
+        titleM.id = "titleM";
+        titleM.innerHTML = `<h3>Lista de Becas</h3>`;
+        dinamic.appendChild(titleM);
+
+        const tableContainer = document.createElement("div");
+        tableContainer.className = "table-container";
+        tableContainer.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID Estudiante</th>
+                        <th>Nombre y Apellido</th>
+                        <th>Área</th>
+                        <th>Porcentaje</th>
+                        <th>Estado</th>
+                        <th>Información</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-becas"></tbody>
+            </table>
+        `;
+        dinamic.appendChild(tableContainer);
+
+        if (data.exito) {
+            const tbody = document.getElementById("tabla-becas");
+            tbody.innerHTML = "";
+            data.becas.forEach(b => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
+                    <td>${b.id_estudiante}</td>
+                    <td>${b.nombre} ${b.apellido}</td>
+                    <td>${b.nombre_area}</td>
+                    <td>${b.porcentaje}%</td>
+                    <td>${b.estado_beca}</td>
+                    <td>
+                        <button class="shiny" onclick="infoEst(${b.id_estudiante})">
+                            <img src="img/info.png" alt="info" width="20"> Info
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+        } else {
+            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
+        }
+    })
+    .catch(err => {
+        console.error("Error al obtener becas:", err);
+        const dinamic = document.getElementById("dinamic");
+        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+    });
+}
+
+function infoEst(id_user) {
     fetch(`php/estudianteGet.php?id_user=${id_user}`)
         .then(res => res.json())
         .then(data => {
@@ -801,7 +1021,6 @@ function info(id_user) {
 
             const est = data.estudiante;
             const dinamic = document.getElementById("dinamic");
-            dinamic.style.justifyContent = "flex-start";
             dinamic.innerHTML = "";
 
             const datosHTML = `
@@ -862,9 +1081,10 @@ function info(id_user) {
 
             const accionesHTML = `
                 <div id="estAcc" style="margin-top: 20px; text-align: center;">
-                    <button class="shiny" onclick="becaEstudiante(${id_user})">Dar Beca</button>
+                    <button class="shiny" onclick="becaEstudiante(${id_user}, &quot;${est.nombre}&quot;, &quot;${est.apellido}&quot;)">Dar Beca</button>
                     <button class="shiny" onclick="inscripciones(${id_user})">Ver Inscripciones</button>
                     <button class="back" onclick="darBaja(${id_user})">Dar de baja</button>
+                    <button class="back" onclick="estudiante()">← Volver</button>
                 </div>
             `;
 
@@ -876,7 +1096,113 @@ function info(id_user) {
         });
 }
 
+function becaEstudiante(id_user, nombre, apellido) {
+    const dinamic = document.getElementById("dinamic");
+    dinamic.innerHTML = `
+        <div>
+            <div>
+                <h3>Dar Beca al Estudiante ${nombre} ${apellido}</h3>
+                
+                <div class="form-full-width">
+                    <label for="areaBeca">Área de la Beca:</label>
+                    <select id="areaBeca"></select>
+                </div>
+
+                <div class="form-full-width">
+                    <label for="porc">Porcentaje de la Beca:</label>
+                    <input type="text" id="porc" placeholder="Porcentaje de la Beca" autocomplete="off">
+                </div>
+
+                <div class="form-full-width">
+                    <label for="inicio_beca">Inicio de la Beca:</label>
+                    <input type="date" id="inicio_beca" autocomplete="off">
+                </div>
+
+                <div class="form-full-width">
+                    <label for="fin_beca">Fin de la Beca:</label>
+                    <input type="date" id="fin_beca" autocomplete="off">
+                </div>
+            </div>
+
+            <div style="margin-top:20px; text-align:center;">
+                <button class="shiny" onclick="guardarBeca(${id_user})">Dar Beca</button>
+                <button class="back" onclick="infoEst(${id_user})">← Volver</button>
+            </div>
+        </div>
+    `;
+
+    fetch("php/areaGetAll.php")
+        .then(res => res.json())
+        .then(areasData => {
+            if (areasData.exito) {
+                const select = document.getElementById("areaBeca");
+                select.innerHTML = `<option value="">Seleccione un área</option>`;
+                areasData.areas.forEach(a => {
+                    select.innerHTML += `<option value="${a.id_area}">${a.nombre_area}</option>`;
+                });
+            } else {
+                alert(areasData.mensaje || "Error al cargar las áreas");
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener áreas:", err);
+            alert("Error al cargar las áreas");
+        });
+}
+
+function guardarBeca(id_user) {
+    const id_area = document.getElementById("areaBeca").value;
+    const porcentaje = document.getElementById("porc").value.trim();
+    const inicio = document.getElementById("inicio_beca").value;
+    const fin = document.getElementById("fin_beca").value;
+
+    if (!id_area || porcentaje === "" || inicio === "" || fin === "") {
+        alert("Todos los campos son obligatorios.");
+        return;
+    }
+
+    if (new Date(fin) <= new Date(inicio)) {
+        alert("La fecha de fin debe ser posterior a la fecha de inicio.");
+        return;
+    }
+
+    const datos = {
+        id_estudiante: id_user,
+        id_admin: id_actual,
+        id_area: id_area,
+        porcentaje: porcentaje,
+        fecha_inicio: inicio,
+        fecha_fin: fin
+    };
+
+    fetch("php/becaNew.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.mensaje);
+        if (data.exito) {
+            infoEst(id_user);
+        }
+    })
+    .catch(err => {
+        console.error("Error al guardar beca:", err);
+        alert("Error al guardar la beca");
+    });
+}
+
+
+function inscripciones(id_user) {
+
+}
+
+function darBaja(id_user) {
+    
+}
 
 function cerrarSesion() {
     window.location = "inicio.html";
 }
+//<button class="back" onclick="ranking()">← Volver</button>
