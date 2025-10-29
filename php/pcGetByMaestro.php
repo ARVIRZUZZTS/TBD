@@ -16,7 +16,8 @@ $sql = "
         cat.nombre_categoria,
         a.nombre_area,
         g.nombre_grado,
-        pc.cupos_ocupados
+        pc.cupos_ocupados,
+        pc.id_periodo_curso
 
     FROM periodo_curso pc
     INNER JOIN curso c ON c.id_curso = pc.id_curso
@@ -50,7 +51,7 @@ if ($result && mysqli_num_rows($result) > 0) {
         }
         
         $cursos[] = [
-            'id_curso' => $row['id_curso'],
+            'id_periodo_curso' => $row['id_periodo_curso'],
             'titulo' => $row['titulo'] ?? 'Sin título',
             'duracion' => ($row['duracion'] ?? 0) . ' horas',
             'modalidad' => $modalidad_completa,
