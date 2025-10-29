@@ -20,7 +20,7 @@ function ingresarMaestro() {
     .then(data => {
         if (data.exito) {
             localStorage.setItem("id_user", data.id_user);
-            window.location = `maestro.html?usuario=${username}`;
+            window.location = `maestro.html`;
         } else {
             alert(data.mensaje || "Error al iniciar sesión");
         }

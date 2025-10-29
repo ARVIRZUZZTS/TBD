@@ -1,62 +1,96 @@
 const params = new URLSearchParams(window.location.search);
 let usuario = params.get("usuario");
 
-// Funcionalidad básica para cambiar entre secciones
 function showSection(sectionId) {
-    // Ocultar todas las secciones
     document.querySelectorAll('.content-area > div').forEach(section => {
         section.style.display = 'none';
     });
     
-    // Mostrar la sección seleccionada
     const targetSection = document.getElementById(sectionId);
     if (targetSection) {
         targetSection.style.display = 'block';
         
-        // Si es la sección de cursos disponibles, cargar los cursos
-        if (sectionId === 'all-courses') {
-            loadAllCourses();
+        if (sectionId === 'current-courses') {
+            loadMyCourses();
         }
     }
 }
 
-// Función para cargar todos los cursos desde la API
-async function loadAllCourses() {
+async function loadMyCourses() {
     const loadingElement = document.getElementById('courses-loading');
     const coursesContainer = document.getElementById('courses-container');
     const errorElement = document.getElementById('courses-error');
     
-    // Mostrar loading, ocultar otros elementos
     loadingElement.style.display = 'block';
     coursesContainer.innerHTML = '';
     errorElement.style.display = 'none';
+
+    let idMaestro = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
     
-    try {
-        const response = await fetch('php/cursoGetAll.php');
-        const data = await response.json();
-        
-        // Ocultar loading
+    fetch("php/pcGetByMaestro.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idMaestro })
+    })
+    .then(res => res.json())
+    .then(data => {
         loadingElement.style.display = 'none';
-        
-        if (data.success && data.cursos.length > 0) {
-            displayCourses(data.cursos);
-        } else {
-            coursesContainer.innerHTML = `
-                <div class="no-courses-message">
-                    <div class="placeholder-icon">📚</div>
-                    <h3>No hay cursos disponibles</h3>
-                    <p>No se encontraron cursos en la base de datos.</p>
-                </div>
-            `;
+        if (data.success) {
+            if(data.cursos.length > 0){
+                displayCourses(data.cursos);
+            } else {
+                coursesContainer.innerHTML = `
+                    <div class="no-courses-message">
+                        <div class="placeholder-icon">📚</div>
+                        <h3>No hay cursos disponibles</h3>
+                        <p>No se le han asignado cursos por el momento.</p>
+                    </div>
+                `;
+            }
         }
-    } catch (error) {
-        console.error('Error al cargar cursos:', error);
+    })
+    .catch(err => {
+        console.error('Error al cargar cursos:', err);
         loadingElement.style.display = 'none';
         errorElement.style.display = 'block';
-    }
+    });
 }
 
-// Función para mostrar los cursos en la interfaz
+// async function loadAllCourses() {
+//     const loadingElement = document.getElementById('courses-loading');
+//     const coursesContainer = document.getElementById('courses-container');
+//     const errorElement = document.getElementById('courses-error');
+    
+//     // Mostrar loading, ocultar otros elementos
+//     loadingElement.style.display = 'block';
+//     coursesContainer.innerHTML = '';
+//     errorElement.style.display = 'none';
+    
+//     try {
+//         const response = await fetch('php/cursoGetAll.php');
+//         const data = await response.json();
+        
+//         // Ocultar loading
+//         loadingElement.style.display = 'none';
+        
+//         if (data.success && data.cursos.length > 0) {
+//             displayCourses(data.cursos);
+//         } else {
+//             coursesContainer.innerHTML = `
+//                 <div class="no-courses-message">
+//                     <div class="placeholder-icon">📚</div>
+//                     <h3>No hay cursos disponibles</h3>
+//                     <p>No se encontraron cursos en la base de datos.</p>
+//                 </div>
+//             `;
+//         }
+//     } catch (error) {
+//         console.error('Error al cargar cursos:', error);
+//         loadingElement.style.display = 'none';
+//         errorElement.style.display = 'block';
+//     }
+// }
+
 function displayCourses(cursos) {
     const coursesContainer = document.getElementById('courses-container');
     
@@ -81,10 +115,10 @@ function displayCourses(cursos) {
                 <p class="course-info"><strong>Área:</strong> ${escapeHTML(curso.area)}</p>
                 <p class="course-info"><strong>Grado:</strong> ${escapeHTML(curso.grado)}</p>
                 <p class="course-info"><strong>Periodo:</strong> ${escapeHTML(curso.periodo)}</p>
+                <p class="course-info"><strong>Inscritos:</strong> ${escapeHTML(curso.inscritos)}</p>
             </div>
             <div class="action-buttons">
-                <button class="shiny">Solicitar Impartir</button>
-                <button class="back">Ver Detalles</button>
+                <button class="shiny">Ver Detalles</button>
             </div>
         </div>
     `).join('');
@@ -92,19 +126,15 @@ function displayCourses(cursos) {
     coursesContainer.innerHTML = coursesHTML;
 }
 
-// Función auxiliar para escapar HTML (seguridad)
 function escapeHTML(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
 }
 
-// Configurar eventos cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    // Mostrar cursos actuales por defecto
     showSection('current-courses');
     
-    // Configurar eventos para los botones del menú
     document.querySelectorAll('.menu-button').forEach(button => {
         button.addEventListener('click', function() {
             const section = this.getAttribute('data-section');
@@ -114,17 +144,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Configurar evento para el botón "Volver a Mis Cursos"
     document.getElementById('back-to-courses').addEventListener('click', function() {
         showSection('current-courses');
     });
     
-    // Configurar evento para reintentar carga de cursos
     document.getElementById('retry-load-courses').addEventListener('click', function() {
-        loadAllCourses();
+        loadMyCourses();
     });
 });
 
 function cerrarSesion() {
-    window.location = "inicio.html";
+    localStorage.removeItem('id_user');
+    sessionStorage.removeItem('id_user');
+    window.location.href = "inicio.html";
 }

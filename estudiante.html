@@ -32,7 +32,8 @@
             <button class="nav-btn" data-tab="perfil">
                 <span>👤 Mi Perfil</span>
             </button>
-            <button class="nav-btn cerrar-sesion-btn" >
+            <!-- Botón Cerrar Sesión dentro del nav -->
+           <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
                 <span>🚪 Cerrar Sesión</span>
             </button>
         </nav>
@@ -40,7 +41,7 @@
  
     <main>
         <div id="top">
-            <h3>Bienvenido, Juan Pérez</h3>
+           <h3 id="nombre-bienvenida">Bienvenido, <span id="nombre-estudiante">Cargando...</span></h3>
             <img src="img/logo.png" alt="Logo pequeño">
         </div>
         
@@ -216,14 +217,14 @@
                 <h1>Mi Perfil</h1>
                 <div class="profile-content">
                     <div class="profile-info">
-                        <div class="avatar">JP</div>
-                        <div class="profile-details">
-                            <h2>Juan Pérez</h2>
-                            <p>Estudiante de 3er Grado</p>
-                            <p>juan.perez@coder.edu</p>
-                            <p>Grupo: A</p>
+                       <div class="avatar" id="avatar-iniciales">--</div>
+                            <div class="profile-details">
+                                <h2 id="nombre-perfil">Cargando...</h2>
+                                <p id="grado-perfil">Estudiante</p>
+                                <p id="correo-perfil">Cargando...</p>
+                                <p id="rango-perfil">Rango: --</p>
+                            </div>
                         </div>
-                    </div>
                     <div class="profile-actions">
                         <button class="shiny">Editar Perfil</button>
                         <button class="back">Cambiar Contraseña</button>
