@@ -6,8 +6,14 @@ administrador.js
 163: // img guardar y cancelar
 119: //img en editar y eliminar
 
+hay que agregar las funcionalidades de la lectura de la bd a la parte de estudiantes 
+
+CORRER :TBD/php/test/crear_areas.php
+
+
 maestro.js 
 // incluir el nomnbre dinamicamente del maestro en lugar de Juan Perez
 // cambiar el uso de getParams a localStorageadministrador linea 1072 falta la ruta para guardar el maestro al curso
 
 administrador linea 1072 falta la ruta para guardar el maestro al curso
+

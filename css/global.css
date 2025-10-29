@@ -68,7 +68,7 @@ button {
     border-radius: 15px;
     border: none;
     color: var(--usWhite);
-    padding: 5px 15px;
+    padding: 20px 15px;
     transition: 500ms;
     cursor: pointer;
     font-size: 2.3vh;
@@ -121,6 +121,10 @@ select {
     border-radius: 5px;
     border: 1px solid var(--nigger);
     background-color: var(--inp);
+    font-size: 2vh;
+}
+select * {
+    font-size: 2vh;
 }
 option {
   background-color: var(--shinyHover);
