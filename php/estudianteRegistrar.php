@@ -64,6 +64,20 @@ if ($res->num_rows > 0) {
     echo json_encode(["exito" => false, "mensaje" => "Ya hay un estudiante con el mismo CI"]);
     exit;
 }
+$stmt->close();
+
+$sqlCheckUser = "SELECT id_user FROM usuario WHERE username = ?";
+$stmtUser = $conexion->prepare($sqlCheckUser);
+$stmtUser->bind_param("s", $username);
+$stmtUser->execute();
+$resUser = $stmtUser->get_result();
+
+if ($resUser->num_rows > 0) {
+    echo json_encode(["exito" => false, "mensaje" => "Username ya utilizado, escoja otro"]);
+    exit;
+}
+$stmtUser->close();
+
 $sqlInsert = "INSERT INTO usuario (nombre, apellido, username, contrasenna, ci, telefono, correo, edad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 $stmt2 = $conexion->prepare($sqlInsert);
 $stmt2->bind_param("ssssssss", $nombre, $apellido, $username, $contrasenna, $ci, $telefono, $correo, $edad);

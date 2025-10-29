@@ -149,7 +149,6 @@
     margin: 0px;
 }
 
-/* Estilos para scroll en tabla de áreas */
 .table-container-scroll {
     max-height: 50vh;
     overflow-y: auto;
