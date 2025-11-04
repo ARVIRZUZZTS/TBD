@@ -24,11 +24,11 @@
                 <span> Calificaciones</span>
             </button>
             <button class="nav-btn" data-tab="perfil">
-                <span>Mi Perfil</span>
+                <span>Inscribete</span>
             </button>
             <!-- Botón Cerrar Sesión dentro del nav -->
            <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
-                <span>🚪 Cerrar Sesión</span>
+                <span>Cerrar Sesión</span>
             </button>
         </nav>
     </header>
@@ -39,9 +39,28 @@
             <img src="img/logo.png" alt="Logo pequeño">
         </div>
         
+        <!-- aca debemos poner el boton que abra la parte de incripciones a cursos -->
         <div id="dinamic">
             <div id="inicio" class="tab-content active">
                 <h1>Bienvenido</h1>
+                <div class="profile-content">
+                    <div class="profile-info">
+                    <div class="avatar" id="avatar-iniciales">--</div>
+                            <div class="profile-details">
+                                <h2 id="nombre-perfil">Cargando...</h2>
+                                <p id="grado-perfil">Estudiante</p>
+                                <p id="correo-perfil">Cargando...</p>
+                                <p id="rango-perfil">Rango: --</p>
+                            </div>
+                        </div>
+                    <div class="profile-actions">
+                        <button class="shiny">Editar Perfil</button>
+                        <button class="back">Cambiar Contraseña</button>
+                        <button class="back">Configuración</button>
+                    </div>
+                </div>
+
+
                 <div class="content-grid">
                     <div class="content-card">
                         <h3> Próximas Actividades</h3>
@@ -71,11 +90,9 @@
                 </div>
             </div>
 
-            <!-- aqui tienes que hacerlo xd -->
            <div id="cursos" class="tab-content">
                 <h1>Mis Cursos</h1>
                 <div class="content-grid">
-                    <!-- Los cursos se cargarán dinámicamente aquí -->
                 </div>
             </div>
 
@@ -120,23 +137,8 @@
             </div>
 
             <div id="perfil" class="tab-content">
-                <h1>Mi Perfil</h1>
-                <div class="profile-content">
-                    <div class="profile-info">
-                       <div class="avatar" id="avatar-iniciales">--</div>
-                            <div class="profile-details">
-                                <h2 id="nombre-perfil">Cargando...</h2>
-                                <p id="grado-perfil">Estudiante</p>
-                                <p id="correo-perfil">Cargando...</p>
-                                <p id="rango-perfil">Rango: --</p>
-                            </div>
-                        </div>
-                    <div class="profile-actions">
-                        <button class="shiny">Editar Perfil</button>
-                        <button class="back">Cambiar Contraseña</button>
-                        <button class="back">Configuración</button>
-                    </div>
-                </div>
+                <h1>Inscripcion</h1>
+                
             </div>
         </div>
     </main>

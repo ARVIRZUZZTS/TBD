@@ -4,6 +4,7 @@ html, body {
     padding: 0;
 }
 
+/* ===== LAYOUT PRINCIPAL ===== */
 #dinamic {
     margin: 2vh 5vh;
     height: calc(100vh - 20vh - 4vh);
@@ -11,9 +12,11 @@ html, body {
     flex-direction: column;
     align-items: center;
     width: calc(100% - 10vh);
-    overflow: visible;
+    overflow-y: auto;
+    padding-bottom: 2vh;
 }
 
+/* ===== SISTEMA DE PESTAÑAS ===== */
 .tab-content {
     display: none;
     width: 100%;
@@ -25,33 +28,42 @@ html, body {
     flex-direction: column;
 }
 
+.tab-content h1 {
+    font-size: 3.5vh;
+    margin: 0;
+    text-align: center;
+}
+
+/* ===== GRID DE CONTENIDO ===== */
 .content-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2vh;
     margin-top: 2vh;
     width: 100%;
-    height: 100%;
+    height: fit-content;
     align-content: start;
 }
 
+/* ===== CARDS GENERALES ===== */
 .content-card {
     background-color: white;
     border-radius: 15px;
     padding: 2vh;
     box-shadow: 0px 2px 5px rgba(87, 45, 13, 0.2);
-    transition: transform 0.3s ease;
+    transition: all 0.3s ease;
     height: fit-content;
     min-height: 180px;
 }
 
 .content-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0px 4px 8px rgba(87, 45, 13, 0.25);
 }
 
 .content-card h3 {
     margin-top: 0;
-    border-bottom: 1px solid var(--shinyHover);
+    border-bottom: 2px solid var(--shinyHover);
     padding-bottom: 1vh;
     color: var(--nigger);
     font-size: 2.2vh;
@@ -65,7 +77,7 @@ html, body {
 .content-card li {
     margin-bottom: 0.8vh;
     line-height: 1.3;
-    font-size: 1.8vh;
+    font-size: 2.5vh;
 }
 
 .content-card button {
@@ -74,6 +86,166 @@ html, body {
     font-size: 1.8vh;
 }
 
+/* ===== CARDS ESPECÍFICAS PARA CURSOS ===== */
+.course-card {
+    background-color: white;
+    border-radius: 15px;
+    padding: 2.5vh;
+    box-shadow: 0px 4px 8px rgba(87, 45, 13, 0.15);
+    transition: all 0.3s ease;
+    height: fit-content;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+}
+
+.course-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 6px 12px rgba(87, 45, 13, 0.2);
+}
+
+/* Header del curso */
+.course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5vh;
+    gap: 1vh;
+}
+
+.course-title {
+    margin: 0;
+    color: var(--nigger);
+    font-size: 3vh;
+    flex: 1;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+.course-stats {
+    display: flex;
+    gap: 1.5vh;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.course-stat {
+    text-align: center;
+    min-width: 60px;
+}
+
+.course-stat-number {
+    font-size:2.3vh;
+    font-weight: bold;
+    color: var(--shiny);
+    display: block;
+}
+
+.course-stat-label {
+    font-size: 2vh;
+    color: var(--nigger);
+    display: block;
+    margin-top: 0.3vh;
+}
+
+/* Progreso del curso */
+.course-progress {
+    margin: 1.5vh 0;
+}
+
+.progress-percentage {
+    text-align: center;
+    font-size: 2vh;
+    color: var(--nigger);
+    margin-top: 0.5vh;
+}
+
+/* Información del curso */
+.course-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5vh;
+    margin: 1.5vh 0;
+}
+
+.info-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vh;
+}
+
+.info-label {
+    font-size: 2vh;
+    color: var(--nigger);
+    font-weight: bold;
+}
+
+.info-value {
+    font-size: 3vh;
+    color: var(--shiny);
+    font-weight: 500;
+}
+
+/* Puntos del curso */
+.course-points {
+    display: flex;
+    justify-content: space-around;
+    background: var(--back);
+    padding: 1vh;
+    border-radius: 8px;
+    margin: 1.5vh 0;
+}
+
+.point-item {
+    text-align: center;
+}
+
+.point-value {
+    font-size: 2vh;
+    font-weight: bold;
+    color: var(--shiny);
+    display: block;
+}
+
+.point-label {
+    font-size: 2vh;
+    color: var(--nigger);
+    display: block;
+}
+
+/* Botón del curso */
+.course-button {
+    margin-top: auto;
+    padding: 1.2vh 2vh;
+    font-size: 2.5vh;
+    width: 100%;
+}
+/* aqui nos quedamos seguimos mañana */
+/* ===== BARRA DE PROGRESO ===== */
+.progress-bar {
+    width: 100%;
+    height: 1.5vh;
+    background-color: var(--back);
+    border-radius: 8px;
+    margin: 0.8vh 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--shiny);
+    border-radius: 8px;
+    transition: width 0.5s ease;
+}
+
+.progress-container {
+    background: var(--back);
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+/* ===== ESTADÍSTICAS DE PROGRESO ===== */
 .progress-stats {
     display: flex;
     flex-direction: column;
@@ -114,6 +286,7 @@ html, body {
     font-size: 2vh;
 }
 
+/* ===== TABLA DE CALIFICACIONES ===== */
 .grades-container {
     margin-top: 2vh;
     background: white;
@@ -150,6 +323,7 @@ html, body {
     background-color: var(--shinyHover);
 }
 
+/* ===== PERFIL DE USUARIO ===== */
 .profile-content {
     display: flex;
     flex-direction: column;
@@ -180,6 +354,7 @@ html, body {
     justify-content: center;
     font-size: 3vh;
     font-weight: bold;
+    flex-shrink: 0;
 }
 
 .profile-details h2 {
@@ -198,6 +373,7 @@ html, body {
     display: flex;
     gap: 1.5vh;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .profile-actions button {
@@ -205,40 +381,7 @@ html, body {
     font-size: 1.8vh;
 }
 
-.progress-bar {
-    width: 100%;
-    height: 1.5vh;
-    background-color: var(--back);
-    border-radius: 8px;
-    margin: 0.8vh 0;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background-color: var(--shiny);
-    border-radius: 8px;
-    transition: width 0.5s ease;
-}
-
-.tab-content h1 {
-    font-size: 3.5vh;
-    margin: 0;
-    text-align: center;
-}
-
-#inicio .content-grid {
-    grid-template-rows: 1fr;
-}
-
-#cursos .content-grid {
-    grid-template-rows: 1fr;
-}
-
-#recursos .content-grid {
-    grid-template-rows: 1fr;
-}
-
+/* ===== ELEMENTOS GENERALES ===== */
 a {
     color: var(--nigger);
     text-decoration: none;
@@ -250,13 +393,270 @@ a:hover {
     color: var(--shiny);
 }
 
+/* ===== NAVEGACIÓN ===== */
 nav {
-    margin-top: -8vh; 
+    margin-top: -8vh;
 }
 
 #top h3 {
-    
     position: absolute;
     left: 60%;
     transform: translateX(-50%);
+}
+
+/* ===== UTILIDADES ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.stat-item-small {
+    text-align: center;
+    padding: 8px;
+    background: var(--back);
+    border-radius: 8px;
+}
+
+.stat-value {
+    font-size: 1.8vh;
+    font-weight: bold;
+    color: var(--shiny);
+}
+
+.stat-label {
+    font-size: 1.6vh;
+    color: var(--nigger);
+}
+
+/* ===== AJUSTES ESPECÍFICOS POR PESTAÑA ===== */
+#inicio .content-grid {
+    grid-template-rows: 1fr;
+}
+
+#cursos .content-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-auto-rows: minmax(320px, auto);
+    align-items: start;
+}
+
+#recursos .content-grid {
+    grid-template-rows: 1fr;
+}
+
+/* ===== VISTA DETALLADA DEL CURSO ===== */
+.curso-detalle-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2vh;
+    height: 8vh;
+    min-height: 60px;
+}
+
+.back-button {
+    background: var(--back);
+    border: none;
+    padding: 1.2vh 2.5vh;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.6vh;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    height: fit-content;
+}
+
+.back-button:hover {
+    background: var(--shinyHover);
+    transform: translateY(-1px);
+}
+
+.filtros-curso {
+    display: flex;
+    gap: 1vh;
+    background: var(--back);
+    padding: 0.5vh;
+    border-radius: 8px;
+    height: fit-content;
+}
+
+.filtro-btn {
+    background: transparent;
+    border: none;
+    padding: 1vh 2vh;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.6vh;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.filtro-btn.active {
+    background: var(--shiny);
+    color: white;
+}
+
+.filtro-btn:hover:not(.active) {
+    background: var(--shinyHover);
+}
+
+.contenido-curso {
+    height: calc(100vh - 20vh - 8vh - 4vh);
+    overflow-y: auto;
+    padding-right: 1vh;
+}
+
+.lista-actividades {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+    height: 100%;
+}
+
+.actividad-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2.5vh;
+    box-shadow: 0 2px 8px rgba(87, 45, 13, 0.1);
+    transition: all 0.3s ease;
+    border-left: 4px solid var(--shiny);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.actividad-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(87, 45, 13, 0.15);
+}
+
+.actividad-card.tarea {
+    border-left-color: #3498db;
+}
+
+.actividad-card.evaluacion {
+    border-left-color: #e74c3c;
+}
+
+.actividad-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5vh;
+    gap: 2vh;
+}
+
+.actividad-header h3 {
+    margin: 0;
+    color: var(--nigger);
+    font-size: 2.2vh;
+    flex: 1;
+    line-height: 1.3;
+}
+
+.actividad-badge {
+    padding: 0.8vh 1.5vh;
+    border-radius: 20px;
+    font-size: 2.5vh;
+    font-weight: bold;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.tarea-badge {
+    background: #3498db;
+    color: white;
+}
+
+.evaluacion-badge {
+    background: #e74c3c;
+    color: white;
+}
+
+.actividad-descripcion {
+    color: var(--nigger);
+    font-size: 2.8vh;
+    line-height: 1.4;
+    margin-bottom: 2vh;
+    flex: 1;
+}
+
+.actividad-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5vh;
+    margin-bottom: 2vh;
+}
+
+.fecha-info, .puntos-info, .modulo-info {
+    font-size: 2.8vh;
+    color: var(--nigger);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3vh;
+}
+
+.fecha-info strong, .puntos-info strong, .modulo-info strong {
+    color: var(--shiny);
+    font-size: 2.8vh;
+}
+
+.actividad-actions {
+    display: flex;
+    gap: 1.5vh;
+    justify-content: flex-end;
+}
+
+.actividad-actions .small {
+    padding: 1vh 2vh;
+    font-size: 1.5vh;
+    white-space: nowrap;
+}
+
+.sin-actividades, .loading, .error {
+    text-align: center;
+    padding: 4vh;
+    background: white;
+    border-radius: 12px;
+    color: var(--nigger);
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.sin-actividades h3 {
+    margin-bottom: 1vh;
+    color: var(--shiny);
+    font-size: 2.2vh;
+}
+
+.loading {
+    font-size: 1.8vh;
+}
+
+.error {
+    color: #e74c3c;
+}
+
+/* Scrollbar personalizado */
+.contenido-curso::-webkit-scrollbar {
+    width: 8px;
+}
+
+.contenido-curso::-webkit-scrollbar-track {
+    background: var(--back);
+    border-radius: 4px;
+}
+
+.contenido-curso::-webkit-scrollbar-thumb {
+    background: var(--shiny);
+    border-radius: 4px;
+}
+
+.contenido-curso::-webkit-scrollbar-thumb:hover {
+    background: var(--shinyHover);
 }

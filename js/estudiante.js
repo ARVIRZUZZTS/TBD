@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    console.log(" DOM completamente cargado");
+    console.log("DOM completamente cargado");
     
     const navButtons = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -9,6 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const targetTab = this.getAttribute('data-tab');
             
             if (targetTab) {
+                // Limpiar vista detallada si existe
+                const detalleView = document.getElementById('curso-detalle');
+                if (detalleView) {
+                    detalleView.remove(); // Eliminar completamente la vista detallada
+                }
+                
                 navButtons.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(tab => tab.classList.remove('active'));
                 
@@ -18,27 +24,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (targetElement) {
                     targetElement.classList.add('active');
                 }
-            } else {
-                if (this.classList.contains('cerrar-sesion-btn')) {
-                    cerrarSesion();
+                
+                // Cargar cursos cuando se hace clic en la pestaña de cursos
+                if (targetTab === 'cursos') {
+                    cargarCursosEstudiante();
                 }
             }
         });
     });
     
-    const cards = document.querySelectorAll('.content-card');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0)';
-        });
-    });
-
     cargarDatosEstudiante();
-    
 });
 
 async function cargarDatosEstudiante() {
@@ -134,16 +129,64 @@ function mostrarCursos(cursos) {
     cursosContainer.innerHTML = '';
     
     cursos.forEach(curso => {
+        const porcentajeProgreso = calcularProgresoCurso(curso.fecha_inicio, curso.fecha_fin);
+        const diasRestantes = calcularDiasRestantes(curso.fecha_fin);
+        
         const cursoCard = document.createElement('div');
-        cursoCard.className = 'content-card';
+        cursoCard.className = 'course-card'; // Cambiamos a course-card
         cursoCard.innerHTML = `
-            <h3>${curso.nombre_curso}</h3>
-            <p><strong>Profesor:</strong> ${curso.nombre_profesor} ${curso.apellido_profesor}</p>
-            <p><strong>Nota:</strong> ${curso.nota || 'N/A'}</p>
-            <p><strong>Asistencia:</strong> ${curso.asistencia || 0}</p>
-            <p><strong>Desk Points:</strong> ${curso.deskPoints || 0}</p>
-            <p><strong>Ranking Points:</strong> ${curso.rankingPoints || 0}</p>
-            <button class="shiny">Acceder al Curso</button>
+            <div class="course-header">
+                <h3 class="course-title">${curso.nombre_curso}</h3>
+                <div class="course-stats">
+                    <div class="course-stat">
+                        <span class="course-stat-number">${curso.total_tareas || 0}</span>
+                        <span class="course-stat-label">Tareas</span>
+                    </div>
+                    <div class="course-stat">
+                        <span class="course-stat-number">${curso.total_evaluaciones || 0}</span>
+                        <span class="course-stat-label">Evaluaciones</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="course-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${porcentajeProgreso}%"></div>
+                </div>
+                <div class="progress-percentage">${porcentajeProgreso}% completado</div>
+            </div>
+            
+            <div class="course-info-grid">
+                <div class="info-group">
+                    <span class="info-label">Profesor:</span>
+                    <span class="info-value">${curso.nombre_profesor} ${curso.apellido_profesor}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Asistencia:</span>
+                    <span class="info-value">${curso.asistencia || 0}%</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Nota:</span>
+                    <span class="info-value">${curso.nota || 'N/A'}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Días restantes:</span>
+                    <span class="info-value">${diasRestantes}</span>
+                </div>
+            </div>
+            
+            <div class="course-points">
+                <div class="point-item">
+                    <span class="point-value">${curso.deskPoints || 0}</span>
+                    <span class="point-label">Desk Points</span>
+                </div>
+                <div class="point-item">
+                    <span class="point-value">${curso.rankingPoints || 0}</span>
+                    <span class="point-label">Ranking Points</span>
+                </div>
+            </div>
+            
+            <button class="shiny course-button">Acceder al Curso</button>
         `;
         cursosContainer.appendChild(cursoCard);
     });
@@ -190,3 +233,342 @@ document.addEventListener('DOMContentLoaded', function() {
     
     cargarDatosEstudiante();
 });
+
+
+function calcularProgresoCurso(fechaInicio, fechaFin) {
+    if (!fechaInicio || !fechaFin) return 0;
+    
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const hoy = new Date();
+    
+    // Asegurarnos de que las fechas sean válidas
+    if (isNaN(inicio) || isNaN(fin)) return 0;
+    
+    const duracionTotal = fin - inicio;
+    const tiempoTranscurrido = hoy - inicio;
+    
+    if (duracionTotal <= 0) return 100; // Si ya terminó
+    
+    let porcentaje = (tiempoTranscurrido / duracionTotal) * 100;
+    
+    // Limitar entre 0% y 100%
+    return Math.min(100, Math.max(0, Math.round(porcentaje)));
+}
+
+function calcularDiasRestantes(fechaFin) {
+    if (!fechaFin) return 'N/A';
+    
+    const fin = new Date(fechaFin);
+    const hoy = new Date();
+    
+    if (isNaN(fin)) return 'N/A';
+    
+    const diferencia = fin - hoy;
+    const diasRestantes = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+    
+    if (diasRestantes < 0) return 'Finalizado';
+    if (diasRestantes === 0) return 'Hoy';
+    if (diasRestantes === 1) return '1 día';
+    
+    return `${diasRestantes} días`;
+}
+
+//  ================================= Detalle del Curso ============================ (lo ultimo que toque xd)
+
+// Función para abrir la vista detallada del curso
+function abrirDetalleCurso(idPeriodoCurso) {
+    // Ocultar todas las vistas primero
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(tab => tab.classList.remove('active'));
+    
+    // Crear o mostrar la vista detallada
+    let detalleView = document.getElementById('curso-detalle');
+    if (!detalleView) {
+        detalleView = document.createElement('div');
+        detalleView.id = 'curso-detalle';
+        detalleView.className = 'tab-content active';
+        document.getElementById('dinamic').appendChild(detalleView);
+    } else {
+        detalleView.classList.add('active');
+        // Limpiar contenido anterior
+        detalleView.innerHTML = '';
+    }
+    
+    cargarDetalleCurso(idPeriodoCurso);
+}
+
+// Función para cargar los datos del curso detallado
+async function cargarDetalleCurso(idPeriodoCurso) {
+    try {
+        const detalleView = document.getElementById('curso-detalle');
+        detalleView.innerHTML = `
+            <div class="curso-detalle-header">
+                <button class="back-button" onclick="volverACursos()">← Volver a Mis Cursos</button>
+                <h1 id="curso-detalle-titulo">Cargando...</h1>
+                <div class="filtros-curso">
+                    <button class="filtro-btn active" data-filtro="todos">Todos</button>
+                    <button class="filtro-btn" data-filtro="tareas">Tareas</button>
+                    <button class="filtro-btn" data-filtro="evaluaciones">Evaluaciones</button>
+                </div>
+            </div>
+            <div class="contenido-curso">
+                <div class="lista-actividades" id="lista-actividades">
+                    <div class="loading">Cargando actividades...</div>
+                </div>
+            </div>
+        `;
+
+        // Cargar datos del curso, tareas y evaluaciones
+        const [cursoData, tareasData, evaluacionesData] = await Promise.all([
+            fetch(`php/cursoDetalleGet.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json()),
+            fetch(`php/tareasGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json()),
+            fetch(`php/evaluacionesGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json())
+        ]);
+
+        if (cursoData.exito) {
+            document.getElementById('curso-detalle-titulo').textContent = cursoData.curso.nombre_curso;
+        }
+
+        // Combinar y mostrar todas las actividades
+        mostrarActividadesCurso(tareasData.tareas || [], evaluacionesData.evaluaciones || []);
+
+        // Configurar filtros
+        configurarFiltros();
+
+    } catch (error) {
+        console.error('Error al cargar detalle del curso:', error);
+        document.getElementById('lista-actividades').innerHTML = `
+            <div class="error">Error al cargar el curso</div>
+        `;
+    }
+}
+
+// Función para mostrar actividades combinadas
+function mostrarActividadesCurso(tareas, evaluaciones) {
+    const listaActividades = document.getElementById('lista-actividades');
+    
+    // Combinar y ordenar por fecha
+    const todasActividades = [
+        ...tareas.map(t => ({ ...t, tipo: 'tarea' })),
+        ...evaluaciones.map(e => ({ ...e, tipo: 'evaluacion' }))
+    ].sort((a, b) => {
+        const fechaA = a.fecha_entrega || a.fecha_inicio;
+        const fechaB = b.fecha_entrega || b.fecha_inicio;
+        return new Date(fechaA) - new Date(fechaB);
+    });
+
+    if (todasActividades.length === 0) {
+        listaActividades.innerHTML = `
+            <div class="sin-actividades">
+                <h3>No hay actividades disponibles</h3>
+                <p>El profesor aún no ha publicado tareas o evaluaciones.</p>
+            </div>
+        `;
+        return;
+    }
+
+    listaActividades.innerHTML = todasActividades.map(actividad => {
+        if (actividad.tipo === 'tarea') {
+            return crearCardTarea(actividad);
+        } else {
+            return crearCardEvaluacion(actividad);
+        }
+    }).join('');
+}
+
+// Función para crear card de tarea
+function crearCardTarea(tarea) {
+    const fechaEntrega = formatearFecha(tarea.fecha_entrega, tarea.hora_entrega);
+    
+    return `
+        <div class="actividad-card tarea" data-tipo="tarea">
+            <div class="actividad-header">
+                <h3>${tarea.titulo}</h3>
+                <span class="actividad-badge tarea-badge">Tarea</span>
+            </div>
+            <div class="actividad-info">
+                <p class="actividad-descripcion">${tarea.descripcion || 'Sin descripción'}</p>
+                <div class="actividad-meta">
+                    <div class="fecha-info">
+                        <strong>Entrega:</strong> ${fechaEntrega}
+                    </div>
+                    <div class="modulo-info">
+                        <strong>Módulo:</strong> ${tarea.modulo_titulo || 'General'}
+                    </div>
+                </div>
+            </div>
+            <div class="actividad-actions">
+                <button class="shiny small">Ver Detalles</button>
+                <button class="back small">Descargar Material</button>
+            </div>
+        </div>
+    `;
+}
+
+// Función para crear card de evaluación
+function crearCardEvaluacion(evaluacion) {
+    const fechaInicio = formatearFecha(evaluacion.fecha_inicio, evaluacion.hora_inicio);
+    const fechaEntrega = formatearFecha(evaluacion.fecha_entrega, evaluacion.hora_entrega);
+    
+    return `
+        <div class="actividad-card evaluacion" data-tipo="evaluacion">
+            <div class="actividad-header">
+                <h3>${evaluacion.titulo}</h3>
+                <span class="actividad-badge evaluacion-badge">Evaluación</span>
+            </div>
+            <div class="actividad-info">
+                <p class="actividad-descripcion">${evaluacion.descripcion || 'Sin descripción'}</p>
+                <div class="actividad-meta">
+                    <div class="fecha-info">
+                        <strong>Inicio:</strong> ${fechaInicio}
+                    </div>
+                    <div class="fecha-info">
+                        <strong>Entrega:</strong> ${fechaEntrega}
+                    </div>
+                    <div class="puntos-info">
+                        <strong>Desk Points:</strong> ${evaluacion.deskpoints || 0}
+                    </div>
+                    <div class="modulo-info">
+                        <strong>Módulo:</strong> ${evaluacion.modulo_titulo || 'General'}
+                    </div>
+                </div>
+            </div>
+            <div class="actividad-actions">
+                <button class="shiny small">Comenzar Evaluación</button>
+                <button class="back small">Instrucciones</button>
+            </div>
+        </div>
+    `;
+}
+
+// Función para formatear fechas
+function formatearFecha(fecha, hora) {
+    if (!fecha) return 'No especificada';
+    
+    const fechaObj = new Date(fecha + 'T00:00:00');
+    const opciones = { day: '2-digit', month: '2-digit', year: 'numeric' };
+    const fechaFormateada = fechaObj.toLocaleDateString('es-ES', opciones);
+    
+    return hora ? `${fechaFormateada} ${hora}` : fechaFormateada;
+}
+
+// Configurar filtros
+function configurarFiltros() {
+    const filtroBtns = document.querySelectorAll('.filtro-btn');
+    
+    filtroBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover active de todos los botones
+            filtroBtns.forEach(b => b.classList.remove('active'));
+            // Agregar active al botón clickeado
+            this.classList.add('active');
+            
+            const filtro = this.getAttribute('data-filtro');
+            filtrarActividades(filtro);
+        });
+    });
+}
+
+// Función para filtrar actividades
+function filtrarActividades(filtro) {
+    const actividades = document.querySelectorAll('.actividad-card');
+    
+    actividades.forEach(actividad => {
+        switch (filtro) {
+            case 'todos':
+                actividad.style.display = 'block';
+                break;
+            case 'tareas':
+                actividad.style.display = actividad.dataset.tipo === 'tarea' ? 'block' : 'none';
+                break;
+            case 'evaluaciones':
+                actividad.style.display = actividad.dataset.tipo === 'evaluacion' ? 'block' : 'none';
+                break;
+        }
+    });
+}
+
+// Función para volver a la vista de cursos
+function volverACursos() {
+    // Ocultar vista detallada
+    const detalleView = document.getElementById('curso-detalle');
+    if (detalleView) {
+        detalleView.classList.remove('active');
+        detalleView.innerHTML = ''; // Limpiar contenido
+    }
+    
+    // Mostrar vista de cursos
+    document.getElementById('cursos').classList.add('active');
+    
+    // Recargar cursos para asegurar datos actualizados
+    cargarCursosEstudiante();
+}
+// Modificar la función mostrarCursos para agregar el evento al botón
+function mostrarCursos(cursos) {
+    const cursosContainer = document.querySelector('#cursos .content-grid');
+    cursosContainer.innerHTML = '';
+    
+    cursos.forEach(curso => {
+        const porcentajeProgreso = calcularProgresoCurso(curso.fecha_inicio, curso.fecha_fin);
+        const diasRestantes = calcularDiasRestantes(curso.fecha_fin);
+        
+        const cursoCard = document.createElement('div');
+        cursoCard.className = 'course-card';
+        cursoCard.innerHTML = `
+            <div class="course-header">
+                <h3 class="course-title">${curso.nombre_curso}</h3>
+                <div class="course-stats">
+                    <div class="course-stat">
+                        <span class="course-stat-number">${curso.total_tareas || 0}</span>
+                        <span class="course-stat-label">Tareas</span>
+                    </div>
+                    <div class="course-stat">
+                        <span class="course-stat-number">${curso.total_evaluaciones || 0}</span>
+                        <span class="course-stat-label">Evaluaciones</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="course-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${porcentajeProgreso}%"></div>
+                </div>
+                <div class="progress-percentage">${porcentajeProgreso}% completado</div>
+            </div>
+            
+            <div class="course-info-grid">
+                <div class="info-group">
+                    <span class="info-label">Profesor:</span>
+                    <span class="info-value">${curso.nombre_profesor} ${curso.apellido_profesor}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Asistencia:</span>
+                    <span class="info-value">${curso.asistencia || 0}%</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Nota:</span>
+                    <span class="info-value">${curso.nota || 'N/A'}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Días restantes:</span>
+                    <span class="info-value">${diasRestantes}</span>
+                </div>
+            </div>
+            
+            <div class="course-points">
+                <div class="point-item">
+                    <span class="point-value">${curso.deskPoints || 0}</span>
+                    <span class="point-label">Desk Points</span>
+                </div>
+                <div class="point-item">
+                    <span class="point-value">${curso.rankingPoints || 0}</span>
+                    <span class="point-label">Ranking Points</span>
+                </div>
+            </div>
+            
+            <button class="shiny course-button" onclick="abrirDetalleCurso(${curso.id_periodo_curso})">Acceder al Curso</button>
+        `;
+        cursosContainer.appendChild(cursoCard);
+    });
+}
