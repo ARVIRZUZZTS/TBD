@@ -157,7 +157,7 @@
 
 
 .menu-opciones {
-    position: fixed; /* Cambiado a fixed para mejor posicionamiento */
+    position: fixed;
     background: var(--usWhite);
     border: 1px solid var(--nigger);
     border-radius: 15px;
@@ -225,4 +225,31 @@
 .data-table input[type="radio"] {
     margin: 0;
     transform: scale(1.2);
+}
+#titleM div {
+    align-items: center;
+}
+
+/*--------------------Descuentos--------------------*/
+.descBoxi {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: left;
+}
+
+#descButBoxi {
+    margin-top: 1vh;
+}
+
+.cursosActTitle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+.cursosActivosTitle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
