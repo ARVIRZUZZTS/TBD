@@ -29,8 +29,9 @@ function curso() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="curso()">Cursos</button>
-        <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
+        <button class="shiny" onclick="cursosActivos()">Cursos Activos</button>
         <button class="shiny" onclick="area()">Áreas</button>
+        <button class="shiny" onclick="descuentos()">Descuentos</button>
         <button class="back" onclick="back()">Atrás</button>
     `;  
     
@@ -43,11 +44,15 @@ function curso() {
         const dinamic = document.getElementById("dinamic");
         dinamic.style.justifyContent = "flex-start";
         dinamic.innerHTML = "";
+
         
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de Cursos</h3>`;
-        dinamic.appendChild(titleM);
+        const header = document.createElement("div");
+        header.className = "cursosActTitle";
+        header.innerHTML = `
+            <h3>Lista de Cursos</h3>
+            <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
+        `;
+        dinamic.appendChild(header);
         
         const tableContainer = document.createElement("div");
         tableContainer.className = "table-container";
@@ -106,6 +111,203 @@ function curso() {
         dinamic.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
 }
+function cursosActivos() {
+    const dinamic = document.getElementById("dinamic");
+    dinamic.innerHTML = "";
+    dinamic.style.justifyContent = "flex-start";
+
+    const header = document.createElement("div");
+    header.className = "cursosActivosTitle";
+    header.innerHTML = `
+        <h3>Lista de Cursos Activos</h3>
+        <select id="cursosFiltrados"></select>
+    `;
+    dinamic.appendChild(header);
+
+    const tableContainer = document.createElement("div");
+    tableContainer.className = "table-container";
+    tableContainer.style.overflowY = "auto";
+    tableContainer.style.maxHeight = "50vh";
+    tableContainer.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID Periodo</th>
+                    <th>ID Maestro</th>
+                    <th>Título</th>
+                    <th>Cupos</th>
+                    <th>Cupos Ocupados</th>
+                    <th>Solicitudes Totales</th>
+                    <th>Recaudado</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-periodos"></tbody>
+        </table>
+    `;
+    dinamic.appendChild(tableContainer);
+
+    fetch("php/pcGetAll.php")
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById("cursosFiltrados");
+            const tbody = document.getElementById("tabla-periodos");
+
+            if (data.success && data.periodos.length > 0) {
+                select.innerHTML = `<option value="">Todos los cursos</option>`;
+                data.periodos.forEach(p => {
+                    const option = document.createElement("option");
+                    option.value = p.id_periodo_curso;
+                    option.textContent = `${p.titulo}`;
+                    select.appendChild(option);
+                });
+
+                renderTablaPeriodos(data.periodos);
+
+                select.addEventListener("change", () => {
+                    const id = select.value;
+                    const filtrados = id ? data.periodos.filter(p => p.id_periodo_curso == id) : data.periodos;
+                    renderTablaPeriodos(filtrados);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No hay cursos activos</td></tr>`;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+        });
+}
+
+function renderTablaPeriodos(periodos) {
+    const tbody = document.getElementById("tabla-periodos");
+    tbody.innerHTML = "";
+    periodos.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${p.id_periodo_curso}</td>
+            <td>${p.id_maestro}</td>
+            <td>${p.titulo}</td>
+            <td>${p.cupos}</td>
+            <td>${p.cupos_ocupados}</td>
+            <td>${p.solicitudes_totales}</td>
+            <td>${p.recaudado}</td>
+            <td>${p.estado_periodo}</td>
+            <td>
+                <button onclick="masOpcionesPCurso(this, ${p.id_periodo_curso}, '${p.titulo.replace(/'/g, "\\'")}')">
+                    <img src="img/masOpciones.png" alt="más" width="20">
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+function masOpcionesPCurso(element, idPeriodoCurso, tituloCurso) {
+    const menuExistente = document.getElementById('opcionesMenu');
+    if (menuExistente) menuExistente.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'opcionesMenu';
+    menu.className = 'menu-opciones';
+
+    const opciones = [
+        { texto: 'Dar de Baja', accion: 'darDeBaja' }
+    ];
+
+    fetch(`php/cursoCertificadoGet.php?idPeriodoCurso=${encodeURIComponent(idPeriodoCurso)}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data || data.exito === false) {
+                console.warn('cursoCertificadoGet no devolvió info válida:', data);
+            } else {
+                const estado = (data.estado_periodo || '').toString().trim().toLowerCase();
+                const esCertificado = !!data.esCertificado || ((data.categoria || '').toString().trim().toLowerCase() === 'curso certificado');
+
+                if (estado === 'inscripciones') {
+                    opciones.push({
+                        texto: 'Descuento',
+                        handler: () => {
+                            menu.remove();
+                            nuevoDescuento(idPeriodoCurso, data.fecha_fin || null);
+                        }
+                    });
+                }
+
+                if (esCertificado) {
+                    opciones.push({
+                        texto: 'Certificados',
+                        accion: 'verCertificados'
+                    });
+                }
+            }
+
+            opciones.forEach(opcion => {
+                const botonOpcion = document.createElement('button');
+                botonOpcion.className = 'opcion-menu';
+                botonOpcion.textContent = opcion.texto;
+
+                botonOpcion.onclick = (e) => {
+                    e.stopPropagation();
+                    if (opcion.handler) {
+                        opcion.handler();
+                    } else {
+                        ejecutarAccionPCurso(opcion.accion, idPeriodoCurso, tituloCurso);
+                    }
+                };
+
+                menu.appendChild(botonOpcion);
+            });
+
+            document.body.appendChild(menu);
+            const rect = element.getBoundingClientRect();
+            const scrollY = window.scrollY || window.pageYOffset;
+            const scrollX = window.scrollX || window.pageXOffset;
+            menu.style.top = (rect.bottom + scrollY) + 'px';
+            menu.style.left = (rect.left + scrollX) + 'px';
+            menu.classList.add('mostrar');
+
+            const cerrarMenu = (e) => {
+                if (!menu.contains(e.target) && e.target !== element) {
+                    menu.remove();
+                    document.removeEventListener('click', cerrarMenu);
+                }
+            };
+            setTimeout(() => document.addEventListener('click', cerrarMenu), 0);
+
+        })
+        .catch(err => {
+            console.error("Error al obtener información del curso:", err);
+
+            const botonOpcion = document.createElement('button');
+            botonOpcion.className = 'opcion-menu';
+            botonOpcion.textContent = 'Dar de Baja';
+            botonOpcion.onclick = (e) => {
+                e.stopPropagation();
+                ejecutarAccionPCurso('darDeBaja', idPeriodoCurso, tituloCurso);
+            };
+            menu.appendChild(botonOpcion);
+
+            document.body.appendChild(menu);
+            const rect = element.getBoundingClientRect();
+            const scrollY = window.scrollY || window.pageYOffset;
+            const scrollX = window.scrollX || window.pageXOffset;
+            menu.style.top = (rect.bottom + scrollY) + 'px';
+            menu.style.left = (rect.left + scrollX) + 'px';
+            menu.classList.add('mostrar');
+
+            setTimeout(() => {
+                document.addEventListener('click', function cerrarMenu(e) {
+                    if (!menu.contains(e.target) && e.target !== element) {
+                        menu.remove();
+                        document.removeEventListener('click', cerrarMenu);
+                    }
+                });
+            }, 0);
+
+            alert('No se pudo verificar el estado del periodo. Intenta de nuevo.');
+        });
+}
+
 
 // ==================== FUNCIONES DE ÁREAS ====================
 function area() {
@@ -1173,6 +1375,235 @@ function guardarBeca(id_user) {
         alert("Error al guardar la beca");
     });
 }
+
+function descuentos() {
+    const botones = document.getElementById("botones");
+    botones.innerHTML = `
+        <button class="shiny" onclick="curso()">Cursos</button>
+        <button class="shiny" onclick="cursosActivos()">Cursos Activos</button>
+        <button class="shiny" onclick="area()">Áreas</button>
+        <button class="shiny" onclick="descuentos()">Descuentos</button>
+        <button class="back" onclick="back()">Atrás</button>
+    `;
+
+    const dinamic = document.getElementById("dinamic");
+    dinamic.style.justifyContent = "flex-start";
+    dinamic.innerHTML = "";
+
+    const titleM = document.createElement("div");
+    titleM.id = "titleM";
+    titleM.innerHTML = `
+        <h3>Gestión de Descuentos</h3>
+        <div class="selectBox">
+            <div>
+                <h4>Ordenar por:</h4>
+                <select id="ordSel" onchange="cargarDescuentos()">
+                    <option value="activas" selected>Activas</option>
+                    <option value="expiradas">Expiradas</option>
+                    <option value="mayor">Mayor Descuento</option>
+                    <option value="menor">Menor Descuento</option>
+                </select>
+                <button class="shiny" onclick="nuevoDescuento()">Nuevo Descuento</button>
+            </div>
+        </div>
+    `;
+    dinamic.appendChild(titleM);
+
+    const tableContainer = document.createElement("div");
+    tableContainer.className = "table-container";
+    tableContainer.innerHTML = `
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID Descuento</th>
+                    <th>Curso</th>
+                    <th>Costo DeskPoints</th>
+                    <th>Expira el</th>
+                    <th>Descuento %</th>
+                    <th>Costo $</th>
+                    <th>Total $</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-descuentos"></tbody>
+        </table>
+    `;
+    dinamic.appendChild(tableContainer);
+
+    cargarDescuentos();
+}
+
+function cargarDescuentos() {
+    const orden = document.getElementById("ordSel").value;
+
+    fetch(`php/descuentosGetAll.php?orden=${encodeURIComponent(orden)}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const tbody = document.getElementById("tabla-descuentos");
+        tbody.innerHTML = "";
+
+        if (data.exito && data.descuentos.length > 0) {
+            data.descuentos.forEach(d => {
+                const fila = document.createElement("tr");
+                const totalConDescuento = (d.costo * (1 - d.porcentaje_descuento / 100)).toFixed(2);
+
+                fila.innerHTML = `
+                    <td>${d.id_descuento}</td>
+                    <td>${d.id_periodo_curso}: ${d.titulo}</td>
+                    <td>${d.costo_canje}</td>
+                    <td>${d.fecha_fin}</td>
+                    <td>${d.porcentaje_descuento}%</td>
+                    <td>${d.costo}$</td>
+                    <td>${totalConDescuento}$</td>
+                `;
+                tbody.appendChild(fila);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px;">${data.mensaje || 'No hay descuentos disponibles.'}</td></tr>`;
+        }
+    })
+    .catch(err => {
+        console.error("Error al obtener descuentos:", err);
+        const tbody = document.getElementById("tabla-descuentos");
+        tbody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Error al cargar los descuentos</td></tr>`;
+    });
+}
+
+function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) {
+    const dinamic = document.getElementById("dinamic");
+    dinamic.innerHTML = "";
+    dinamic.style.justifyContent = "flex-start";
+
+    const titleM = document.createElement("div");
+    titleM.id = "titleM";
+    titleM.innerHTML = `<h3>Registrar Nuevo Descuento</h3>`;
+    dinamic.appendChild(titleM);
+
+    const form = document.createElement("div");
+    form.className = "descBoxi";
+    form.innerHTML = `
+        <select id="idPeriodo">
+            <option value="">Cargando cursos disponibles...</option>
+        </select>
+
+        <input type="number" id="costoCanje" placeholder="Costo DeskPoints" min="0">
+
+        <input type="date" id="fechaFin" disabled>
+
+        <input type="number" id="porcentaje" placeholder="Descuento %" min="1" max="100">
+
+        <div id="descButBoxi">
+            <button class="shiny" onclick="registrarDescuento()">Registrar</button>
+            <button class="back" onclick="descuentos()">Cancelar</button>
+        </div>
+    `;
+    dinamic.appendChild(form);
+
+    fetch("php/descuentoCursosF.php")
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById("idPeriodo");
+            select.innerHTML = "";
+
+            if (data.exito && data.periodos.length > 0) {
+                select.innerHTML = `<option value="">Seleccione un curso...</option>`;
+
+                data.periodos.forEach(p => {
+                    const option = document.createElement("option");
+                    const cuposLibres = p.cupos_libres;
+                    option.value = p.id_periodo_curso;
+                    option.textContent = `${p.id_periodo_curso}: ${p.titulo} - Cupos Libres: ${cuposLibres}`;
+                    option.dataset.fechaInicio = p.fecha_inicio;
+                    option.dataset.fechaFin = p.fecha_fin;
+
+                    select.appendChild(option);
+                });
+
+                // 🔹 Si se pasó un curso para preseleccionar
+                if (preSeleccionId) {
+                    const opcion = Array.from(select.options).find(o => o.value == preSeleccionId);
+                    if (opcion) {
+                        opcion.selected = true;
+                        const fechaFinInput = document.getElementById("fechaFin");
+                        fechaFinInput.value = preSeleccionFechaFin || opcion.dataset.fechaFin || "";
+                        fechaFinInput.disabled = false;
+                    }
+                }
+
+                // 🔹 Evento cuando el usuario cambia el select
+                select.addEventListener("change", () => {
+                    const fechaFinInput = document.getElementById("fechaFin");
+                    const optionSel = select.options[select.selectedIndex];
+
+                    if (optionSel.value !== "") {
+                        const fechaFinCurso = optionSel.dataset.fechaFin;
+                        if (fechaFinCurso) {
+                            fechaFinInput.value = fechaFinCurso;
+                            fechaFinInput.disabled = false;
+                        } else {
+                            fechaFinInput.value = "";
+                            fechaFinInput.disabled = true;
+                        }
+                    } else {
+                        fechaFinInput.value = "";
+                        fechaFinInput.disabled = true;
+                    }
+                });
+
+            } else {
+                select.innerHTML = `<option value="">No hay cursos disponibles</option>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener cursos:", err);
+            document.getElementById("idPeriodo").innerHTML =
+                `<option value="">Error al cargar cursos</option>`;
+        });
+}
+
+
+function registrarDescuento() {
+    const idPeriodo = document.getElementById("idPeriodo").value.trim();
+    const costoCanje = document.getElementById("costoCanje").value.trim();
+    const fechaFin = document.getElementById("fechaFin").value.trim();
+    const porcentaje = document.getElementById("porcentaje").value.trim();
+
+    if (!idPeriodo || !costoCanje || !fechaFin || !porcentaje) {
+        alert("Todos los campos son obligatorios.");
+        return;
+    }
+    if (porcentaje < 1 || porcentaje > 100) {
+        alert("El porcentaje de descuento debe estar entre 1 y 100.");
+        return;
+    }
+
+    fetch("php/descuentoNew.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id_periodo_curso: idPeriodo,
+            costo_canje: costoCanje,
+            fecha_fin: fechaFin,
+            porcentaje_descuento: porcentaje
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito) {
+            alert("Descuento registrado con éxito.", true);
+            setTimeout(() => descuentos(), 1500);
+        } else {
+            alert(`Error: ${data.mensaje || "No se pudo registrar el descuento."}`);
+        }
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("Error en la conexión con el servidor.");
+    });
+}
+
 
 function inscripciones(id_user) {
 

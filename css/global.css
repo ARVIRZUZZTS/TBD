@@ -101,7 +101,7 @@ main {
 /*--------------------Inputs--------------------*/
 input {
     padding: 1vh;
-    border-radius: 20px;
+    border-radius: 4px;
     font-size: 2vh;
     border: 1px solid var(--nigger);
     transition: 200ms;
@@ -122,6 +122,7 @@ select {
     border: 1px solid var(--nigger);
     background-color: var(--inp);
     font-size: 2vh;
+    height: 4vh;
 }
 select * {
     font-size: 2vh;
@@ -135,4 +136,8 @@ option:hover {
 /*--------------------TABLE--------------------*/
 table button {
     padding: 10px;
+}
+/*--------------------LABEL--------------------*/
+label {
+    font-size: 2vh;
 }

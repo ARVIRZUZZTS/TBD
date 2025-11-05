@@ -72,3 +72,57 @@ main h5 {
     padding-left: 3vh;
     padding-right: 3vh;
 }
+#setCo {
+    margin-bottom: 1vh;
+}
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    transition: opacity 0.2s ease;
+}
+
+.modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background: #fff;
+    color: #222;
+    border-radius: 12px;
+    padding: 20px 30px;
+    text-align: center;
+    max-width: 400px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    animation: pop 0.2s ease;
+}
+
+.modal-content h3 {
+    margin-bottom: 20px;
+}
+
+.modal-content button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.modal-content button:hover {
+    background: #0056b3;
+}
+
+@keyframes pop {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}

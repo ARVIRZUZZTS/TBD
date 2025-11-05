@@ -1,5 +1,5 @@
 <?php
-header("Content-Type: application/json"); //corregir grado no da xd
+header("Content-Type: application/json");
 include 'conexion.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
@@ -13,6 +13,7 @@ $correo = trim($data['correo'] ?? '');
 $edad = trim($data['edad'] ?? '');
 $contrasenna = trim($data['contrasenna'] ?? '');
 $contrasenna2 = trim($data['contrasenna2'] ?? '');
+$grado = trim($data['grado'] ?? '');
 
 if (strlen($nombre) < 3 || strlen($apellido) < 3) {
     echo json_encode(["exito" => false, "mensaje" => "Nombre y apellido deben tener mínimo 3 letras"]);
@@ -54,6 +55,11 @@ if ($contrasenna !== $contrasenna2) {
     exit;
 }
 
+if (!ctype_digit($grado) || intval($grado) <= 0) {
+    echo json_encode(["exito" => false, "mensaje" => "Seleccione un área válida"]);
+    exit;
+}
+
 $sqlCheck = "SELECT id_user FROM usuario WHERE ci = ?";
 $stmt = $conexion->prepare($sqlCheck);
 $stmt->bind_param("s", $ci);
@@ -78,9 +84,11 @@ if ($resUser->num_rows > 0) {
 }
 $stmtUser->close();
 
-$sqlInsert = "INSERT INTO usuario (nombre, apellido, username, contrasenna, ci, telefono, correo, edad) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+$sqlInsert = "INSERT INTO usuario (nombre, apellido, username, contrasenna, ci, telefono, correo, edad, grado)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 $stmt2 = $conexion->prepare($sqlInsert);
-$stmt2->bind_param("ssssssss", $nombre, $apellido, $username, $contrasenna, $ci, $telefono, $correo, $edad);
+$stmt2->bind_param("ssssssssi", $nombre, $apellido, $username, $contrasenna, $ci, $telefono, $correo, $edad, $grado);
+
 
 if ($stmt2->execute()) {
     $id_user = $stmt2->insert_id;

@@ -43,17 +43,39 @@ function setTipo() {
             </div>
             <div>
                 <input id="setEd" type="number" placeholder="Edad" maxlength="3" autocomplete="off">
-                <input id="setGe" type="text" placeholder="Grado Educativo" maxlength="30" autocomplete="off">
+                <select id="setGe">
+                    <option value="">Seleccionar grado educativo</option>
+                </select>
             </div>
             <div>
                 <input id="setPass" type="password" placeholder="Contraseña" maxlength="30" autocomplete="off">
                 <input id="setPass2" type="password" placeholder="Confirmar Contraseña" maxlength="30" autocomplete="off">
             </div>
         `;
+        cargarAreas();
     } else {
         window.location = "inicio.html";
     }
 }
+function cargarAreas() {
+    fetch("php/areaGetAll.php")
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                const select = document.getElementById("setGe");
+                data.areas.forEach(area => {
+                    const opt = document.createElement("option");
+                    opt.value = area.id_area;
+                    opt.textContent = area.nombre_area;
+                    select.appendChild(opt);
+                });
+            } else {
+                console.warn("No se encontraron áreas:", data.mensaje);
+            }
+        })
+        .catch(err => console.error("Error al cargar áreas:", err));
+}
+
 
 function inics() {
     est = "i";
@@ -80,7 +102,7 @@ function iniciar() {
     const password = document.getElementById("getPass").value.trim();
 
     if (!username || !password) {
-        alert("Por favor, complete todos los campos.");
+        mostrarModal("Por favor, complete todos los campos.");
         return;
     }
 
@@ -107,14 +129,15 @@ function registrar() {
     const telefono = document.getElementById("setTl").value.trim();
     const correo = document.getElementById("setCo").value.trim();
     const edad = document.getElementById("setEd").value.trim();
-    const grado = document.getElementById("setGe").value.trim();
+    const grado = document.getElementById("setGe").value;
     const contrasenna = document.getElementById("setPass").value.trim();
     const contrasenna2 = document.getElementById("setPass2").value.trim();
 
     if (!nombre || !apellido || !username || !ci || !telefono || !correo || !edad || !grado || !contrasenna || !contrasenna2) {
-        alert("Por favor, complete todos los campos.");
+        mostrarModal("Por favor, complete todos los campos.");
         return;
     }
+
 
     fetch("php/estudianteRegistrar.php", {
         method: "POST",
@@ -126,16 +149,15 @@ function registrar() {
     })
     .then(res => res.json())
     .then(data => {
-        if (data.exito) {
-            localStorage.setItem("id_user", data.id_user);
-            window.location = "estudiante.html";
-        } else {
-            alert(data.mensaje || "Error al registrar el estudiante");
-        }
-    })
-    .catch(err => {
+    if (data.exito) {
+        localStorage.setItem("id_user", data.id_user);
+        window.location = "estudiante.html";
+    } else {
+        mostrarModal(data.mensaje || "Error al registrar el estudiante");
+    }
+    }) .catch(err => {
         console.error("Error al registrar estudiante:", err);
-        alert("Error de conexión con el servidor.");
+        mostrarModal("Error de conexión con el servidor.");
     });
 }
 
@@ -157,6 +179,18 @@ document.addEventListener("keydown", function(event) {
 document.addEventListener("keyup", function(event) {
     pressedKeys.delete(event.key.toLowerCase());
 });
+
+function mostrarModal(mensaje) {
+    const modal = document.getElementById("msgModal");
+    const msgText = document.getElementById("msgText");
+    msgText.textContent = mensaje;
+    modal.classList.remove("hidden");
+}
+
+function cerrarModal() {
+    const modal = document.getElementById("msgModal");
+    modal.classList.add("hidden");
+}
 
 function admin() {
     window.location = "admin.html";
