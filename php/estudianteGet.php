@@ -20,6 +20,7 @@ $sql = "
         u.telefono,
         u.correo,
         u.edad,
+        u.grado, 
         COALESCE(p.saldo_actual, 0) AS saldo_actual,
         COALESCE(p.puntos_totales, 0) AS puntos_totales,
         COALESCE(p.puntos_gastados, 0) AS puntos_gastados,

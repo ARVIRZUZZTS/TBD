@@ -26,3 +26,6 @@ administrador linea 1072 falta la ruta para guardar el maestro al curso
 modificar USUARIO añadiendo Grado
 modificar MATERIAL con fecha emision y hora emision 
 
+corregir vista admin 
+corregir desplegable cursos // Sergio
+

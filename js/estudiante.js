@@ -4,38 +4,38 @@ document.addEventListener('DOMContentLoaded', function() {
     const navButtons = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const targetTab = this.getAttribute('data-tab');
-            
-            if (targetTab) {
-                // Limpiar vista detallada si existe
-                const detalleView = document.getElementById('curso-detalle');
-                if (detalleView) {
-                    detalleView.remove(); // Eliminar completamente la vista detallada
-                }
-                
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(tab => tab.classList.remove('active'));
-                
-                this.classList.add('active');
-                
-                const targetElement = document.getElementById(targetTab);
-                if (targetElement) {
-                    targetElement.classList.add('active');
-                }
-                
-                // Cargar cursos cuando se hace clic en la pestaña de cursos
-                if (targetTab === 'cursos') {
-                    cargarCursosEstudiante();
-                }
+   navButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        
+        if (targetTab) {
+            const detalleView = document.getElementById('curso-detalle');
+            if (detalleView) {
+                detalleView.remove(); 
             }
-        });
+             
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            this.classList.add('active');
+            
+            const targetElement = document.getElementById(targetTab);
+            if (targetElement) {
+                targetElement.classList.add('active');
+            }
+            
+            if (targetTab === 'cursos') {
+                cargarCursosEstudiante();
+            }
+            if (targetTab === 'inscripcion') {
+                cargarInscripciones();
+            }
+        }
     });
+});
     
     cargarDatosEstudiante();
 });
-
 async function cargarDatosEstudiante() {
     
     try {
@@ -201,39 +201,6 @@ function mostrarCursosVacios(mensaje = "No tienes cursos asignados") {
         </div>
     `;
 }
-// Modificar el evento DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM completamente cargado");
-    
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    
-    navButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const targetTab = this.getAttribute('data-tab');
-            
-            if (targetTab) {
-                navButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(tab => tab.classList.remove('active'));
-                
-                this.classList.add('active');
-                
-                const targetElement = document.getElementById(targetTab);
-                if (targetElement) {
-                    targetElement.classList.add('active');
-                }
-                
-                // Cargar cursos cuando se hace clic en la pestaña de cursos
-                if (targetTab === 'cursos') {
-                    cargarCursosEstudiante();
-                }
-            }
-        });
-    });
-    
-    cargarDatosEstudiante();
-});
-
 
 function calcularProgresoCurso(fechaInicio, fechaFin) {
     if (!fechaInicio || !fechaFin) return 0;
@@ -491,20 +458,16 @@ function filtrarActividades(filtro) {
 
 // Función para volver a la vista de cursos
 function volverACursos() {
-    // Ocultar vista detallada
     const detalleView = document.getElementById('curso-detalle');
     if (detalleView) {
         detalleView.classList.remove('active');
-        detalleView.innerHTML = ''; // Limpiar contenido
+        detalleView.innerHTML = ''; 
     }
     
-    // Mostrar vista de cursos
     document.getElementById('cursos').classList.add('active');
     
-    // Recargar cursos para asegurar datos actualizados
     cargarCursosEstudiante();
 }
-// Modificar la función mostrarCursos para agregar el evento al botón
 function mostrarCursos(cursos) {
     const cursosContainer = document.querySelector('#cursos .content-grid');
     cursosContainer.innerHTML = '';
@@ -571,4 +534,154 @@ function mostrarCursos(cursos) {
         `;
         cursosContainer.appendChild(cursoCard);
     });
+}
+async function cargarInscripciones() {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (!idEstudiante) {
+            mostrarInscripcionesVacios("Debes iniciar sesión");
+            return;
+        }
+        
+        const response = await fetch(`php/inscripcionesGet.php?id_estudiante=${idEstudiante}`);
+        
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.exito && data.cursos && data.cursos.length > 0) {
+            mostrarCursosInscripciones(data.cursos, data.grado_estudiante);
+        } else {
+            mostrarInscripcionesVacios(data.mensaje || "No hay cursos disponibles para tu grado");
+        }
+    } catch (error) {
+        console.error('Error al cargar inscripciones:', error);
+        mostrarInscripcionesVacios("Error al cargar los cursos disponibles");
+    }
+}
+
+function mostrarCursosInscripciones(cursos, gradoEstudiante) {
+    const inscripcionesContainer = document.querySelector('#inscripcion .content-grid');
+    inscripcionesContainer.innerHTML = `
+        <div class="content-card">
+            <h3>Cursos Disponibles - Grado: ${gradoEstudiante}</h3>
+            <p>Encuentra aquí los cursos disponibles para tu grado académico.</p>
+        </div>
+    `;
+    
+    cursos.forEach(curso => {
+        const cuposDisponibles = curso.cupos - curso.cupos_ocupados;
+        const fechaInicio = formatearFecha(curso.fecha_inicio);
+        const fechaFin = formatearFecha(curso.fecha_fin);
+        
+        const cursoCard = document.createElement('div');
+        cursoCard.className = 'course-card';
+        cursoCard.innerHTML = `
+            <div class="course-header">
+                <h3 class="course-title">${curso.nombre_curso}</h3>
+                <div class="course-stats">
+                    <div class="course-stat">
+                        <span class="course-stat-number">${cuposDisponibles}</span>
+                        <span class="course-stat-label">Cupos</span>
+                    </div>
+                    <div class="course-stat">
+                        <span class="course-stat-number">${curso.duracion}h</span>
+                        <span class="course-stat-label">Duración</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="course-info-grid">
+                <div class="info-group">
+                    <span class="info-label">Profesor:</span>
+                    <span class="info-value">${curso.nombre_profesor} ${curso.apellido_profesor}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Modalidad:</span>
+                    <span class="info-value">${curso.modalidad === 'P' ? 'Presencial' : 'Virtual'}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Categoría:</span>
+                    <span class="info-value">${curso.nombre_categoria}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Grado:</span>
+                    <span class="info-value">${curso.nombre_grado}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Inicio:</span>
+                    <span class="info-value">${fechaInicio}</span>
+                </div>
+                <div class="info-group">
+                    <span class="info-label">Fin:</span>
+                    <span class="info-value">${fechaFin}</span>
+                </div>
+            </div>
+            
+            <div class="course-points">
+                <div class="point-item">
+                    <span class="point-value">${curso.costo || 0} Bs</span>
+                    <span class="point-label">Costo</span>
+                </div>
+                <div class="point-item">
+                    <span class="point-value">${cuposDisponibles}</span>
+                    <span class="point-label">Cupos Disponibles</span>
+                </div>
+            </div>
+            
+            <button class="shiny course-button" onclick="inscribirEnCurso(${curso.id_periodo_curso})">
+                Inscribirse
+            </button>
+        `;
+        inscripcionesContainer.appendChild(cursoCard);
+    });
+}
+
+function mostrarInscripcionesVacios(mensaje) {
+    const inscripcionesContainer = document.querySelector('#inscripcion .content-grid');
+    inscripcionesContainer.innerHTML = `
+        <div class="content-card">
+            <h3>${mensaje}</h3>
+            <p>No hay cursos disponibles para inscripción en este momento.</p>
+        </div>
+    `;
+}
+
+async function inscribirEnCurso(idPeriodoCurso) {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (!idEstudiante) {
+            alert('Debes iniciar sesión para inscribirte');
+            return;
+        }
+        
+        if (!confirm('¿Estás seguro de que quieres inscribirte en este curso?')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('id_estudiante', idEstudiante);
+        formData.append('id_periodo_curso', idPeriodoCurso);
+        
+        const response = await fetch('php/inscribirCurso.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.exito) {
+            alert('¡Inscripción exitosa!');
+            cargarInscripciones();
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al inscribirse:', error);
+        alert('Error al realizar la inscripción');
+    }
 }
