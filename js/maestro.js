@@ -70,7 +70,10 @@ function displayCourses(cursos) {
         return;
     }
     
-    const coursesHTML = cursos.map(curso => `
+    const coursesHTML = cursos.map(curso => {
+        const isPendiente = curso.estado === 'Pendiente';
+       
+        return `
         <div class="course-card available-course">
             <h3 class="course-title">${escapeHTML(curso.titulo)}</h3>
             <div class="course-details">
@@ -80,17 +83,26 @@ function displayCourses(cursos) {
                 <p class="course-info"><strong>Área:</strong> ${escapeHTML(curso.area)}</p>
                 <p class="course-info"><strong>Grado:</strong> ${escapeHTML(curso.grado)}</p>
                 <p class="course-info"><strong>Periodo:</strong> ${escapeHTML(curso.periodo)}</p>
-                <p class="course-info"><strong>Inscritos:</strong> ${escapeHTML(curso.inscritos)}</p>
+                ${!isPendiente ? `
+                    <p class="course-info"><strong>Inscritos:</strong> ${escapeHTML(curso.inscritos)}</p>
+                ` : ''
+                }
+                <p class="course-info"><strong>Estado:</strong> ${escapeHTML(curso.estado)}</p>
             </div>
             <div class="action-buttons">
-                <button class="shiny view-details" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}" data-course-inscritos="${escapeHTML(curso.inscritos)}">Ver Detalles</button>
+                ${isPendiente ? `
+                    <button class="shiny accept-course" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}">Agregar Curso</button>
+                ` : ''}
+                ${!isPendiente ? `
+                    <button class="shiny view-details" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}" data-course-inscritos="${escapeHTML(curso.inscritos)}">Ver Detalles</button>
+                ` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
     
     coursesContainer.innerHTML = coursesHTML;
     
-    // Agregar event listeners a los botones de ver detalles
     document.querySelectorAll('.view-details').forEach(button => {
         button.addEventListener('click', function() {
             const courseId = this.getAttribute('data-course-id');
@@ -99,6 +111,226 @@ function displayCourses(cursos) {
             showCourseDetails(courseId, courseTitle, courseInscritos);
         });
     });
+    
+    document.querySelectorAll('.accept-course').forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            acceptCourse(courseId, courseTitle);
+        });
+    });
+}
+
+function acceptCourse(courseId, courseTitle) {
+
+    const confirmModalHTML = `
+        <div id="confirm-accept-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirmar Aceptación</h3>
+                    <button class="modal-close" id="close-confirm-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Desea aceptar el curso "<strong>${escapeHTML(courseTitle)}</strong>"?</p>
+                    <div class="form-actions">
+                        <button type="button" class="back" id="reject-course">No</button>
+                        <button type="button" class="shiny" id="confirm-accept">Sí</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', confirmModalHTML);
+    
+    const confirmModal = document.getElementById('confirm-accept-modal');
+    
+    document.getElementById('close-confirm-modal').addEventListener('click', () => {
+        confirmModal.remove();
+    });
+    
+    document.getElementById('reject-course').addEventListener('click', () => {
+        confirmModal.remove();
+        deleteCourse(courseId, courseTitle);
+    });
+    
+    document.getElementById('confirm-accept').addEventListener('click', () => {
+        confirmModal.remove();
+        showCourseDetailsModal(courseId, courseTitle);
+    });
+    
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === confirmModal) {
+            confirmModal.remove();
+        }
+    });
+}
+
+function showCourseDetailsModal(courseId, courseTitle) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const detailsModalHTML = `
+        <div id="course-details-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Configurar Curso: ${escapeHTML(courseTitle)}</h3>
+                    <button class="modal-close" id="close-details-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="course-details-form">
+                        <div class="form-group">
+                            <label for="fecha-inicio">Fecha de Inicio:</label>
+                            <input type="date" id="fecha-inicio" name="fecha_inicio" required min="${today}">
+                            <small>La fecha de inicio no puede ser anterior a la fecha actual</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fecha-fin">Fecha de Fin:</label>
+                            <input type="date" id="fecha-fin" name="fecha_fin" required>
+                            <small>La fecha de fin debe ser al menos 2 semanas después de la fecha de inicio</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cupos">Número de Cupos:</label>
+                            <input type="number" id="cupos" name="cupos" required min="1" max="500" placeholder="Máximo 500 cupos">
+                            <small>El número máximo de cupos permitido es 500</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-details">Cancelar</button>
+                            <button type="submit" class="shiny">Aceptar Curso</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', detailsModalHTML);
+    
+    const detailsModal = document.getElementById('course-details-modal');
+    const form = document.getElementById('course-details-form');
+    
+    document.getElementById('close-details-modal').addEventListener('click', () => {
+        detailsModal.remove();
+    });
+    
+    document.getElementById('cancel-details').addEventListener('click', () => {
+        detailsModal.remove();
+    });
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitCourseAcceptance(courseId, courseTitle);
+    });
+    
+    detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+            detailsModal.remove();
+        }
+    });
+}
+
+function submitCourseAcceptance(courseId, courseTitle) {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin = document.getElementById('fecha-fin').value;
+    const cupos = parseInt(document.getElementById('cupos').value);
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!fechaInicio || !fechaFin || !cupos) {
+        alert('Por favor, complete todos los campos');
+        return;
+    }
+    
+    if (fechaInicio < today) {
+        alert('La fecha de inicio no puede ser anterior a la fecha actual');
+        return;
+    }
+    
+    if (fechaFin <= fechaInicio) {
+        alert('La fecha de fin debe ser posterior a la fecha de inicio');
+        return;
+    }
+    
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const diferenciaMs = fin - inicio;
+    const diferenciaDias = diferenciaMs / (1000 * 60 * 60 * 24);
+    const diferenciaSemanas = diferenciaDias / 7;
+    
+    if (diferenciaSemanas < 2) {
+        alert('La fecha de fin debe ser al menos 2 semanas después de la fecha de inicio');
+        return;
+    }
+    
+    if (cupos < 1 || cupos > 500) {
+        alert('El número de cupos debe estar entre 1 y 500');
+        return;
+    }
+    
+    console.log('Aceptando curso:', {
+        courseId,
+        courseTitle,
+        fechaInicio,
+        fechaFin,
+        cupos,
+        diferenciaSemanas: diferenciaSemanas.toFixed(1)
+    });
+        
+    fetch("php/pcAceptarCurso.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id_periodo_curso: courseId,
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin,
+            cupos: cupos
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Curso aceptado exitosamente');
+            document.getElementById('course-details-modal').remove();
+            loadMyCourses();
+        } else {
+            alert('Error al aceptar curso: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al aceptar curso. Por favor, intente nuevamente.');
+    });
+    
+    alert(`Curso "${courseTitle}" aceptado exitosamente con:\n- Fecha inicio: ${fechaInicio}\n- Fecha fin: ${fechaFin}\n- Cupos: ${cupos}\n- Duración: ${diferenciaDias} días (${diferenciaSemanas.toFixed(1)} semanas)`);
+    document.getElementById('course-details-modal').remove();
+    loadMyCourses(); 
+}
+
+function deleteCourse(courseId, courseTitle) {
+    console.log('Rechazando curso:', courseId, courseTitle);
+        
+    fetch("php/pcDelete.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_periodo_curso: courseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Curso rechazado exitosamente');
+            loadMyCourses();
+        } else {
+            alert('Error al rechazar curso: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al rechazar curso. Por favor, intente nuevamente.');
+    });
+    
+    loadMyCourses();
 }
 
 function showCourseDetails(courseId, courseTitle, courseInscritos) {
