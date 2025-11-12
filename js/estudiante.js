@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     cargarDatosEstudiante();
 });
+
 async function cargarDatosEstudiante() {
     
     try {
@@ -88,6 +89,7 @@ function cerrarSesion() {
         window.location.href = "inicio.html";
     }
 }
+
 async function cargarCursosEstudiante() {
     try {
         let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
@@ -186,7 +188,7 @@ function mostrarCursos(cursos) {
                 </div>
             </div>
             
-            <button class="shiny course-button">Acceder al Curso</button>
+            <button class="shiny course-button" onclick="abrirDetalleCurso(${curso.id_periodo_curso})">Acceder al Curso</button>
         `;
         cursosContainer.appendChild(cursoCard);
     });
@@ -286,18 +288,49 @@ async function cargarDetalleCurso(idPeriodoCurso) {
             </div>
         `;
 
-        // Cargar datos del curso, tareas y evaluaciones
-        const [cursoData, tareasData, evaluacionesData] = await Promise.all([
+        // Cargar datos del curso y evaluaciones primero (sin tareas)
+        const [cursoData, evaluacionesData] = await Promise.all([
             fetch(`php/cursoDetalleGet.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json()),
-            fetch(`php/tareasGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json()),
             fetch(`php/evaluacionesGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json())
         ]);
+
+        // Cargar tareas de forma separada con manejo de errores robusto
+        let tareasData = { exito: false, tareas: [] };
+        try {
+            const tareasResponse = await fetch(`php/tareasGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`);
+            const responseText = await tareasResponse.text();
+            
+            // Verificar si la respuesta es JSON válido
+            if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+                tareasData = JSON.parse(responseText);
+            } else {
+                // Usar datos vacíos pero continuar con el flujo
+                tareasData = { exito: false, tareas: [], mensaje: 'Error en el servidor' };
+            }
+        } catch (tareasError) {
+            // Continuar con tareas vacías
+            tareasData = { exito: false, tareas: [] };
+        }
+
+        if (tareasData.exito && tareasData.tareas && tareasData.tareas.length > 0) {
+            console.log("Archivos cargados desde tareasGetByCurso.php:");
+            tareasData.tareas.forEach((tarea, index) => {
+                if (tarea.archivo_url) {
+                    // console.log(`   Tarea ${index + 1}: "${tarea.titulo}"`);
+                    // console.log(`   Archivo: ${tarea.archivo_url}`);
+                    // console.log(`   Nombre: ${tarea.archivo_nombre || 'Sin nombre'}`);
+                    // console.log(`   Tamaño: ${tarea.archivo_tamanio || 'N/A'} bytes`);
+                }
+            });
+        } else {
+            console.log("ℹ️ No hay tareas disponibles o hubo un error");
+        }
 
         if (cursoData.exito) {
             document.getElementById('curso-detalle-titulo').textContent = cursoData.curso.nombre_curso;
         }
 
-        // Combinar y mostrar todas las actividades
+        // Combinar y mostrar todas las actividades (aunque las tareas fallen)
         mostrarActividadesCurso(tareasData.tareas || [], evaluacionesData.evaluaciones || []);
 
         // Configurar filtros
@@ -306,7 +339,7 @@ async function cargarDetalleCurso(idPeriodoCurso) {
     } catch (error) {
         console.error('Error al cargar detalle del curso:', error);
         document.getElementById('lista-actividades').innerHTML = `
-            <div class="error">Error al cargar el curso</div>
+            <div class="error">Error al cargar el curso: ${error.message}</div>
         `;
     }
 }
@@ -325,6 +358,10 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
         return new Date(fechaA) - new Date(fechaB);
     });
 
+    console.log(todasActividades);
+    console.log("ta: ", tareas);
+    console.log("ev: ", evaluaciones);
+
     if (todasActividades.length === 0) {
         listaActividades.innerHTML = `
             <div class="sin-actividades">
@@ -342,11 +379,15 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
             return crearCardEvaluacion(actividad);
         }
     }).join('');
+    
+    // Configurar los event listeners para descargas
+    configurarDescargas();
 }
 
 // Función para crear card de tarea
 function crearCardTarea(tarea) {
     const fechaEntrega = formatearFecha(tarea.fecha_entrega, tarea.hora_entrega);
+    const tieneArchivo = tarea.archivo_url && tarea.archivo_url !== '';
     
     return `
         <div class="actividad-card tarea" data-tipo="tarea">
@@ -363,11 +404,24 @@ function crearCardTarea(tarea) {
                     <div class="modulo-info">
                         <strong>Módulo:</strong> ${tarea.modulo_titulo || 'General'}
                     </div>
+                    ${tieneArchivo ? `
+                        <div class="archivo-info">
+                            <strong>Archivo adjunto:</strong> 
+                            <span class="archivo-nombre">${tarea.archivo_nombre || 'Material de apoyo'}</span>
+                            <small>Tamaño: ${formatFileSize(tarea.archivo_tamanio)}</small>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             <div class="actividad-actions">
                 <button class="shiny small">Ver Detalles</button>
-                <button class="back small">Descargar Material</button>
+                ${tieneArchivo ? `
+                    <button class="back small descargar-archivo" 
+                            data-archivo="${tarea.archivo_url.replace('uploads/', '')}"
+                            data-nombre="${tarea.archivo_nombre || 'archivo_descargado'}">
+                        Descargar Material
+                    </button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -377,6 +431,7 @@ function crearCardTarea(tarea) {
 function crearCardEvaluacion(evaluacion) {
     const fechaInicio = formatearFecha(evaluacion.fecha_inicio, evaluacion.hora_inicio);
     const fechaEntrega = formatearFecha(evaluacion.fecha_entrega, evaluacion.hora_entrega);
+    const tieneArchivo = evaluacion.archivo_url && evaluacion.archivo_url !== '';
     
     return `
         <div class="actividad-card evaluacion" data-tipo="evaluacion">
@@ -399,11 +454,24 @@ function crearCardEvaluacion(evaluacion) {
                     <div class="modulo-info">
                         <strong>Módulo:</strong> ${evaluacion.modulo_titulo || 'General'}
                     </div>
+                    ${tieneArchivo ? `
+                        <div class="archivo-info">
+                            <strong>Archivo adjunto:</strong> 
+                            <span class="archivo-nombre">${evaluacion.archivo_nombre || 'Material de evaluación'}</span>
+                            <small>Tamaño: ${formatFileSize(evaluacion.archivo_tamanio)}</small>
+                        </div>
+                    ` : ''}
                 </div>
             </div>
             <div class="actividad-actions">
                 <button class="shiny small">Comenzar Evaluación</button>
-                <button class="back small">Instrucciones</button>
+                ${tieneArchivo ? `
+                    <button class="back small descargar-archivo" 
+                            data-archivo="${evaluacion.archivo_url.replace('uploads/', '')}"
+                            data-nombre="${evaluacion.archivo_nombre || 'archivo_evaluacion'}">
+                        Descargar Material
+                    </button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -468,73 +536,55 @@ function volverACursos() {
     
     cargarCursosEstudiante();
 }
-function mostrarCursos(cursos) {
-    const cursosContainer = document.querySelector('#cursos .content-grid');
-    cursosContainer.innerHTML = '';
-    
-    cursos.forEach(curso => {
-        const porcentajeProgreso = calcularProgresoCurso(curso.fecha_inicio, curso.fecha_fin);
-        const diasRestantes = calcularDiasRestantes(curso.fecha_fin);
-        
-        const cursoCard = document.createElement('div');
-        cursoCard.className = 'course-card';
-        cursoCard.innerHTML = `
-            <div class="course-header">
-                <h3 class="course-title">${curso.nombre_curso}</h3>
-                <div class="course-stats">
-                    <div class="course-stat">
-                        <span class="course-stat-number">${curso.total_tareas || 0}</span>
-                        <span class="course-stat-label">Tareas</span>
-                    </div>
-                    <div class="course-stat">
-                        <span class="course-stat-number">${curso.total_evaluaciones || 0}</span>
-                        <span class="course-stat-label">Evaluaciones</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="course-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${porcentajeProgreso}%"></div>
-                </div>
-                <div class="progress-percentage">${porcentajeProgreso}% completado</div>
-            </div>
-            
-            <div class="course-info-grid">
-                <div class="info-group">
-                    <span class="info-label">Profesor:</span>
-                    <span class="info-value">${curso.nombre_profesor} ${curso.apellido_profesor}</span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Asistencia:</span>
-                    <span class="info-value">${curso.asistencia || 0}%</span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Nota:</span>
-                    <span class="info-value">${curso.nota || 'N/A'}</span>
-                </div>
-                <div class="info-group">
-                    <span class="info-label">Días restantes:</span>
-                    <span class="info-value">${diasRestantes}</span>
-                </div>
-            </div>
-            
-            <div class="course-points">
-                <div class="point-item">
-                    <span class="point-value">${curso.deskPoints || 0}</span>
-                    <span class="point-label">Desk Points</span>
-                </div>
-                <div class="point-item">
-                    <span class="point-value">${curso.rankingPoints || 0}</span>
-                    <span class="point-label">Ranking Points</span>
-                </div>
-            </div>
-            
-            <button class="shiny course-button" onclick="abrirDetalleCurso(${curso.id_periodo_curso})">Acceder al Curso</button>
-        `;
-        cursosContainer.appendChild(cursoCard);
+
+// Función para configurar event listeners de descarga
+function configurarDescargas() {
+    document.querySelectorAll('.descargar-archivo').forEach(button => {
+        button.addEventListener('click', function() {
+            const archivoUrl = this.getAttribute('data-archivo');
+            const nombreArchivo = this.getAttribute('data-nombre');
+            manejarDescargaArchivo(archivoUrl, nombreArchivo);
+        });
     });
 }
+
+// Función para manejar la descarga de archivos
+function manejarDescargaArchivo(archivoUrl, nombreArchivo) {
+    if (!archivoUrl) {
+        alert('No hay archivo disponible para descargar');
+        return;
+    }
+    
+    // Usar el endpoint de descarga existente
+    const urlDescarga = `php/descargar.php?archivo=${encodeURIComponent(archivoUrl)}`;
+
+    console.log("Iniciando descarga de archivo:");
+    console.log(`URL: ${archivoUrl}`);
+    console.log(`Nombre: ${nombreArchivo}`);
+    
+    // Crear un enlace temporal para la descarga
+    const link = document.createElement('a');
+    link.href = urlDescarga;
+    link.download = nombreArchivo || 'archivo_descargado';
+    link.target = '_blank';
+    
+    // Simular click para iniciar la descarga
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Función para formatear tamaño de archivo
+function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 async function cargarInscripciones() {
     try {
         let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');

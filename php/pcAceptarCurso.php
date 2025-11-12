@@ -45,7 +45,7 @@ $sql = "UPDATE periodo_curso SET
         fecha_inicio = ?,
         fecha_fin = ?,
         cupos = ?,
-        estado_periodo = 'Inscripcion'
+        estado_periodo = 'Inscripciones'
         WHERE id_periodo_curso = ?";
 
 $stmt = mysqli_prepare($conexion, $sql);

@@ -9,12 +9,19 @@ if (empty($id_periodo_curso)) {
     exit;
 }
 
+// Consulta simplificada sin la columna problemática
 $sql = "
     SELECT 
         t.*,
-        m.titulo as modulo_titulo
+        m.titulo as modulo_titulo,
+        aa.id_archivo, 
+        aa.titulo as archivo_nombre, 
+        aa.tipo as archivo_tipo, 
+        aa.ruta_archivo as archivo_url
     FROM tarea t
     INNER JOIN modulo m ON t.id_modulo = m.id_modulo
+    LEFT JOIN archivos_publicacion ap ON t.id_tarea = ap.id_publicacion
+    LEFT JOIN archivos_adjuntos aa ON ap.id_archivo = aa.id_archivo
     WHERE m.id_periodo_curso = ?
     ORDER BY t.fecha_entrega ASC, t.hora_entrega ASC
 ";

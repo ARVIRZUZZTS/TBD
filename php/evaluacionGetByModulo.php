@@ -9,10 +9,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($data['id_modulo'])) {
         $id_modulo = $data['id_modulo'];
         
-        $sql = "SELECT id_evaluacion, id_modulo, titulo, descripcion, hora_emision, fecha_emision, hora_inicio, fecha_inicio, hora_entrega, fecha_entrega, deskpoints 
-                FROM evaluacion 
-                WHERE id_modulo = ? 
-                ORDER BY fecha_inicio DESC, hora_inicio DESC";
+        $sql = "SELECT e.id_evaluacion, e.id_modulo, e.titulo, e.descripcion, 
+                       e.hora_emision, e.fecha_emision, e.hora_inicio, e.fecha_inicio, 
+                       e.hora_entrega, e.fecha_entrega, e.deskpoints,
+                       aa.titulo as archivo_nombre, 
+                       aa.ruta_archivo as archivo_url, 
+                       aa.tipo as archivo_tipo
+                FROM evaluacion e 
+                LEFT JOIN archivos_publicacion ap ON e.id_evaluacion = ap.id_publicacion 
+                LEFT JOIN archivos_adjuntos aa ON ap.id_archivo = aa.id_archivo 
+                WHERE e.id_modulo = ? 
+                ORDER BY e.fecha_inicio DESC, e.hora_inicio DESC";
         $stmt = $conexion->prepare($sql);
         $stmt->bind_param("i", $id_modulo);
         $stmt->execute();

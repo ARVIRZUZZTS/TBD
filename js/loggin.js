@@ -52,28 +52,41 @@ function setTipo() {
                 <input id="setPass2" type="password" placeholder="Confirmar Contraseña" maxlength="30" autocomplete="off">
             </div>
         `;
-        cargarAreas();
+        cargarGrados();
     } else {
         window.location = "inicio.html";
     }
 }
-function cargarAreas() {
-    fetch("php/areaGetAll.php")
-        .then(res => res.json())
-        .then(data => {
-            if (data.exito) {
+function cargarGrados() {    
+    fetch("php/gradoGetAll.php")
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`Error HTTP: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(data => {            
+            if (data && data.exito === true && data.grados && Array.isArray(data.grados)) {
                 const select = document.getElementById("setGe");
-                data.areas.forEach(area => {
+                
+                if (!select) {
+                    return;
+                }
+                select.innerHTML = '<option value="">Seleccionar grado educativo</option>';
+                
+                data.grados.forEach((grado, index) => {
                     const opt = document.createElement("option");
-                    opt.value = area.id_area;
-                    opt.textContent = area.nombre_area;
+                    opt.value = grado.id_grado;
+                    opt.textContent = grado.nombre_grado;
                     select.appendChild(opt);
-                });
+                });       
             } else {
-                console.warn("No se encontraron áreas:", data.mensaje);
+                mostrarModal("Error: No se pudieron cargar los grados educativos");
             }
         })
-        .catch(err => console.error("Error al cargar áreas:", err));
+        .catch(err => {
+            mostrarModal("Error de conexión al cargar los grados educativos", err);
+        });
 }
 
 
