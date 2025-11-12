@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 05-11-2025 a las 01:18:43
+-- Tiempo de generación: 12-11-2025 a las 18:24:03
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -192,6 +192,19 @@ DELIMITER ;
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `bitacora_inscripcion_estudiante`
+--
+
+CREATE TABLE `bitacora_inscripcion_estudiante` (
+  `id_bitInscripcionEstudiante` int(11) NOT NULL,
+  `accion` varchar(50) DEFAULT NULL,
+  `fecha` datetime DEFAULT NULL,
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `categoria`
 --
 
@@ -270,6 +283,54 @@ CREATE TABLE `curso_estudiante` (
   `rankingPoints` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Disparadores `curso_estudiante`
+--
+DELIMITER $$
+CREATE TRIGGER `inscripcion_estudiante` AFTER INSERT ON `curso_estudiante` FOR EACH ROW BEGIN
+    DECLARE costo DECIMAL(10,2) DEFAULT 0;
+    DECLARE descuento DECIMAL(5,2) DEFAULT 0;
+    DECLARE total DECIMAL(10,2) DEFAULT 0;
+    DECLARE idCurso INT DEFAULT 0;
+    DECLARE idDescuento INT DEFAULT 0;
+
+    SELECT IFNULL(pc.costo, 0), IFNULL(pc.id_curso, 0)
+    INTO costo, idCurso
+    FROM PERIODO_CURSO pc
+    WHERE pc.id_periodo_curso = NEW.id_periodo_curso
+    LIMIT 1;
+
+    SELECT d.id_descuento, IFNULL(d.porcentaje_descuento, 0)
+    INTO idDescuento, descuento
+    FROM RECOMPENSA_CANJEADA rc
+    JOIN DESCUENTO d ON rc.recompensa = d.id_descuento
+    WHERE rc.id_estudiante = NEW.id_estudiante
+      AND d.id_periodo_curso = NEW.id_periodo_curso
+    ORDER BY rc.fecha_recompensa DESC, rc.hora_recompensa DESC
+    LIMIT 1;
+
+    IF idDescuento IS NULL THEN 
+        SET idDescuento = 0;
+        SET descuento = 0;
+    END IF;
+
+    INSERT INTO BITACORA_INSCRIPCION_ESTUDIANTE (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT(
+            'C: ', IFNULL(idCurso, 0),
+            ' - PC: ', IFNULL(NEW.id_periodo_curso, 0),
+            ' : Est: ', IFNULL(NEW.id_estudiante, 0),
+            ', Costo: ', FORMAT(IFNULL(costo, 0), 2), ' $',
+            ', Descuento: ', FORMAT(IFNULL(descuento, 0), 2), '%',
+            ', TOTAL: ', FORMAT(IFNULL(costo - (costo * (descuento / 100)), 0), 2), ' $'
+        )
+    );
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -333,10 +394,27 @@ CREATE TABLE `dia_horario` (
 CREATE TABLE `entregas` (
   `id_entrega` int(11) NOT NULL,
   `id_user` int(11) DEFAULT NULL,
-  `nota` int(11) DEFAULT NULL,
+  `nota` decimal(10,2) DEFAULT NULL,
   `hora_entrega` time DEFAULT NULL,
   `fecha_entrega` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Disparadores `entregas`
+--
+DELIMITER $$
+CREATE TRIGGER `actualizar_puntos_nota` AFTER UPDATE ON `entregas` FOR EACH ROW BEGIN
+	IF NEW.nota <> OLD.nota THEN
+    	UPDATE puntos
+        SET
+        	saldo_actual = saldo_actual + (NEW.nota * 0.3),
+            puntos_totales = puntos_totales + (NEW.nota *0.3),
+            rankingPoints = rankingPoints + NEW.nota
+		WHERE id_user = NEW.id_user;
+	END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -377,9 +455,10 @@ INSERT INTO `grado` (`id_grado`, `nombre_grado`) VALUES
 (1, 'Primaria'),
 (2, 'Secundaria'),
 (3, 'Bachillerato'),
-(4, 'Universitario'),
-(5, 'Maestría'),
-(6, 'Doctorado');
+(4, 'Técnico'),
+(5, 'Universitario'),
+(6, 'Maestría'),
+(7, 'Doctorado');
 
 -- --------------------------------------------------------
 
@@ -518,11 +597,12 @@ INSERT INTO `permiso` (`id_permiso`, `nombre_permiso`) VALUES
 CREATE TABLE `puntos` (
   `id_puntos` int(11) NOT NULL,
   `id_user` int(11) DEFAULT NULL,
-  `puntos_totales` int(11) DEFAULT NULL,
-  `puntos_gastados` int(11) DEFAULT NULL,
-  `saldo_actual` int(11) DEFAULT NULL,
+  `puntos_totales` decimal(10,2) DEFAULT NULL,
+  `puntos_gastados` decimal(10,2) DEFAULT NULL,
+  `saldo_actual` decimal(10,2) DEFAULT NULL,
   `rankingPoints` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 -- --------------------------------------------------------
 
@@ -582,10 +662,37 @@ INSERT INTO `ranking` (`ranking`, `nombre_ranking`, `limite_superior`, `limite_i
 
 CREATE TABLE `recompensa_canjeada` (
   `id_recompensa_canjeada` int(11) NOT NULL,
+  `recompensa` varchar(11) NOT NULL,
   `id_estudiante` int(11) DEFAULT NULL,
   `fecha_recompensa` date DEFAULT NULL,
   `hora_recompensa` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Disparadores `recompensa_canjeada`
+--
+DELIMITER $$
+CREATE TRIGGER `resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
+	DECLARE costo DECIMAL(10,2);
+    IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
+    	SELECT costo_canje INTO costo
+        FROM cosmetico
+        WHERE id_cosmetico = NEW.recompensa;
+	ELSEIF LEFT(NEW.recompensa, 3) = 'RD-' THEN
+    	SELECT costo_canje INTO costo
+        FROM descuento
+        WHERE id_descuento = NEW.recompensa;
+	END IF;
+    IF costo IS NOT NULL THEN
+    	UPDATE puntos
+        SET
+        	saldo_actual = saldo_actual - costo,
+            puntos_gastados = puntos_gastados + costo
+		WHERE id_user = NEW.id_estudiante;
+     END IF;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -606,7 +713,6 @@ INSERT INTO `rol` (`id_rol`, `nombre_rol`) VALUES
 (1, 'Administrador'),
 (2, 'Maestro'),
 (3, 'Estudiante');
-
 -- --------------------------------------------------------
 
 --
@@ -628,13 +734,6 @@ CREATE TABLE `rol_usuario` (
   `id_user` int(11) NOT NULL,
   `id_rol` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `rol_usuario`
---
-
-INSERT INTO `rol_usuario` (`id_user`, `id_rol`) VALUES
-(1, 1);
 
 -- --------------------------------------------------------
 
@@ -726,6 +825,8 @@ CREATE TABLE `usuario` (
 
 INSERT INTO `usuario` (`id_user`, `nombre`, `apellido`, `username`, `contrasenna`, `ci`, `telefono`, `correo`, `edad`, `estado`, `grado`) VALUES
 (1, 'David Eduardo', 'Chavez Totora', 'Arvi', '231222', '9513465', '67231718', 'virzuzz12345@gmail.com', '21', 'Activo', '');
+
+--
 -- Disparadores `usuario`
 --
 DELIMITER $$
@@ -880,6 +981,12 @@ ALTER TABLE `beca`
   ADD KEY `id_estudiante` (`id_estudiante`),
   ADD KEY `id_admin` (`id_admin`),
   ADD KEY `id_area` (`id_area`);
+
+--
+-- Indices de la tabla `bitacora_inscripcion_estudiante`
+--
+ALTER TABLE `bitacora_inscripcion_estudiante`
+  ADD PRIMARY KEY (`id_bitInscripcionEstudiante`);
 
 --
 -- Indices de la tabla `categoria`
@@ -1164,7 +1271,13 @@ ALTER TABLE `aula`
 -- AUTO_INCREMENT de la tabla `beca`
 --
 ALTER TABLE `beca`
-  MODIFY `id_beca` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_beca` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT de la tabla `bitacora_inscripcion_estudiante`
+--
+ALTER TABLE `bitacora_inscripcion_estudiante`
+  MODIFY `id_bitInscripcionEstudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT de la tabla `categoria`
@@ -1188,13 +1301,13 @@ ALTER TABLE `cosmetico`
 -- AUTO_INCREMENT de la tabla `curso`
 --
 ALTER TABLE `curso`
-  MODIFY `id_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `curso_estudiante`
 --
 ALTER TABLE `curso_estudiante`
-  MODIFY `id_curso_estudiante` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_curso_estudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `curso_maestro`
@@ -1218,7 +1331,7 @@ ALTER TABLE `dia_horario`
 -- AUTO_INCREMENT de la tabla `entregas`
 --
 ALTER TABLE `entregas`
-  MODIFY `id_entrega` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_entrega` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `evaluacion`
@@ -1236,7 +1349,7 @@ ALTER TABLE `grado`
 -- AUTO_INCREMENT de la tabla `inscripcion`
 --
 ALTER TABLE `inscripcion`
-  MODIFY `id_inscripcion` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_inscripcion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `insignias`
@@ -1260,13 +1373,13 @@ ALTER TABLE `material`
 -- AUTO_INCREMENT de la tabla `modulo`
 --
 ALTER TABLE `modulo`
-  MODIFY `id_modulo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_modulo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `periodo_curso`
 --
 ALTER TABLE `periodo_curso`
-  MODIFY `id_periodo_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_periodo_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `permiso`
@@ -1278,19 +1391,19 @@ ALTER TABLE `permiso`
 -- AUTO_INCREMENT de la tabla `puntos`
 --
 ALTER TABLE `puntos`
-  MODIFY `id_puntos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_puntos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `recompensa_canjeada`
 --
 ALTER TABLE `recompensa_canjeada`
-  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `rol`
 --
 ALTER TABLE `rol`
-  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_rol` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `tarea`
@@ -1302,7 +1415,7 @@ ALTER TABLE `tarea`
 -- AUTO_INCREMENT de la tabla `temas`
 --
 ALTER TABLE `temas`
-  MODIFY `id_tema` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_tema` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `tipo_cosmetico`
@@ -1320,7 +1433,7 @@ ALTER TABLE `tipo_pago`
 -- AUTO_INCREMENT de la tabla `usuario`
 --
 ALTER TABLE `usuario`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios_backup`
