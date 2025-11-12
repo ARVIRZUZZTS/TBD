@@ -1,4 +1,5 @@
 <?php
+// php/tareaGetByModulo.php
 include 'conexion.php';
 
 header('Content-Type: application/json');
@@ -9,10 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($data['id_modulo'])) {
         $id_modulo = $data['id_modulo'];
         
-        $sql = "SELECT id_tarea, id_modulo, titulo, descripcion, hora_emision, fecha_emision, hora_entrega, fecha_entrega 
-                FROM tarea 
-                WHERE id_modulo = ? 
-                ORDER BY fecha_emision DESC, hora_emision DESC";
+        $sql = "SELECT t.*, 
+                       aa.id_archivo, aa.titulo as archivo_nombre, aa.tipo as archivo_tipo, 
+                       aa.ruta_archivo as archivo_url
+                FROM tarea t
+                LEFT JOIN archivos_publicacion ap ON t.id_tarea = ap.id_publicacion
+                LEFT JOIN archivos_adjuntos aa ON ap.id_archivo = aa.id_archivo
+                WHERE t.id_modulo = ?
+                ORDER BY t.fecha_emision DESC, t.hora_emision DESC";
+        
         $stmt = $conexion->prepare($sql);
         $stmt->bind_param("i", $id_modulo);
         $stmt->execute();

@@ -518,7 +518,7 @@ function showCreateTemaModal(courseId, courseTitle) {
                             <button class="modal-close" id="close-tema-modal">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <form id="create-tema-form">
+                            <form id="create-tema-form" enctype="multipart/form-data">
                                 <div class="form-group">
                                     <label for="tema-modulo">Módulo:</label>
                                     <select id="tema-modulo" name="id_modulo" required>
@@ -529,6 +529,16 @@ function showCreateTemaModal(courseId, courseTitle) {
                                 <div class="form-group">
                                     <label for="tema-title">Título del Tema:</label>
                                     <input type="text" id="tema-title" name="title" required maxlength="50">
+                                </div>
+                                <div class="form-group">
+                                    <label for="tema-archivo">Archivo Adjunto:</label>
+                                    <input type="file" id="tema-archivo" name="archivo" 
+                                        accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg,.mp4,.avi,.mov,.zip,.rar">
+                                    <small>Formatos permitidos: PDF, PPT, DOC, PNG, JPG, MP4, AVI, MOV, ZIP, RAR (Máx. 10MB)</small>
+                                    <div id="tema-archivo-preview" style="display: none; margin-top: 10px;">
+                                        <span id="tema-archivo-nombre"></span>
+                                        <button type="button" id="tema-quitar-archivo" class="back small">×</button>
+                                    </div>
                                 </div>
                                 <div class="form-actions">
                                     <button type="button" class="back" id="cancel-tema">Cancelar</button>
@@ -574,7 +584,7 @@ function showCreateTareaModal(courseId, courseTitle) {
                             <button class="modal-close" id="close-tarea-modal">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <form id="create-tarea-form">
+                            <form id="create-tarea-form" enctype="multipart/form-data">
                                 <div class="form-group">
                                     <label for="tarea-modulo">Módulo:</label>
                                     <select id="tarea-modulo" name="id_modulo" required>
@@ -589,6 +599,16 @@ function showCreateTareaModal(courseId, courseTitle) {
                                 <div class="form-group">
                                     <label for="tarea-descripcion">Descripción:</label>
                                     <textarea id="tarea-descripcion" name="descripcion" rows="4" maxlength="1000"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-archivo">Archivo Adjunto:</label>
+                                    <input type="file" id="tarea-archivo" name="archivo" 
+                                           accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg">
+                                    <small>Formatos permitidos: PDF, PPT, DOC, PNG, JPG (Máx. 10MB)</small>
+                                    <div id="archivo-preview" style="display: none; margin-top: 10px;">
+                                        <span id="archivo-nombre"></span>
+                                        <button type="button" id="quitar-archivo" class="back small">×</button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="tarea-fecha-emision">Fecha de Emisión:</label>
@@ -650,7 +670,7 @@ function showCreateEvaluacionModal(courseId, courseTitle) {
                             <button class="modal-close" id="close-evaluacion-modal">&times;</button>
                         </div>
                         <div class="modal-body">
-                            <form id="create-evaluacion-form">
+                            <form id="create-evaluacion-form" enctype="multipart/form-data">
                                 <div class="form-group">
                                     <label for="evaluacion-modulo">Módulo:</label>
                                     <select id="evaluacion-modulo" name="id_modulo" required>
@@ -665,6 +685,16 @@ function showCreateEvaluacionModal(courseId, courseTitle) {
                                 <div class="form-group">
                                     <label for="evaluacion-descripcion">Descripción:</label>
                                     <textarea id="evaluacion-descripcion" name="descripcion" rows="4" maxlength="1000"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-archivo">Archivo Adjunto:</label>
+                                    <input type="file" id="evaluacion-archivo" name="archivo" 
+                                           accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg,.zip,.rar">
+                                    <small>Formatos permitidos: PDF, PPT, DOC, PNG, JPG, ZIP, RAR (Máx. 10MB)</small>
+                                    <div id="evaluacion-archivo-preview" style="display: none; margin-top: 10px;">
+                                        <span id="evaluacion-archivo-nombre"></span>
+                                        <button type="button" id="evaluacion-quitar-archivo" class="back small">×</button>
+                                    </div>
                                 </div>
                                 <div class="form-group">
                                     <label for="evaluacion-fecha-emision">Fecha de Emisión:</label>
@@ -719,9 +749,59 @@ function showCreateEvaluacionModal(courseId, courseTitle) {
 function setupTemaModal() {
     const modal = document.getElementById('create-tema-modal');
     const form = document.getElementById('create-tema-form');
+    const archivoInput = document.getElementById('tema-archivo');
+    const archivoPreview = document.getElementById('tema-archivo-preview');
+    const archivoNombre = document.getElementById('tema-archivo-nombre');
+    const quitarArchivoBtn = document.getElementById('tema-quitar-archivo');
     
     document.getElementById('close-tema-modal').addEventListener('click', closeTemaModal);
     document.getElementById('cancel-tema').addEventListener('click', closeTemaModal);
+    
+    // Manejar selección de archivo
+    archivoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validar tamaño (10MB máximo)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 10MB permitido.');
+                archivoInput.value = '';
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = [
+                'application/pdf',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'image/png',
+                'image/jpeg',
+                'image/jpg',
+                'video/mp4',
+                'video/avi',
+                'video/quicktime',
+                'application/zip',
+                'application/x-rar-compressed'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Tipo de archivo no permitido. Use PDF, PPT, DOC, PNG, JPG, MP4, AVI, MOV, ZIP o RAR.');
+                archivoInput.value = '';
+                return;
+            }
+            
+            // Mostrar preview
+            archivoNombre.textContent = file.name;
+            archivoPreview.style.display = 'block';
+        }
+    });
+    
+    // Quitar archivo seleccionado
+    quitarArchivoBtn.addEventListener('click', function() {
+        archivoInput.value = '';
+        archivoPreview.style.display = 'none';
+    });
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -738,9 +818,64 @@ function setupTemaModal() {
 function setupTareaModal() {
     const modal = document.getElementById('create-tarea-modal');
     const form = document.getElementById('create-tarea-form');
-    
+    const archivoInput = document.getElementById('tarea-archivo');
+    const archivoPreview = document.getElementById('archivo-preview');
+    const archivoNombre = document.getElementById('archivo-nombre');
+    const quitarArchivoBtn = document.getElementById('quitar-archivo');
+
+    const now = new Date();
+    const fechaActual = now.toISOString().split('T')[0];
+    const horaActual = now.toTimeString().slice(0, 5);
+
+    document.getElementById('tarea-fecha-emision').value = fechaActual;
+    document.getElementById('tarea-hora-emision').value = horaActual;
+
+    document.getElementById('tarea-fecha-emision').readOnly = true;
+    document.getElementById('tarea-hora-emision').readOnly = true;
+
     document.getElementById('close-tarea-modal').addEventListener('click', closeTareaModal);
     document.getElementById('cancel-tarea').addEventListener('click', closeTareaModal);
+
+    // Manejar selección de archivo
+    archivoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validar tamaño (10MB máximo)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 10MB permitido.');
+                archivoInput.value = '';
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = [
+                'application/pdf',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'image/png',
+                'image/jpeg',
+                'image/jpg'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Tipo de archivo no permitido. Use PDF, PPT, DOC, PNG o JPG.');
+                archivoInput.value = '';
+                return;
+            }
+            
+            // Mostrar preview
+            archivoNombre.textContent = file.name;
+            archivoPreview.style.display = 'block';
+        }
+    });
+    
+    // Quitar archivo seleccionado
+    quitarArchivoBtn.addEventListener('click', function() {
+        archivoInput.value = '';
+        archivoPreview.style.display = 'none';
+    });
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -757,9 +892,66 @@ function setupTareaModal() {
 function setupEvaluacionModal() {
     const modal = document.getElementById('create-evaluacion-modal');
     const form = document.getElementById('create-evaluacion-form');
+    const archivoInput = document.getElementById('evaluacion-archivo');
+    const archivoPreview = document.getElementById('evaluacion-archivo-preview');
+    const archivoNombre = document.getElementById('evaluacion-archivo-nombre');
+    const quitarArchivoBtn = document.getElementById('evaluacion-quitar-archivo');
+
+    const now = new Date();
+    const fechaActual = now.toISOString().split('T')[0];
+    const horaActual = now.toTimeString().slice(0, 5);
     
+    document.getElementById('evaluacion-fecha-emision').value = fechaActual;
+    document.getElementById('evaluacion-hora-emision').value = horaActual;
+
+    document.getElementById('evaluacion-fecha-emision').readOnly = true;
+    document.getElementById('evaluacion-hora-emision').readOnly = true;
+
     document.getElementById('close-evaluacion-modal').addEventListener('click', closeEvaluacionModal);
     document.getElementById('cancel-evaluacion').addEventListener('click', closeEvaluacionModal);
+    
+    // Manejar selección de archivo
+    archivoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validar tamaño (10MB máximo)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('El archivo es demasiado grande. Máximo 10MB permitido.');
+                archivoInput.value = '';
+                return;
+            }
+            
+            // Validar tipo de archivo
+            const allowedTypes = [
+                'application/pdf',
+                'application/vnd.ms-powerpoint',
+                'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'image/png',
+                'image/jpeg',
+                'image/jpg',
+                'application/zip',
+                'application/x-rar-compressed'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                alert('Tipo de archivo no permitido. Use PDF, PPT, DOC, PNG, JPG, ZIP o RAR.');
+                archivoInput.value = '';
+                return;
+            }
+            
+            // Mostrar preview
+            archivoNombre.textContent = file.name;
+            archivoPreview.style.display = 'block';
+        }
+    });
+    
+    // Quitar archivo seleccionado
+    quitarArchivoBtn.addEventListener('click', function() {
+        archivoInput.value = '';
+        archivoPreview.style.display = 'none';
+    });
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -843,6 +1035,8 @@ function createModule(courseId) {
 function createTema() {
     const id_modulo = document.getElementById('tema-modulo').value;
     const titulo = document.getElementById('tema-title').value.trim();
+    const archivoInput = document.getElementById('tema-archivo');
+    const archivo = archivoInput.files[0];
     
     if (!id_modulo) {
         alert('Por favor, selecciona un módulo');
@@ -854,18 +1048,22 @@ function createTema() {
         return;
     }
     
+    const formData = new FormData();
+    formData.append('id_modulo', id_modulo);
+    formData.append('titulo', titulo);
+    
+    if (archivo) {
+        formData.append('archivo', archivo);
+    }
+    
     fetch("php/temasNew.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id_modulo: id_modulo,
-            titulo: titulo
-        })
+        body: formData
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('Tema creado exitosamente');
+            alert('Tema creado exitosamente' + (archivo ? ' con archivo adjunto' : ''));
             closeTemaModal();
             const courseId = localStorage.getItem('current_course_id');
             loadCourseModules(courseId); // Recargar la lista de módulos con temas
@@ -887,6 +1085,8 @@ function createTarea() {
     const hora_emision = document.getElementById('tarea-hora-emision').value;
     const fecha_entrega = document.getElementById('tarea-fecha-entrega').value;
     const hora_entrega = document.getElementById('tarea-hora-entrega').value;
+    const archivoInput = document.getElementById('tarea-archivo');
+    const archivo = archivoInput.files[0];
     
     if (!id_modulo) {
         alert('Por favor, selecciona un módulo');
@@ -903,26 +1103,30 @@ function createTarea() {
         return;
     }
     
+    const formData = new FormData();
+    formData.append('id_modulo', id_modulo);
+    formData.append('titulo', titulo);
+    formData.append('descripcion', descripcion);
+    formData.append('fecha_emision', fecha_emision);
+    formData.append('hora_emision', hora_emision);
+    formData.append('fecha_entrega', fecha_entrega);
+    formData.append('hora_entrega', hora_entrega);
+    
+    if (archivo) {
+        formData.append('archivo', archivo);
+    }
+    
     fetch("php/tareaNew.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id_modulo: id_modulo,
-            titulo: titulo,
-            descripcion: descripcion,
-            fecha_emision: fecha_emision,
-            hora_emision: hora_emision,
-            fecha_entrega: fecha_entrega,
-            hora_entrega: hora_entrega
-        })
+        body: formData 
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('Tarea creada exitosamente');
+            alert('Tarea creada exitosamente' + (archivo ? ' con archivo adjunto' : ''));
             closeTareaModal();
             const courseId = localStorage.getItem('current_course_id');
-            loadCourseModules(courseId); // Recargar la lista de módulos con tareas
+            loadCourseModules(courseId);
         } else {
             alert('Error al crear tarea: ' + data.message);
         }
@@ -944,6 +1148,8 @@ function createEvaluacion() {
     const fecha_entrega = document.getElementById('evaluacion-fecha-entrega').value;
     const hora_entrega = document.getElementById('evaluacion-hora-entrega').value;
     const deskpoints = document.getElementById('evaluacion-deskpoints').value;
+    const archivoInput = document.getElementById('evaluacion-archivo');
+    const archivo = archivoInput.files[0];
     
     if (!id_modulo) {
         alert('Por favor, selecciona un módulo');
@@ -965,26 +1171,30 @@ function createEvaluacion() {
         return;
     }
     
+    const formData = new FormData();
+    formData.append('id_modulo', id_modulo);
+    formData.append('titulo', titulo);
+    formData.append('descripcion', descripcion);
+    formData.append('fecha_emision', fecha_emision);
+    formData.append('hora_emision', hora_emision);
+    formData.append('fecha_inicio', fecha_inicio);
+    formData.append('hora_inicio', hora_inicio);
+    formData.append('fecha_entrega', fecha_entrega);
+    formData.append('hora_entrega', hora_entrega);
+    formData.append('deskpoints', deskpoints);
+    
+    if (archivo) {
+        formData.append('archivo', archivo);
+    }
+    
     fetch("php/evaluacionNew.php", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id_modulo: id_modulo,
-            titulo: titulo,
-            descripcion: descripcion,
-            fecha_emision: fecha_emision,
-            hora_emision: hora_emision,
-            fecha_inicio: fecha_inicio,
-            hora_inicio: hora_inicio,
-            fecha_entrega: fecha_entrega,
-            hora_entrega: hora_entrega,
-            deskpoints: deskpoints
-        })
+        body: formData
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            alert('Evaluación creada exitosamente');
+            alert('Evaluación creada exitosamente' + (archivo ? ' con archivo adjunto' : ''));
             closeEvaluacionModal();
             const courseId = localStorage.getItem('current_course_id');
             loadCourseModules(courseId); // Recargar la lista de módulos con evaluaciones
@@ -1126,6 +1336,14 @@ function displayModulesWithContent(modules) {
                             <div class="tema-content">
                                 <div class="tema-info">
                                     <h5 class="tema-title">📖 ${escapeHTML(tema.titulo)}</h5>
+                                    ${tema.archivo_url ? `
+                                        <div class="archivo-adjunto">
+                                            <a href="php/descargar.php?archivo=${tema.archivo_url.replace('uploads/', '')}" class="archivo-link" target="_blank">
+                                                📎 ${tema.archivo_nombre || 'Archivo adjunto'}
+                                            </a>
+                                            <small>Tipo: ${tema.archivo_tipo || 'Archivo'}</small>
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 <div class="tema-actions">
                                     <button class="shiny small">Editar</button>
@@ -1146,6 +1364,14 @@ function displayModulesWithContent(modules) {
                                 <div class="tema-info">
                                     <h5 class="tema-title">📝 ${escapeHTML(tarea.titulo)}</h5>
                                     <p class="tema-desc">${escapeHTML(tarea.descripcion || 'Sin descripción')}</p>
+                                    ${tarea.archivo_url ? `
+                                        <div class="archivo-adjunto">
+                                            <a href="php/descargar.php?archivo=${tarea.archivo_url.replace('uploads/', '')}" class="archivo-link" target="_blank">
+                                                📎 ${tarea.archivo_nombre || 'Archivo adjunto'}
+                                            </a>
+                                            <small>Tipo: ${tarea.archivo_tipo || 'Archivo'}</small>
+                                        </div>
+                                    ` : ''}
                                     <small>Entrega: ${formatDate(tarea.fecha_entrega)} ${tarea.hora_entrega}</small>
                                 </div>
                                 <div class="tema-actions">
@@ -1167,6 +1393,14 @@ function displayModulesWithContent(modules) {
                                 <div class="tema-info">
                                     <h5 class="tema-title">📊 ${escapeHTML(evaluacion.titulo)}</h5>
                                     <p class="tema-desc">${escapeHTML(evaluacion.descripcion || 'Sin descripción')}</p>
+                                    ${evaluacion.archivo_url ? `
+                                        <div class="archivo-adjunto">
+                                            <a href="php/descargar.php?archivo=${evaluacion.archivo_url.replace('uploads/', '')}" class="archivo-link" target="_blank">
+                                                📎 ${evaluacion.archivo_nombre || 'Archivo adjunto'}
+                                            </a>
+                                            <small>Tipo: ${evaluacion.archivo_tipo || 'Archivo'}</small>
+                                        </div>
+                                    ` : ''}
                                     <small>Inicio: ${formatDate(evaluacion.fecha_inicio)} ${evaluacion.hora_inicio}</small>
                                     <small>Entrega: ${formatDate(evaluacion.fecha_entrega)} ${evaluacion.hora_entrega}</small>
                                     <small>Puntos: ${evaluacion.deskpoints}</small>
@@ -1192,6 +1426,13 @@ function displayModulesWithContent(modules) {
     modulesList.innerHTML = modulesHTML;
 }
 
+function formatFileSize(bytes) {
+    if (!bytes) return 'N/A';
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -1212,3 +1453,11 @@ function escapeHTML(str) {
 document.addEventListener('DOMContentLoaded', function() {
     showSection('current-courses');
 });
+
+function cerrarSesion() {
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = "inicio.html";
+    }
+}
