@@ -63,12 +63,17 @@ async function cargarDatosEstudiante() {
             document.getElementById('nombre-estudiante').textContent = 
                 `${estudiante.nombre} ${estudiante.apellido}`;
             
-            document.getElementById('nombre-perfil').textContent = 
-                `${estudiante.nombre} ${estudiante.apellido}`;
+            document.getElementById('nombre-perfil').textContent =  `${estudiante.nombre} ${estudiante.apellido}`;
             document.getElementById('correo-perfil').textContent = estudiante.correo || 'No disponible';
             document.getElementById('rango-perfil').textContent = 
                 `Rango: ${estudiante.rango_actual}`;
             
+            // Dentro del if (data.exito && data.estudiante), agregar:
+            document.getElementById('saldo-actual').textContent = estudiante.saldo_actual;
+            document.getElementById('puntos-totales').textContent = estudiante.puntos_totales;
+            document.getElementById('puntos-gastados').textContent = estudiante.puntos_gastados;
+            
+            // Configurar avatar con iniciales
             const iniciales = (estudiante.nombre.charAt(0) + estudiante.apellido.charAt(0)).toUpperCase();
             document.getElementById('avatar-iniciales').textContent = iniciales;
             
@@ -733,5 +738,166 @@ async function inscribirEnCurso(idPeriodoCurso) {
     } catch (error) {
         console.error('Error al inscribirse:', error);
         alert('Error al realizar la inscripción');
+    }
+}// Variables globales para el modal de pago
+let cursoSeleccionadoParaInscripcion = null;
+
+// Función para mostrar modal de pago
+function mostrarModalPago(curso) {
+    cursoSeleccionadoParaInscripcion = curso;
+    
+    // Crear modal dinámicamente si no existe
+    let modal = document.getElementById('modal-pago');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-pago';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Confirmar Inscripción y Pago</h2>
+                    <span class="close-modal">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="info-curso-modal">
+                        <h3 id="modal-curso-nombre">${curso.nombre_curso}</h3>
+                        <p><strong>Profesor:</strong> ${curso.nombre_profesor} ${curso.apellido_profesor}</p>
+                        <p><strong>Duración:</strong> ${curso.duracion} horas</p>
+                        <p><strong>Modalidad:</strong> ${curso.modalidad === 'P' ? 'Presencial' : 'Virtual'}</p>
+                        <div class="costo-info">
+                            <h4>Costo: <span id="modal-curso-costo">${curso.costo || 0}</span> Bs</h4>
+                        </div>
+                    </div>
+                    <div class="metodo-pago">
+                        <h4>Método de Pago (Simulado)</h4>
+                        <div class="opciones-pago">
+                            <label>
+                                <input type="radio" name="metodo-pago" value="tarjeta" checked>
+                                Tarjeta de Crédito/Débito
+                            </label>
+                            <label>
+                                <input type="radio" name="metodo-pago" value="transferencia">
+                                Transferencia Bancaria
+                            </label>
+                            <label>
+                                <input type="radio" name="metodo-pago" value="efectivo">
+                                Pago en Efectivo
+                            </label>
+                        </div>
+                        <div class="info-pago-simulado">
+                            <p><em>Este es un pago simulado. No se realizará ningún cargo real.</em></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="back" id="cancelar-pago">Cancelar</button>
+                    <button class="shiny" id="confirmar-pago">Confirmar Pago e Inscripción</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Agregar event listeners
+        modal.querySelector('.close-modal').addEventListener('click', cerrarModalPago);
+        modal.querySelector('#cancelar-pago').addEventListener('click', cerrarModalPago);
+        modal.querySelector('#confirmar-pago').addEventListener('click', confirmarPago);
+        
+        // Cerrar modal al hacer click fuera
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                cerrarModalPago();
+            }
+        });
+    } else {
+        // Actualizar información del curso si el modal ya existe
+        document.getElementById('modal-curso-nombre').textContent = curso.nombre_curso;
+        document.getElementById('modal-curso-costo').textContent = curso.costo || 0;
+    }
+    
+    modal.style.display = 'block';
+}
+
+// Función para cerrar modal de pago
+function cerrarModalPago() {
+    const modal = document.getElementById('modal-pago');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Función para confirmar pago (mock)
+async function confirmarPago() {
+    try {
+        const confirmarBtn = document.getElementById('confirmar-pago');
+        const metodoPago = document.querySelector('input[name="metodo-pago"]:checked').value;
+        
+        // Simular procesamiento de pago
+        confirmarBtn.textContent = 'Procesando pago...';
+        confirmarBtn.disabled = true;
+        
+        // Simular delay de pago
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Realizar la inscripción
+        const formData = new FormData();
+        formData.append('id_estudiante', localStorage.getItem('id_user') || sessionStorage.getItem('id_user'));
+        formData.append('id_periodo_curso', cursoSeleccionadoParaInscripcion.id_periodo_curso);
+        
+        const response = await fetch('php/inscribirCurso.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        // Cerrar modal
+        cerrarModalPago();
+        
+        if (data.exito) {
+            alert('Inscripción exitosa. Pago procesado correctamente.');
+            cargarInscripciones(); // Recargar la lista de cursos disponibles
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error en pago:', error);
+        alert('Error al procesar el pago');
+    } finally {
+        const confirmarBtn = document.getElementById('confirmar-pago');
+        if (confirmarBtn) {
+            confirmarBtn.textContent = 'Confirmar Pago e Inscripción';
+            confirmarBtn.disabled = false;
+        }
+    }
+}
+
+// Modificar la función inscribirEnCurso para usar el modal
+async function inscribirEnCurso(idPeriodoCurso) {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (!idEstudiante) {
+            alert('Debes iniciar sesión para inscribirte');
+            return;
+        }
+        
+        // Buscar el curso en los datos cargados
+        const response = await fetch(`php/inscripcionesGet.php?id_estudiante=${idEstudiante}`);
+        const data = await response.json();
+        
+        if (data.exito && data.cursos) {
+            const curso = data.cursos.find(c => c.id_periodo_curso === idPeriodoCurso);
+            if (curso) {
+                // Mostrar modal de pago en lugar de confirmación directa
+                mostrarModalPago(curso);
+                return;
+            }
+        }
+        
+        alert('Curso no encontrado');
+        
+    } catch (error) {
+        console.error('Error al preparar inscripción:', error);
+        alert('Error al cargar información del curso');
     }
 }

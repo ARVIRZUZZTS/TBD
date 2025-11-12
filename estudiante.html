@@ -26,10 +26,9 @@
            <button class="nav-btn" data-tab="inscripcion">
                 <span>Inscripciones</span>
             </button>
-            <!-- Botón Cerrar Sesión dentro del nav -->
            <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
                 <span>Cerrar Sesión</span>
-            </button>
+           </button>
         </nav>
     </header>
  
@@ -38,21 +37,22 @@
            <h3 id="nombre-bienvenida">Bienvenido, <span id="nombre-estudiante">Cargando...</span></h3>
             <img src="img/logo.png" alt="Logo pequeño">
         </div>
-        
-        <!-- aca debemos poner el boton que abra la parte de incripciones a cursos -->
+    
         <div id="dinamic">
             <div id="inicio" class="tab-content active">
                 <h1>Bienvenido</h1>
                 <div class="profile-content">
                     <div class="profile-info">
-                    <div class="avatar" id="avatar-iniciales">--</div>
-                            <div class="profile-details">
-                                <h2 id="nombre-perfil">Cargando...</h2>
-                                <p id="grado-perfil">Estudiante</p>
-                                <p id="correo-perfil">Cargando...</p>
-                                <p id="rango-perfil">Rango: --</p>
-                            </div>
+                        <div class="avatar" id="avatar-iniciales">--</div>
+                        <div class="profile-details">
+                            <h2 id="nombre-perfil">Cargando...</h2>
+                            <p id="grado-perfil">Estudiante</p>
+                            <p id="correo-perfil">Cargando...</p>
+                            <p id="rango-perfil">Rango: --</p>
                         </div>
+                
+                       
+                    </div>
                     <div class="profile-actions">
                         <button class="shiny">Editar Perfil</button>
                         <button class="back">Cambiar Contraseña</button>
@@ -79,12 +79,20 @@
                         </ul>
                     </div>
                     <div class="content-card">
-                        <h3> Tu Progreso</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 75%"></div>
+                        <h3> Tus Puntos</h3>
+                        <div class="puntos-info">
+                            <div class="punto-item">
+                                <span class="punto-valor" id="saldo-actual">0</span>
+                                <span class="punto-label">Saldo Actual</span>
                             </div>
-                            <p>75% completado del semestre</p>
+                            <div class="punto-item">
+                                <span class="punto-valor" id="puntos-totales">0</span>
+                                <span class="punto-label">Puntos Totales</span>
+                            </div>
+                            <div class="punto-item">
+                                <span class="punto-valor" id="puntos-gastados">0</span>
+                                <span class="punto-label">Puntos Gastados</span>
+                            </div>
                         </div>
                     </div>
                 </div>
