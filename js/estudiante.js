@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const navButtons = document.querySelectorAll('.nav-btn');
     const tabContents = document.querySelectorAll('.tab-content');
     
-   navButtons.forEach(button => {
+  navButtons.forEach(button => {
     button.addEventListener('click', function() {
         const targetTab = this.getAttribute('data-tab');
         
@@ -24,12 +24,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 targetElement.classList.add('active');
             }
             
+            // Agregar las llamadas a las funciones aquí:
             if (targetTab === 'cursos') {
                 cargarCursosEstudiante();
             }
             if (targetTab === 'inscripcion') {
                 cargarInscripciones();
             }
+            if (targetTab === 'tienda') {
+                cargarTienda();
+            }
+            document.addEventListener('click', function(e) {
+               if (e.target.classList.contains('canjear-descuento-btn')) {
+                    const idDescuento = e.target.getAttribute('data-descuento-id');
+                    const costo = e.target.getAttribute('data-descuento-costo');
+                    canjearDescuento(idDescuento, parseInt(costo)); // Pasar el string directamente
+                }
+                            
+                // Botones de aceptar beca
+                if (e.target.classList.contains('aceptar-beca-btn')) {
+                    const idBeca = e.target.getAttribute('data-beca-id');
+                    aceptarBeca(parseInt(idBeca));
+                }
+            });
         }
     });
 });
@@ -38,13 +55,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 async function cargarDatosEstudiante() {
-    
     try {
-        
         let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
         
         if (!idEstudiante) {
-            console.error(' No se encontró ID de estudiante en el storage');
+            console.error('No se encontró ID de estudiante en el storage');
             document.getElementById('nombre-estudiante').textContent = 'Estudiante';
             document.getElementById('nombre-perfil').textContent = 'Estudiante';
             return;
@@ -63,17 +78,14 @@ async function cargarDatosEstudiante() {
             document.getElementById('nombre-estudiante').textContent = 
                 `${estudiante.nombre} ${estudiante.apellido}`;
             
-            document.getElementById('nombre-perfil').textContent =  `${estudiante.nombre} ${estudiante.apellido}`;
+            document.getElementById('nombre-perfil').textContent = `${estudiante.nombre} ${estudiante.apellido}`;
             document.getElementById('correo-perfil').textContent = estudiante.correo || 'No disponible';
-            document.getElementById('rango-perfil').textContent = 
-                `Rango: ${estudiante.rango_actual}`;
+            document.getElementById('rango-perfil').textContent = `Rango: ${estudiante.rango_actual}`;
             
-            // Dentro del if (data.exito && data.estudiante), agregar:
             document.getElementById('saldo-actual').textContent = estudiante.saldo_actual;
             document.getElementById('puntos-totales').textContent = estudiante.puntos_totales;
             document.getElementById('puntos-gastados').textContent = estudiante.puntos_gastados;
             
-            // Configurar avatar con iniciales
             const iniciales = (estudiante.nombre.charAt(0) + estudiante.apellido.charAt(0)).toUpperCase();
             document.getElementById('avatar-iniciales').textContent = iniciales;
             
@@ -109,8 +121,6 @@ async function cargarCursosEstudiante() {
         
         const response = await fetch(`php/cursoEstudianteGet.php?id_estudiante=${idEstudiante}`);
         
-        //console.log("manden ayuda xd"+"Respuesta del servidor:", response);
-        
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
@@ -140,7 +150,7 @@ function mostrarCursos(cursos) {
         const diasRestantes = calcularDiasRestantes(curso.fecha_fin);
         
         const cursoCard = document.createElement('div');
-        cursoCard.className = 'course-card'; // Cambiamos a course-card
+        cursoCard.className = 'course-card';
         cursoCard.innerHTML = `
             <div class="course-header">
                 <h3 class="course-title">${curso.nombre_curso}</h3>
@@ -216,17 +226,15 @@ function calcularProgresoCurso(fechaInicio, fechaFin) {
     const fin = new Date(fechaFin);
     const hoy = new Date();
     
-    // Asegurarnos de que las fechas sean válidas
     if (isNaN(inicio) || isNaN(fin)) return 0;
     
     const duracionTotal = fin - inicio;
     const tiempoTranscurrido = hoy - inicio;
     
-    if (duracionTotal <= 0) return 100; // Si ya terminó
+    if (duracionTotal <= 0) return 100;
     
     let porcentaje = (tiempoTranscurrido / duracionTotal) * 100;
     
-    // Limitar entre 0% y 100%
     return Math.min(100, Math.max(0, Math.round(porcentaje)));
 }
 
@@ -248,15 +256,10 @@ function calcularDiasRestantes(fechaFin) {
     return `${diasRestantes} días`;
 }
 
-//  ================================= Detalle del Curso ============================ (lo ultimo que toque xd)
-
-// Función para abrir la vista detallada del curso
 function abrirDetalleCurso(idPeriodoCurso) {
-    // Ocultar todas las vistas primero
     const tabContents = document.querySelectorAll('.tab-content');
     tabContents.forEach(tab => tab.classList.remove('active'));
     
-    // Crear o mostrar la vista detallada
     let detalleView = document.getElementById('curso-detalle');
     if (!detalleView) {
         detalleView = document.createElement('div');
@@ -265,14 +268,12 @@ function abrirDetalleCurso(idPeriodoCurso) {
         document.getElementById('dinamic').appendChild(detalleView);
     } else {
         detalleView.classList.add('active');
-        // Limpiar contenido anterior
         detalleView.innerHTML = '';
     }
     
     cargarDetalleCurso(idPeriodoCurso);
 }
 
-// Función para cargar los datos del curso detallado
 async function cargarDetalleCurso(idPeriodoCurso) {
     try {
         const detalleView = document.getElementById('curso-detalle');
@@ -293,52 +294,30 @@ async function cargarDetalleCurso(idPeriodoCurso) {
             </div>
         `;
 
-        // Cargar datos del curso y evaluaciones primero (sin tareas)
         const [cursoData, evaluacionesData] = await Promise.all([
             fetch(`php/cursoDetalleGet.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json()),
             fetch(`php/evaluacionesGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json())
         ]);
 
-        // Cargar tareas de forma separada con manejo de errores robusto
         let tareasData = { exito: false, tareas: [] };
         try {
             const tareasResponse = await fetch(`php/tareasGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`);
             const responseText = await tareasResponse.text();
             
-            // Verificar si la respuesta es JSON válido
             if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
                 tareasData = JSON.parse(responseText);
             } else {
-                // Usar datos vacíos pero continuar con el flujo
                 tareasData = { exito: false, tareas: [], mensaje: 'Error en el servidor' };
             }
         } catch (tareasError) {
-            // Continuar con tareas vacías
             tareasData = { exito: false, tareas: [] };
-        }
-
-        if (tareasData.exito && tareasData.tareas && tareasData.tareas.length > 0) {
-            console.log("Archivos cargados desde tareasGetByCurso.php:");
-            tareasData.tareas.forEach((tarea, index) => {
-                if (tarea.archivo_url) {
-                    // console.log(`   Tarea ${index + 1}: "${tarea.titulo}"`);
-                    // console.log(`   Archivo: ${tarea.archivo_url}`);
-                    // console.log(`   Nombre: ${tarea.archivo_nombre || 'Sin nombre'}`);
-                    // console.log(`   Tamaño: ${tarea.archivo_tamanio || 'N/A'} bytes`);
-                }
-            });
-        } else {
-            console.log("ℹ️ No hay tareas disponibles o hubo un error");
         }
 
         if (cursoData.exito) {
             document.getElementById('curso-detalle-titulo').textContent = cursoData.curso.nombre_curso;
         }
 
-        // Combinar y mostrar todas las actividades (aunque las tareas fallen)
         mostrarActividadesCurso(tareasData.tareas || [], evaluacionesData.evaluaciones || []);
-
-        // Configurar filtros
         configurarFiltros();
 
     } catch (error) {
@@ -349,11 +328,9 @@ async function cargarDetalleCurso(idPeriodoCurso) {
     }
 }
 
-// Función para mostrar actividades combinadas
 function mostrarActividadesCurso(tareas, evaluaciones) {
     const listaActividades = document.getElementById('lista-actividades');
     
-    // Combinar y ordenar por fecha
     const todasActividades = [
         ...tareas.map(t => ({ ...t, tipo: 'tarea' })),
         ...evaluaciones.map(e => ({ ...e, tipo: 'evaluacion' }))
@@ -362,10 +339,6 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
         const fechaB = b.fecha_entrega || b.fecha_inicio;
         return new Date(fechaA) - new Date(fechaB);
     });
-
-    console.log(todasActividades);
-    console.log("ta: ", tareas);
-    console.log("ev: ", evaluaciones);
 
     if (todasActividades.length === 0) {
         listaActividades.innerHTML = `
@@ -385,11 +358,9 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
         }
     }).join('');
     
-    // Configurar los event listeners para descargas
     configurarDescargas();
 }
 
-// Función para crear card de tarea
 function crearCardTarea(tarea) {
     const fechaEntrega = formatearFecha(tarea.fecha_entrega, tarea.hora_entrega);
     const tieneArchivo = tarea.archivo_url && tarea.archivo_url !== '';
@@ -432,7 +403,6 @@ function crearCardTarea(tarea) {
     `;
 }
 
-// Función para crear card de evaluación
 function crearCardEvaluacion(evaluacion) {
     const fechaInicio = formatearFecha(evaluacion.fecha_inicio, evaluacion.hora_inicio);
     const fechaEntrega = formatearFecha(evaluacion.fecha_entrega, evaluacion.hora_entrega);
@@ -482,7 +452,6 @@ function crearCardEvaluacion(evaluacion) {
     `;
 }
 
-// Función para formatear fechas
 function formatearFecha(fecha, hora) {
     if (!fecha) return 'No especificada';
     
@@ -493,15 +462,12 @@ function formatearFecha(fecha, hora) {
     return hora ? `${fechaFormateada} ${hora}` : fechaFormateada;
 }
 
-// Configurar filtros
 function configurarFiltros() {
     const filtroBtns = document.querySelectorAll('.filtro-btn');
     
     filtroBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            // Remover active de todos los botones
             filtroBtns.forEach(b => b.classList.remove('active'));
-            // Agregar active al botón clickeado
             this.classList.add('active');
             
             const filtro = this.getAttribute('data-filtro');
@@ -510,7 +476,6 @@ function configurarFiltros() {
     });
 }
 
-// Función para filtrar actividades
 function filtrarActividades(filtro) {
     const actividades = document.querySelectorAll('.actividad-card');
     
@@ -529,7 +494,6 @@ function filtrarActividades(filtro) {
     });
 }
 
-// Función para volver a la vista de cursos
 function volverACursos() {
     const detalleView = document.getElementById('curso-detalle');
     if (detalleView) {
@@ -538,11 +502,9 @@ function volverACursos() {
     }
     
     document.getElementById('cursos').classList.add('active');
-    
     cargarCursosEstudiante();
 }
 
-// Función para configurar event listeners de descarga
 function configurarDescargas() {
     document.querySelectorAll('.descargar-archivo').forEach(button => {
         button.addEventListener('click', function() {
@@ -553,33 +515,24 @@ function configurarDescargas() {
     });
 }
 
-// Función para manejar la descarga de archivos
 function manejarDescargaArchivo(archivoUrl, nombreArchivo) {
     if (!archivoUrl) {
         alert('No hay archivo disponible para descargar');
         return;
     }
     
-    // Usar el endpoint de descarga existente
     const urlDescarga = `php/descargar.php?archivo=${encodeURIComponent(archivoUrl)}`;
 
-    console.log("Iniciando descarga de archivo:");
-    console.log(`URL: ${archivoUrl}`);
-    console.log(`Nombre: ${nombreArchivo}`);
-    
-    // Crear un enlace temporal para la descarga
     const link = document.createElement('a');
     link.href = urlDescarga;
     link.download = nombreArchivo || 'archivo_descargado';
     link.target = '_blank';
     
-    // Simular click para iniciar la descarga
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 }
 
-// Función para formatear tamaño de archivo
 function formatFileSize(bytes) {
     if (!bytes || bytes === 0) return '0 Bytes';
     
@@ -705,48 +658,11 @@ function mostrarInscripcionesVacios(mensaje) {
     `;
 }
 
-async function inscribirEnCurso(idPeriodoCurso) {
-    try {
-        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
-        
-        if (!idEstudiante) {
-            alert('Debes iniciar sesión para inscribirte');
-            return;
-        }
-        
-        if (!confirm('¿Estás seguro de que quieres inscribirte en este curso?')) {
-            return;
-        }
-        
-        const formData = new FormData();
-        formData.append('id_estudiante', idEstudiante);
-        formData.append('id_periodo_curso', idPeriodoCurso);
-        
-        const response = await fetch('php/inscribirCurso.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const data = await response.json();
-        
-        if (data.exito) {
-            alert('¡Inscripción exitosa!');
-            cargarInscripciones();
-        } else {
-            alert('Error: ' + data.mensaje);
-        }
-    } catch (error) {
-        console.error('Error al inscribirse:', error);
-        alert('Error al realizar la inscripción');
-    }
-}// Variables globales para el modal de pago
 let cursoSeleccionadoParaInscripcion = null;
 
-// Función para mostrar modal de pago
 function mostrarModalPago(curso) {
     cursoSeleccionadoParaInscripcion = curso;
     
-    // Crear modal dinámicamente si no existe
     let modal = document.getElementById('modal-pago');
     if (!modal) {
         modal = document.createElement('div');
@@ -797,19 +713,16 @@ function mostrarModalPago(curso) {
         `;
         document.body.appendChild(modal);
         
-        // Agregar event listeners
         modal.querySelector('.close-modal').addEventListener('click', cerrarModalPago);
         modal.querySelector('#cancelar-pago').addEventListener('click', cerrarModalPago);
         modal.querySelector('#confirmar-pago').addEventListener('click', confirmarPago);
         
-        // Cerrar modal al hacer click fuera
         modal.addEventListener('click', function(event) {
             if (event.target === modal) {
                 cerrarModalPago();
             }
         });
     } else {
-        // Actualizar información del curso si el modal ya existe
         document.getElementById('modal-curso-nombre').textContent = curso.nombre_curso;
         document.getElementById('modal-curso-costo').textContent = curso.costo || 0;
     }
@@ -817,7 +730,6 @@ function mostrarModalPago(curso) {
     modal.style.display = 'block';
 }
 
-// Función para cerrar modal de pago
 function cerrarModalPago() {
     const modal = document.getElementById('modal-pago');
     if (modal) {
@@ -825,20 +737,16 @@ function cerrarModalPago() {
     }
 }
 
-// Función para confirmar pago (mock)
 async function confirmarPago() {
     try {
         const confirmarBtn = document.getElementById('confirmar-pago');
         const metodoPago = document.querySelector('input[name="metodo-pago"]:checked').value;
         
-        // Simular procesamiento de pago
         confirmarBtn.textContent = 'Procesando pago...';
         confirmarBtn.disabled = true;
         
-        // Simular delay de pago
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        // Realizar la inscripción
         const formData = new FormData();
         formData.append('id_estudiante', localStorage.getItem('id_user') || sessionStorage.getItem('id_user'));
         formData.append('id_periodo_curso', cursoSeleccionadoParaInscripcion.id_periodo_curso);
@@ -850,12 +758,11 @@ async function confirmarPago() {
         
         const data = await response.json();
         
-        // Cerrar modal
         cerrarModalPago();
         
         if (data.exito) {
             alert('Inscripción exitosa. Pago procesado correctamente.');
-            cargarInscripciones(); // Recargar la lista de cursos disponibles
+            cargarInscripciones();
         } else {
             alert('Error: ' + data.mensaje);
         }
@@ -871,7 +778,6 @@ async function confirmarPago() {
     }
 }
 
-// Modificar la función inscribirEnCurso para usar el modal
 async function inscribirEnCurso(idPeriodoCurso) {
     try {
         let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
@@ -881,14 +787,12 @@ async function inscribirEnCurso(idPeriodoCurso) {
             return;
         }
         
-        // Buscar el curso en los datos cargados
         const response = await fetch(`php/inscripcionesGet.php?id_estudiante=${idEstudiante}`);
         const data = await response.json();
         
         if (data.exito && data.cursos) {
             const curso = data.cursos.find(c => c.id_periodo_curso === idPeriodoCurso);
             if (curso) {
-                // Mostrar modal de pago en lugar de confirmación directa
                 mostrarModalPago(curso);
                 return;
             }
@@ -901,3 +805,263 @@ async function inscribirEnCurso(idPeriodoCurso) {
         alert('Error al cargar información del curso');
     }
 }
+async function cargarTienda() {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (!idEstudiante) {
+            mostrarTiendaVacia("Debes iniciar sesión");
+            return;
+        }
+
+        console.log("Cargando tienda para estudiante:", idEstudiante);
+
+        // Cargar todo en paralelo
+        const [descuentosResponse, becasResponse, puntosResponse] = await Promise.all([
+            fetch(`php/tiendaGetDescuentos.php?id_estudiante=${idEstudiante}`),
+            fetch(`php/tiendaGetBecas.php?id_estudiante=${idEstudiante}`),
+            fetch(`php/tiendaGetPuntos.php?id_estudiante=${idEstudiante}`)
+        ]);
+
+        // Obtener el texto de las respuestas primero para debuggear
+        const descuentosText = await descuentosResponse.text();
+        const becasText = await becasResponse.text();
+        const puntosText = await puntosResponse.text();
+
+        console.log("Respuesta descuentos:", descuentosText);
+        console.log("Respuesta becas:", becasText);
+        console.log("Respuesta puntos:", puntosText);
+
+        // Parsear JSON
+        let descuentosData, becasData, puntosData;
+
+        try {
+            descuentosData = JSON.parse(descuentosText);
+        } catch (e) {
+            console.error("Error parseando descuentos:", e);
+            descuentosData = { exito: false, mensaje: "Error parseando JSON: " + e.message };
+        }
+
+        try {
+            becasData = JSON.parse(becasText);
+        } catch (e) {
+            console.error("Error parseando becas:", e);
+            becasData = { exito: false, mensaje: "Error parseando JSON: " + e.message };
+        }
+
+        try {
+            puntosData = JSON.parse(puntosText);
+        } catch (e) {
+            console.error("Error parseando puntos:", e);
+            puntosData = { exito: false, mensaje: "Error parseando JSON: " + e.message };
+        }
+
+        // Verificar si todas las respuestas fueron exitosas
+        if (descuentosData.exito && becasData.exito && puntosData.exito) {
+            mostrarTienda(
+                descuentosData.descuentos || [],
+                becasData.becas || [],
+                puntosData.puntos_estudiante || 0
+            );
+        } else {
+            const errores = [];
+            if (!descuentosData.exito) errores.push("Descuentos: " + (descuentosData.mensaje || "Error desconocido"));
+            if (!becasData.exito) errores.push("Becas: " + (becasData.mensaje || "Error desconocido"));
+            if (!puntosData.exito) errores.push("Puntos: " + (puntosData.mensaje || "Error desconocido"));
+            
+            throw new Error(errores.join("; "));
+        }
+
+    } catch (error) {
+        console.error('Error completo al cargar tienda:', error);
+        mostrarTiendaVacia("Error al cargar la tienda: " + error.message);
+    }
+}
+function mostrarTienda(descuentos, becas, puntosEstudiante) {
+    const tiendaContainer = document.querySelector('#tienda .content-grid');
+    
+    tiendaContainer.innerHTML = `
+        <div class="content-card">
+            <h3>Tus Puntos Disponibles</h3>
+            <div class="puntos-disponibles">
+                <span class="puntos-totales">${puntosEstudiante}</span>
+                <span class="puntos-label">Desk Points</span>
+            </div>
+        </div>
+    `;
+
+    // Mostrar descuentos
+    if (descuentos.length > 0) {
+        const descuentosCard = document.createElement('div');
+        descuentosCard.className = 'content-card';
+        
+        let descuentosHTML = `
+            <h3>Descuentos Disponibles</h3>
+            <div class="descuentos-lista">
+        `;
+        
+        descuentos.forEach(descuento => {
+            descuentosHTML += `
+                <div class="descuento-item">
+                    <div class="descuento-info">
+                        <h4>${descuento.nombre_curso}</h4>
+                        <p><strong>Descuento:</strong> ${descuento.porcentaje_descuento}%</p>
+                        <p><strong>Profesor:</strong> ${descuento.nombre_profesor}</p>
+                        <p><strong>Categoría:</strong> ${descuento.nombre_categoria}</p>
+                        <p><strong>Área:</strong> ${descuento.nombre_area}</p>
+                        <p><strong>Válido hasta:</strong> ${formatearFecha(descuento.fecha_fin)}</p>
+                    </div>
+                    <div class="descuento-precio">
+                        <span class="costo-puntos">${descuento.costo_canje} Points</span>
+                        <button class="shiny small canjear-descuento-btn" 
+                                data-descuento-id="${descuento.id_descuento}" 
+                                data-descuento-costo="${descuento.costo_canje}">
+                            Canjear
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        descuentosHTML += '</div>';
+        descuentosCard.innerHTML = descuentosHTML;
+        tiendaContainer.appendChild(descuentosCard);
+    }
+
+    // Mostrar becas
+    if (becas.length > 0) {
+        const becasCard = document.createElement('div');
+        becasCard.className = 'content-card';
+        
+        let becasHTML = `
+            <h3>Tus Becas</h3>
+            <div class="becas-lista">
+        `;
+        
+        becas.forEach(beca => {
+            becasHTML += `
+                <div class="beca-item">
+                    <div class="beca-info">
+                        <h4>Beca para ${beca.nombre_area}</h4>
+                        <p><strong>Porcentaje:</strong> ${beca.porcentaje}%</p>
+                        <p><strong>Estado:</strong> ${beca.estado_beca}</p>
+                        <p><strong>Asignada por:</strong> ${beca.admin_nombre || 'Admin'} ${beca.admin_apellido || ''}</p>
+                        <p><strong>Válida hasta:</strong> ${formatearFecha(beca.fecha_fin)}</p>
+                    </div>
+                    ${beca.estado_beca === 'Pendiente' ? `
+                        <button class="shiny small aceptar-beca-btn" data-beca-id="${beca.id_beca}">
+                            Aceptar Beca
+                        </button>
+                    ` : '<span class="estado-aceptada">✓ Aceptada</span>'}
+                </div>
+            `;
+        });
+        
+        becasHTML += '</div>';
+        becasCard.innerHTML = becasHTML;
+        tiendaContainer.appendChild(becasCard);
+    }
+
+    // Mensaje si no hay nada
+    if (descuentos.length === 0 && becas.length === 0) {
+        const vacioCard = document.createElement('div');
+        vacioCard.className = 'content-card';
+        vacioCard.innerHTML = `
+            <h3>No hay descuentos o becas disponibles</h3>
+            <p>Vuelve más tarde para ver nuevas ofertas.</p>
+        `;
+        tiendaContainer.appendChild(vacioCard);
+    }
+}
+
+// Función para mostrar tienda vacía
+function mostrarTiendaVacia(mensaje) {
+    const tiendaContainer = document.querySelector('#tienda .content-grid');
+    tiendaContainer.innerHTML = `
+        <div class="content-card">
+            <h3>${mensaje}</h3>
+            <p>No se pudieron cargar los descuentos y becas.</p>
+        </div>
+    `;
+}
+
+// Función para canjear descuento - VERSIÓN CORREGIDA PARA STRINGS
+async function canjearDescuento(idDescuento, costo) {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (!confirm(`¿Canjear este descuento por ${costo} puntos?`)) {
+            return;
+        }
+
+        console.log("Canjeando descuento:", { 
+            idDescuento: idDescuento, 
+            tipo_idDescuento: typeof idDescuento,
+            costo: costo, 
+            idEstudiante: idEstudiante 
+        });
+
+        const formData = new FormData();
+        formData.append('id_estudiante', idEstudiante);
+        formData.append('id_descuento', idDescuento); // Enviar como string
+
+        const response = await fetch('php/canjearDescuento.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const responseText = await response.text();
+        console.log("Respuesta del servidor:", responseText);
+
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Error parseando JSON:", e);
+            alert('Error en la respuesta del servidor');
+            return;
+        }
+
+        if (data.exito) {
+            alert('Descuento canjeado exitosamente');
+            cargarTienda();
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al canjear descuento:', error);
+        alert('Error de conexión');
+    }
+}
+// Función para aceptar beca
+async function aceptarBeca(idBeca) {
+    try {
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (!confirm('¿Aceptar esta beca?')) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('id_estudiante', idEstudiante);
+        formData.append('id_beca', idBeca);
+
+        const response = await fetch('php/aceptarBeca.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.exito) {
+            alert('Beca aceptada exitosamente');
+            cargarTienda(); // Recargar la vista
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al aceptar beca:', error);
+        alert('Error al aceptar la beca');
+    }
+}
+
