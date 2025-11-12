@@ -9,7 +9,6 @@ if (empty($id_periodo_curso)) {
     exit;
 }
 
-// Consulta simplificada sin la columna problemática
 $sql = "
     SELECT 
         t.*,
