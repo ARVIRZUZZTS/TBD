@@ -21,11 +21,11 @@ $sql = "
         u.correo,
         u.edad,
         u.grado, 
-        COALESCE(p.saldo_actual, 0) AS saldo_actual,
-        COALESCE(p.puntos_totales, 0) AS puntos_totales,
-        COALESCE(p.puntos_gastados, 0) AS puntos_gastados,
-        COALESCE(p.rankingPoints, 0) AS rankingPoints,
-        COALESCE(AVG(c.nota), 0) AS promedio,
+        p.saldo_actual  AS saldo_actual,
+        p.puntos_totales  AS puntos_totales,
+        p.puntos_gastados AS puntos_gastados,
+        p.rankingPoints AS rankingPoints,
+        AVG(c.nota) AS promedio,
         'Activo' AS estado
     FROM USUARIO u
     INNER JOIN ROL_USUARIO ru ON u.id_user = ru.id_user
