@@ -29,3 +29,17 @@ modificar MATERIAL con fecha emision y hora emision
 corregir vista admin 
 corregir desplegable cursos // Sergio
 
+entre gestiones
+1 semana despues del now()
+
+urgente-----------------------------------agregar rol a lista de trabajadores
+--Cambio necesario a decimal para aplicar la formula
+
+TRIGGERS ACTIVOS (de la imagen)
+    - I,II actualizacion automaticamente de puntos canje y rankingPoints
+        - en el php solo seria colocar en entrega el update de la nota desde el maestro con el id_estudiante y el nuevo valor de la nota que cambiara el 0.00
+        - el trigger manda [nota*0.3 + anterior] y ya menos en rankingPoints es solo [nota + anterior]
+    - III actualiza los puntos cuando un estudainte compra una recompensa tanto un descuento como un cosmetico
+        - el php solo debe agregar en recompensa_canjeada lo necesario de ESA tabla
+    - IV ya esta en un php/inscribirCurso.php 
+    - V 
