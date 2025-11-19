@@ -85,7 +85,7 @@ DELIMITER ;
 
 CREATE TABLE `archivos_publicacion` (
   `id_archivo` int(11) NOT NULL,
-  `id_publicacion` int(11) NOT NULL
+  `id_publicacion` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
