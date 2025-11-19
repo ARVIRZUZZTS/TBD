@@ -253,3 +253,40 @@
     justify-content: space-between;
     align-items: center;
 }
+/*--------------------PRINT--------------------*/
+#printy {
+    display: none;
+    padding: 20px;
+    font-family: serif;
+    text-align: center;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #printy, #printy * {
+        visibility: visible;
+    }
+
+    #printy {
+        display: block !important;
+        width: 100%;
+        text-align: center;
+    }
+
+    #printy img {
+        width: 200px;
+        margin: 0 auto;
+        display: block;
+    }
+
+    #printy h1, #printy h3, #printy p {
+        margin: 10px 0;
+    }
+
+    header, main {
+        display: none !important;
+    }
+}
