@@ -1,3 +1,4 @@
+/* estudiante.css */
 html, body {
     height: 100%;
     margin: 0;
@@ -135,7 +136,7 @@ html, body {
 }
 
 .course-stat-number {
-    font-size:2.3vh;
+    font-size: 2.3vh;
     font-weight: bold;
     color: var(--shiny);
     display: block;
@@ -236,13 +237,6 @@ html, body {
     background-color: var(--shiny);
     border-radius: 8px;
     transition: width 0.5s ease;
-}
-
-.progress-container {
-    background: var(--back);
-    padding: 10px;
-    border-radius: 10px;
-    margin: 10px 0;
 }
 
 /* ===== ESTADÍSTICAS DE PROGRESO ===== */
@@ -432,18 +426,10 @@ nav {
 }
 
 /* ===== AJUSTES ESPECÍFICOS POR PESTAÑA ===== */
-#inicio .content-grid {
-    grid-template-rows: 1fr;
-}
-
 #cursos .content-grid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     grid-auto-rows: minmax(320px, auto);
     align-items: start;
-}
-
-#recursos .content-grid {
-    grid-template-rows: 1fr;
 }
 
 /* ===== VISTA DETALLADA DEL CURSO ===== */
@@ -515,7 +501,7 @@ nav {
     height: 100%;
 }
 
-/* ===== CARDS DE ACTIVIDADES CORREGIDAS ===== */
+/* ===== CARDS DE ACTIVIDADES ===== */
 .actividad-card {
     background: white;
     border-radius: 12px;
@@ -559,7 +545,6 @@ nav {
     max-height: 6vh;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
 }
 
@@ -599,7 +584,6 @@ nav {
     max-height: 5.4vh;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     flex-shrink: 0;
 }
@@ -670,7 +654,7 @@ nav {
     color: #e74c3c;
 }
 
-/* ===== INFORMACIÓN DE ARCHIVOS CORREGIDA ===== */
+/* ===== INFORMACIÓN DE ARCHIVOS ===== */
 .archivo-info {
     grid-column: 1 / -1;
     background: var(--back);
@@ -721,6 +705,7 @@ nav {
 .contenido-curso::-webkit-scrollbar-thumb:hover {
     background: var(--shinyHover);
 }
+
 /* ===== MODAL ===== */
 .modal {
     display: none;
@@ -736,14 +721,14 @@ nav {
 
 .modal-content {
     background-color: white;
-    margin: 5% auto; /* Cambiado de 10% a 5% para subirlo más */
+    margin: 5% auto;
     padding: 0;
     border-radius: 15px;
     width: 90%;
     max-width: 500px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     position: relative;
-    top: -5%; /* Esto lo sube un poco más */
+    top: -5%;
 }
 
 .modal-header {
@@ -837,4 +822,73 @@ nav {
     color: #856404;
     font-style: italic;
 }
+/* Agregar al estudiante.css */
 
+/* Estilos para la tienda */
+.puntos-disponibles {
+    text-align: center;
+    padding: 2vh;
+}
+
+.puntos-totales {
+    font-size: 4vh;
+    font-weight: bold;
+    color: var(--shiny);
+    display: block;
+}
+
+.puntos-label {
+    font-size: 2vh;
+    color: var(--nigger);
+}
+
+.descuentos-lista, .becas-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 2vh;
+}
+
+.descuento-item, .beca-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5vh;
+    background: var(--back);
+    border-radius: 8px;
+    border-left: 4px solid var(--shiny);
+}
+
+.descuento-info, .beca-info {
+    flex: 1;
+}
+
+.descuento-info h4, .beca-info h4 {
+    margin: 0 0 1vh 0;
+    color: var(--nigger);
+    font-size: 2vh;
+}
+
+.descuento-info p, .beca-info p {
+    margin: 0.5vh 0;
+    font-size: 1.6vh;
+    color: var(--nigger);
+}
+
+.descuento-precio {
+    text-align: center;
+    min-width: 120px;
+}
+
+.costo-puntos {
+    display: block;
+    font-size: 2vh;
+    font-weight: bold;
+    color: var(--shiny);
+    margin-bottom: 1vh;
+}
+
+.estado-aceptada {
+    color: #27ae60;
+    font-weight: bold;
+    font-size: 1.6vh;
+}

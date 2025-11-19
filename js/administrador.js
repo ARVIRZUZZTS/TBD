@@ -1264,9 +1264,10 @@ function infoEst(id_user) {
 
             const accionesHTML = `
                 <div id="estAcc" style="margin-top: 20px; text-align: center;">
+                <button class="back" onclick="darBaja(${id_user})">Dar de baja</button>
                     <button class="shiny" onclick="becaEstudiante(${id_user}, &quot;${est.nombre}&quot;, &quot;${est.apellido}&quot;)">Dar Beca</button>
-                    <button class="shiny" onclick="inscripciones(${id_user})">Ver Inscripciones</button>
-                    <button class="back" onclick="darBaja(${id_user})">Dar de baja</button>
+                    <button class="shiny" onclick="inscripciones(${id_user})">Reporte de Incripciones</button>
+                    <button class="shiny" onclick="recompensas(${id_user})">Reporte de Recompensas</button>
                     <button class="back" onclick="estudiante()">← Volver</button>
                 </div>
             `;
@@ -1606,6 +1607,221 @@ function registrarDescuento() {
 
 
 function inscripciones(id_user) {
+    fetch(`php/reporteAcademicoGet.php?id_user=${id_user}`)
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                alert(data.message || "Error al obtener inscripciones del estudiante");
+                return;
+            }
+
+            const ins = data.inscripciones;
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML = "";
+
+            let tablaHTML = `
+                <div id="titleM">
+                    <h3>Reporte académico del estudiante ${id_user}</h3>
+                </div>
+
+                <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>CURSO-PC</th>
+                            <th>TÍTULO</th>
+                            <th>MAESTRO</th>
+                            <th>PROGRESO</th>
+                            <th>ESTADO</th>
+                            <th>DESKPOINTS</th>
+                            <th>RANKINGPOINTS</th>
+                            <th>NOTA</th>
+                            <th>ACCIÓN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            const fechaActual = new Date();
+
+            ins.forEach(row => {
+                let progreso = 0;
+
+                const inicio = new Date(row.fecha_inicio);
+                const fin = new Date(row.fecha_fin);
+
+                if (fechaActual < inicio) {
+                    progreso = 0;
+                } else if (fechaActual >= fin) {
+                    progreso = 100;
+                } else {
+                    let total = fin - inicio;
+                    let actual = fechaActual - inicio;
+                    progreso = Math.round((actual / total) * 100);
+                }
+
+                const maestro = `${row.id_maestro}:${row.maestro_nombre} ${row.maestro_apellido}`;
+
+                const cursoPC = `${row.id_curso}-${row.id_periodo_curso}`;
+
+                let btnCert = "-";
+                if (row.id_categoria == "4" && row.estado_periodo === "Finalizado" && row.estado_estudiante === "Aprobado") {
+                    btnCert = `<button class="shiny" onclick="showCertificado(this, ${row.id_estudiante}, ${row.id_periodo_curso})">CERTIFICADO</button>`;
+                }
+
+                tablaHTML += `
+                    <tr>
+                        <td>${cursoPC}</td>
+                        <td>${row.titulo}</td>
+                        <td>${maestro}</td>
+                        <td>${progreso}%</td>
+                        <td>${row.estado_periodo}</td>
+                        <td>${row.deskPoints}</td>
+                        <td>${row.rankingPoints}</td>
+                        <td>${row.nota ?? "-"}</td>
+                        <td>${btnCert}</td>
+                    </tr>
+                `;
+            });
+
+            tablaHTML += `
+                    </tbody>
+                </table>
+                </div>
+
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="back" onclick="infoEst(${id_user})">← Volver</button>
+                </div>
+            `;
+
+            dinamic.innerHTML = tablaHTML;
+        })
+        .catch(err => {
+            console.error("Error en inscripciones:", err);
+            alert("Error de conexión con el servidor");
+        });
+}
+
+function showCertificado(element, id_estudiante, id_periodo_curso) {
+    const menuExistente = document.getElementById('certMenu');
+    if (menuExistente) menuExistente.remove();
+
+    const menu = document.createElement('div');
+    menu.id = 'certMenu';
+    menu.className = 'menu-opciones';
+
+    const opciones = [
+        { texto: 'Imprimir', accion: 'print' },
+        { texto: 'Descargar PDF', accion: 'pdf' }
+    ];
+
+    opciones.forEach(op => {
+        const btn = document.createElement('button');
+        btn.className = 'opcion-menu';
+        btn.textContent = op.texto;
+
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            certificado(id_estudiante, id_periodo_curso, op.accion);
+        };
+
+        menu.appendChild(btn);
+    });
+
+    document.body.appendChild(menu);
+
+    const rect = element.getBoundingClientRect();
+    menu.style.top = (rect.bottom + window.scrollY) + 'px';
+    menu.style.left = (rect.left + window.scrollX) + 'px';
+    menu.classList.add('mostrar');
+
+    setTimeout(() => {
+        document.addEventListener("click", (e) => {
+            if (!menu.contains(e.target)) menu.remove();
+        });
+    }, 0);
+}
+
+function certificado(id_estudiante, id_periodo_curso, accion) {
+
+    fetch(`php/getCertificadoData.php?id_estudiante=${id_estudiante}&id_periodo_curso=${id_periodo_curso}`)
+    .then(r => r.json())
+    .then(data => {
+
+        if (!data.success) {
+            alert("No se pudo generar el certificado");
+            return;
+        }
+
+        const d = data.data;
+        const div = document.getElementById("printy");
+
+        div.innerHTML = `
+            <div>
+                <img src="img/logo.png" id="certLogo">
+                <h1>CERTIFICADO DE FINALIZACIÓN<br>${d.titulo}</h1>
+            </div>
+
+            <div style="margin-top:40px;">
+                <h3>Verificado por Administración: Nombre Apellido Admin</h3>
+                <h3>Aprobado por el Maestro: ${d.mae_nombre} ${d.mae_apellido}</h3>
+            </div>
+
+            <p style="margin-top:30px; font-size:20px; width:90%; margin:auto; line-height:1.5;">
+                Se certifica que <b>${d.est_nombre} ${d.est_apellido}</b> ha completado 
+                satisfactoriamente el curso <b>${d.titulo}</b> obteniendo la nota de 
+                <b>${d.nota}</b>. En reconocimiento a su esfuerzo se le otorga este certificado.
+                <br><br>¡Felicidades!
+            </p>
+        `;
+
+        const imgs = div.querySelectorAll("img");
+        let cargas = 0;
+
+        imgs.forEach(img => {
+            const loader = new Image();
+            loader.onload = () => {
+                cargas++;
+                if (cargas === imgs.length) {
+                    if (accion === "print") {
+                        setTimeout(() => window.print(), 200);
+                    }
+                    if (accion === "pdf") {
+                        descargarPDFCert(div.innerHTML);
+                    }
+                }
+            };
+            loader.onerror = () => {
+                cargas++;
+                if (cargas === imgs.length) {
+                    if (accion === "print") {
+                        setTimeout(() => window.print(), 200);
+                    }
+                    if (accion === "pdf") {
+                        descargarPDFCert(div.innerHTML);
+                    }
+                }
+            };
+            loader.src = img.src;
+        });
+
+    })
+    .catch(e => console.error(e));
+}
+function descargarPDFCert(html) {
+    const w = window.open("", "_blank");
+    w.document.write(`
+        <html>
+            <head><title>Certificado</title></head>
+            <body>${html}</body>
+        </html>
+    `);
+    w.document.close();
+    w.print();
+}
+
+
+function recompensas(id_user) {
 
 }
 
