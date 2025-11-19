@@ -82,7 +82,7 @@ try {
         throw new Exception("Ya has canjeado este descuento anteriormente");
     }
     
-    // 3. Verificar puntos del estudiante
+    // 3. Verificar puntos del estudiante (solo para validación, el trigger hace la resta)
     $sql_puntos = "SELECT id_user, saldo_actual FROM puntos WHERE id_user = ?";
     $stmt = $conexion->prepare($sql_puntos);
     
@@ -111,23 +111,8 @@ try {
         throw new Exception("Puntos insuficientes. Tienes $saldo_actual pero necesitas $costo_canje");
     }
     
-    // 4. Restar puntos
-    $sql_restar = "UPDATE puntos SET saldo_actual = saldo_actual - ? WHERE id_user = ?";
-    $stmt = $conexion->prepare($sql_restar);
-    
-    if (!$stmt) {
-        throw new Exception("Error preparando actualización de puntos: " . $conexion->error);
-    }
-    
-    $stmt->bind_param("di", $costo_canje, $id_estudiante);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Error ejecutando actualización de puntos: " . $stmt->error);
-    }
-    
-    error_log("Puntos restados exitosamente");
-    
-    // 5. Registrar canje en recompensa_canjeada (AMBOS CAMPOS COINCIDEN COMO VARCHAR)
+    // 4. Registrar canje en recompensa_canjeada (AMBOS CAMPOS COINCIDEN COMO VARCHAR)
+    // EL TRIGGER SE ENCARGA DE RESTAR LOS PUNTOS AUTOMÁTICAMENTE
     $sql_registrar = "
         INSERT INTO recompensa_canjeada (recompensa, id_estudiante, fecha_recompensa, hora_recompensa)
         VALUES (?, ?, CURDATE(), CURTIME())
@@ -151,11 +136,7 @@ try {
         "mensaje" => "Descuento canjeado exitosamente",
         "id_periodo_curso" => $id_periodo_curso,
         "curso" => $nombre_curso,
-        "debug" => [
-            'saldo_antes' => $saldo_actual,
-            'costo_canje' => $costo_canje,
-            'saldo_despues' => $saldo_actual - $costo_canje
-        ]
+        "puntos_restados" => $costo_canje
     ]);
     
 } catch (Exception $e) {
