@@ -20,7 +20,7 @@ $sql = "
         aa.ruta_archivo as archivo_url
     FROM evaluacion e
     INNER JOIN modulo m ON e.id_modulo = m.id_modulo
-    LEFT JOIN archivos_publicacion ap ON e.id_evaluacion = ap.id_publicacion
+    LEFT JOIN archivos_publicacion ap ON CONCAT('EV-', e.id_evaluacion) = ap.id_publicacion
     LEFT JOIN archivos_adjuntos aa ON ap.id_archivo = aa.id_archivo
     WHERE m.id_periodo_curso = ?
     ORDER BY e.fecha_entrega ASC, e.hora_entrega ASC

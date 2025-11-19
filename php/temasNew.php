@@ -102,10 +102,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $id_archivo = $conexion->insert_id;
                     
-                    // Relacionar archivo con el tema en archivos_publicacion
+                    // Relacionar archivo con el tema en archivos_publicacion (USANDO PREFIJO)
                     $sqlRelacion = "INSERT INTO archivos_publicacion (id_archivo, id_publicacion) VALUES (?, ?)";
                     $stmtRelacion = $conexion->prepare($sqlRelacion);
-                    $stmtRelacion->bind_param("ii", $id_archivo, $id_tema);
+                    $id_publicacion_con_prefijo = 'TE-' . $id_tema;
+                    $stmtRelacion->bind_param("is", $id_archivo, $id_publicacion_con_prefijo);
                     
                     if (!$stmtRelacion->execute()) {
                         throw new Exception('Error al relacionar el archivo: ' . $stmtRelacion->error);
@@ -124,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'success' => true, 
                 'message' => 'Tema creado exitosamente' . ($archivo_subido ? ' con archivo adjunto' : ''),
                 'id_tema' => $id_tema,
+                'id_publicacion' => 'TE-' . $id_tema,
                 'con_archivo' => $archivo_subido
             ]);
             
@@ -170,10 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("is", $id_modulo, $titulo);
             
             if ($stmt->execute()) {
+                $id_tema = $conexion->insert_id;
+                
                 echo json_encode([
                     'success' => true, 
                     'message' => 'Tema creado exitosamente',
-                    'id_tema' => $conexion->insert_id,
+                    'id_tema' => $id_tema,
+                    'id_publicacion' => 'TE-' . $id_tema,
                     'con_archivo' => false
                 ]);
             } else {

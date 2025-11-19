@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        aa.id_archivo, aa.titulo as archivo_nombre, aa.tipo as archivo_tipo, 
                        aa.ruta_archivo as archivo_url
                 FROM tarea t
-                LEFT JOIN archivos_publicacion ap ON t.id_tarea = ap.id_publicacion
+                LEFT JOIN archivos_publicacion ap ON CONCAT('TA-', t.id_tarea) = ap.id_publicacion
                 LEFT JOIN archivos_adjuntos aa ON ap.id_archivo = aa.id_archivo
                 WHERE t.id_modulo = ?
                 ORDER BY t.fecha_emision DESC, t.hora_emision DESC";
