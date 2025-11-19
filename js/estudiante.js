@@ -994,12 +994,6 @@ async function canjearDescuento(idDescuento, costo) {
             return;
         }
 
-        console.log("Canjeando descuento:", { 
-            idDescuento: idDescuento, 
-            tipo_idDescuento: typeof idDescuento,
-            costo: costo, 
-            idEstudiante: idEstudiante 
-        });
 
         const formData = new FormData();
         formData.append('id_estudiante', idEstudiante);
