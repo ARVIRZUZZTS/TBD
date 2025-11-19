@@ -1341,7 +1341,6 @@ function displayModulesWithContent(modules) {
                                             <a href="php/descargar.php?archivo=${tema.archivo_url.replace('uploads/', '')}" class="archivo-link" target="_blank">
                                                 📎 ${tema.archivo_nombre || 'Archivo adjunto'}
                                             </a>
-                                            <small>Tipo: ${tema.archivo_tipo || 'Archivo'}</small>
                                         </div>
                                     ` : ''}
                                 </div>
@@ -1369,7 +1368,6 @@ function displayModulesWithContent(modules) {
                                             <a href="php/descargar.php?archivo=${tarea.archivo_url.replace('uploads/', '')}" class="archivo-link" target="_blank">
                                                 📎 ${tarea.archivo_nombre || 'Archivo adjunto'}
                                             </a>
-                                            <small>Tipo: ${tarea.archivo_tipo || 'Archivo'}</small>
                                         </div>
                                     ` : ''}
                                     <small>Entrega: ${formatDate(tarea.fecha_entrega)} ${tarea.hora_entrega}</small>
@@ -1398,7 +1396,6 @@ function displayModulesWithContent(modules) {
                                             <a href="php/descargar.php?archivo=${evaluacion.archivo_url.replace('uploads/', '')}" class="archivo-link" target="_blank">
                                                 📎 ${evaluacion.archivo_nombre || 'Archivo adjunto'}
                                             </a>
-                                            <small>Tipo: ${evaluacion.archivo_tipo || 'Archivo'}</small>
                                         </div>
                                     ` : ''}
                                     <small>Inicio: ${formatDate(evaluacion.fecha_inicio)} ${evaluacion.hora_inicio}</small>
