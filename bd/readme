@@ -5,3 +5,4 @@ comentar linea 1181
 eliminar trigger actualizar puntos nota y subirlo desde triggers sql
 
 borrar el doble   `id_publicacion` varchar(20) NOT NULL,  
+
