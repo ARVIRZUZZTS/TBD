@@ -1,0 +1,235 @@
+//mas especifico para cada curso
+import { formatearFecha, formatFileSize, manejarDescargaArchivo } from './utils.js';
+
+export async function cargarDetalleCurso(idPeriodoCurso) {
+    try {
+        const detalleView = document.getElementById('curso-detalle');
+        detalleView.innerHTML = `
+            <div class="curso-detalle-header">
+                <button class="back-button" onclick="volverACursos()">← Volver a Mis Cursos</button>
+                <h1 id="curso-detalle-titulo">Cargando...</h1>
+                <div class="filtros-curso">
+                    <button class="filtro-btn active" data-filtro="todos">Todos</button>
+                    <button class="filtro-btn" data-filtro="tareas">Tareas</button>
+                    <button class="filtro-btn" data-filtro="evaluaciones">Evaluaciones</button>
+                </div>
+            </div>
+            <div class="contenido-curso">
+                <div class="lista-actividades" id="lista-actividades">
+                    <div class="loading">Cargando actividades...</div>
+                </div>
+            </div>
+        `;
+
+        const [cursoData, evaluacionesData] = await Promise.all([
+            fetch(`php/cursoDetalleGet.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json()),
+            fetch(`php/evaluacionesGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`).then(r => r.json())
+        ]);
+
+        let tareasData = { exito: false, tareas: [] };
+        try {
+            const tareasResponse = await fetch(`php/tareasGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`);
+            const responseText = await tareasResponse.text();
+            
+            if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+                tareasData = JSON.parse(responseText);
+            } else {
+                tareasData = { exito: false, tareas: [], mensaje: 'Error en el servidor' };
+            }
+        } catch (tareasError) {
+            tareasData = { exito: false, tareas: [] };
+        }
+
+        if (cursoData.exito) {
+            document.getElementById('curso-detalle-titulo').textContent = cursoData.curso.nombre_curso;
+        }
+
+        mostrarActividadesCurso(tareasData.tareas || [], evaluacionesData.evaluaciones || []);
+        configurarFiltros();
+
+    } catch (error) {
+        console.error('Error al cargar detalle del curso:', error);
+        document.getElementById('lista-actividades').innerHTML = `
+            <div class="error">Error al cargar el curso: ${error.message}</div>
+        `;
+    }
+}
+
+function mostrarActividadesCurso(tareas, evaluaciones) {
+    const listaActividades = document.getElementById('lista-actividades');
+    
+    const todasActividades = [
+        ...tareas.map(t => ({ ...t, tipo: 'tarea' })),
+        ...evaluaciones.map(e => ({ ...e, tipo: 'evaluacion' }))
+    ].sort((a, b) => {
+        const fechaA = a.fecha_entrega || a.fecha_inicio;
+        const fechaB = b.fecha_entrega || b.fecha_inicio;
+        return new Date(fechaA) - new Date(fechaB);
+    });
+
+    if (todasActividades.length === 0) {
+        listaActividades.innerHTML = `
+            <div class="sin-actividades">
+                <h3>No hay actividades disponibles</h3>
+                <p>El profesor aún no ha publicado tareas o evaluaciones.</p>
+            </div>
+        `;
+        return;
+    }
+
+    listaActividades.innerHTML = todasActividades.map(actividad => {
+        if (actividad.tipo === 'tarea') {
+            return crearCardTarea(actividad);
+        } else {
+            return crearCardEvaluacion(actividad);
+        }
+    }).join('');
+    
+    configurarDescargas();
+}
+
+function crearCardTarea(tarea) {
+    const fechaEntrega = formatearFecha(tarea.fecha_entrega, tarea.hora_entrega);
+    const tieneArchivo = tarea.archivo_url && tarea.archivo_url !== '';
+    
+    return `
+        <div class="actividad-card tarea" data-tipo="tarea">
+            <div class="actividad-header">
+                <h3>${tarea.titulo}</h3>
+                <span class="actividad-badge tarea-badge">Tarea</span>
+            </div>
+            <div class="actividad-info">
+                <p class="actividad-descripcion">${tarea.descripcion || 'Sin descripción'}</p>
+                <div class="actividad-meta">
+                    <div class="fecha-info">
+                        <strong>Entrega:</strong> ${fechaEntrega}
+                    </div>
+                    <div class="modulo-info">
+                        <strong>Módulo:</strong> ${tarea.modulo_titulo || 'General'}
+                    </div>
+                    ${tieneArchivo ? `
+                        <div class="archivo-info">
+                            <strong>Archivo adjunto:</strong> 
+                            <span class="archivo-nombre">${tarea.archivo_nombre || 'Material de apoyo'}</span>
+                            <small>Tamaño: ${formatFileSize(tarea.archivo_tamanio)}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="actividad-actions">
+                <button class="shiny small">Ver Detalles</button>
+                ${tieneArchivo ? `
+                    <button class="back small descargar-archivo" 
+                            data-archivo="${tarea.archivo_url.replace('uploads/', '')}"
+                            data-nombre="${tarea.archivo_nombre || 'archivo_descargado'}">
+                        Descargar Material
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function crearCardEvaluacion(evaluacion) {
+    const fechaInicio = formatearFecha(evaluacion.fecha_inicio, evaluacion.hora_inicio);
+    const fechaEntrega = formatearFecha(evaluacion.fecha_entrega, evaluacion.hora_entrega);
+    const tieneArchivo = evaluacion.archivo_url && evaluacion.archivo_url !== '';
+    
+    return `
+        <div class="actividad-card evaluacion" data-tipo="evaluacion">
+            <div class="actividad-header">
+                <h3>${evaluacion.titulo}</h3>
+                <span class="actividad-badge evaluacion-badge">Evaluación</span>
+            </div>
+            <div class="actividad-info">
+                <p class="actividad-descripcion">${evaluacion.descripcion || 'Sin descripción'}</p>
+                <div class="actividad-meta">
+                    <div class="fecha-info">
+                        <strong>Inicio:</strong> ${fechaInicio}
+                    </div>
+                    <div class="fecha-info">
+                        <strong>Entrega:</strong> ${fechaEntrega}
+                    </div>
+                    <div class="puntos-info">
+                        <strong>Desk Points:</strong> ${evaluacion.deskpoints || 0}
+                    </div>
+                    <div class="modulo-info">
+                        <strong>Módulo:</strong> ${evaluacion.modulo_titulo || 'General'}
+                    </div>
+                    ${tieneArchivo ? `
+                        <div class="archivo-info">
+                            <strong>Archivo adjunto:</strong> 
+                            <span class="archivo-nombre">${evaluacion.archivo_nombre || 'Material de evaluación'}</span>
+                            <small>Tamaño: ${formatFileSize(evaluacion.archivo_tamanio)}</small>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="actividad-actions">
+                <button class="shiny small">Comenzar Evaluación</button>
+                ${tieneArchivo ? `
+                    <button class="back small descargar-archivo" 
+                            data-archivo="${evaluacion.archivo_url.replace('uploads/', '')}"
+                            data-nombre="${evaluacion.archivo_nombre || 'archivo_evaluacion'}">
+                        Descargar Material
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function configurarFiltros() {
+    const filtroBtns = document.querySelectorAll('.filtro-btn');
+    
+    filtroBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filtroBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filtro = this.getAttribute('data-filtro');
+            filtrarActividades(filtro);
+        });
+    });
+}
+
+function filtrarActividades(filtro) {
+    const actividades = document.querySelectorAll('.actividad-card');
+    
+    actividades.forEach(actividad => {
+        switch (filtro) {
+            case 'todos':
+                actividad.style.display = 'block';
+                break;
+            case 'tareas':
+                actividad.style.display = actividad.dataset.tipo === 'tarea' ? 'block' : 'none';
+                break;
+            case 'evaluaciones':
+                actividad.style.display = actividad.dataset.tipo === 'evaluacion' ? 'block' : 'none';
+                break;
+        }
+    });
+}
+
+function configurarDescargas() {
+    document.querySelectorAll('.descargar-archivo').forEach(button => {
+        button.addEventListener('click', function() {
+            const archivoUrl = this.getAttribute('data-archivo');
+            const nombreArchivo = this.getAttribute('data-nombre');
+            manejarDescargaArchivo(archivoUrl, nombreArchivo);
+        });
+    });
+}
+
+// Exportar para uso global desde HTML
+window.volverACursos = () => {
+    const detalleView = document.getElementById('curso-detalle');
+    if (detalleView) {
+        detalleView.classList.remove('active');
+        detalleView.innerHTML = ''; 
+    }
+    
+    document.getElementById('cursos').classList.add('active');
+    // Necesitaríamos importar cargarCursosEstudiante aquí o usar evento
+    window.dispatchEvent(new CustomEvent('recargarCursos'));
+};

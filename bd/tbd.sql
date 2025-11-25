@@ -92,9 +92,9 @@ DELIMITER ;
 
 CREATE TABLE `archivos_publicacion` (
   `id_archivo` int(11) NOT NULL,
-  `id_publicacion` varchar(20) NOT NULL
+  `id_publicacion` varchar(20) NOT NULL,  
+  PRIMARY KEY (`id_archivo`,`id_publicacion`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 --
 -- Volcado de datos para la tabla `archivos_publicacion`
 --
@@ -500,19 +500,6 @@ INSERT INTO `entregas` (`id_entrega`, `id_user`, `nota`, `hora_entrega`, `fecha_
 --
 -- Disparadores `entregas`
 --
-DELIMITER $$
-CREATE TRIGGER `actualizar_puntos_nota` AFTER UPDATE ON `entregas` FOR EACH ROW BEGIN
-	IF NEW.nota <> OLD.nota THEN
-    	UPDATE puntos
-        SET
-        	saldo_actual = saldo_actual + (NEW.nota * 0.3),
-            puntos_totales = puntos_totales + (NEW.nota *0.3),
-            rankingPoints = rankingPoints + NEW.nota
-		WHERE id_user = NEW.id_user;
-	END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1191,8 +1178,8 @@ ALTER TABLE `archivos_adjuntos`
 --
 -- Indices de la tabla `archivos_publicacion`
 --
-ALTER TABLE `archivos_publicacion`
-  ADD PRIMARY KEY (`id_archivo`,`id_publicacion`);
+-- ALTER TABLE `archivos_publicacion`
+--   ADD PRIMARY KEY (`id_archivo`,`id_publicacion`);
 
 --
 -- Indices de la tabla `area`

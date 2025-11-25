@@ -1,0 +1,7 @@
+comentar linea 1181 
+-- ALTER TABLE `archivos_publicacion`
+--   ADD PRIMARY KEY (`id_archivo`,`id_publicacion`);
+
+eliminar trigger actualizar puntos nota y subirlo desde triggers sql
+
+borrar el doble   `id_publicacion` varchar(20) NOT NULL,  
