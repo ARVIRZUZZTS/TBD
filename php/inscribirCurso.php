@@ -1,5 +1,5 @@
 <?php
-// inscribirCurso.php
+// inscribirCurso.php - VERSIÓN CORREGIDA
 header("Content-Type: application/json");
 include 'conexion.php';
 
@@ -11,28 +11,61 @@ if (empty($id_estudiante) || empty($id_periodo_curso)) {
     exit;
 }
 
-// Iniciar transacción para asegurar que se guarde en ambas tablas
+// Iniciar transacción
 $conexion->begin_transaction();
 
 try {
-    // Verificar que el curso existe y tiene cupos
-    $sql_verificar = "
-        SELECT cupos, cupos_ocupados 
+    // 1. Verificar que el estudiante existe
+    $sql_verificar_estudiante = "SELECT id_user FROM usuario WHERE id_user = ? ";
+    $stmt_verificar_estudiante = $conexion->prepare($sql_verificar_estudiante);
+    $stmt_verificar_estudiante->bind_param("i", $id_estudiante);
+    $stmt_verificar_estudiante->execute();
+    $result_verificar_estudiante = $stmt_verificar_estudiante->get_result();
+
+    if ($result_verificar_estudiante->num_rows === 0) {
+        throw new Exception('Estudiante no encontrado');
+    }
+
+    // 2. Verificar que el curso existe y tiene cupos
+    $sql_verificar_curso = "
+        SELECT cupos, cupos_ocupados, costo, estado_periodo
         FROM periodo_curso 
         WHERE id_periodo_curso = ? 
         AND estado_periodo = 'Inscripciones'
         AND cupos_ocupados < cupos
+        FOR UPDATE
     ";
-    $stmt_verificar = $conexion->prepare($sql_verificar);
-    $stmt_verificar->bind_param("i", $id_periodo_curso);
-    $stmt_verificar->execute();
-    $result_verificar = $stmt_verificar->get_result();
+    $stmt_verificar_curso = $conexion->prepare($sql_verificar_curso);
+    $stmt_verificar_curso->bind_param("i", $id_periodo_curso);
+    $stmt_verificar_curso->execute();
+    $result_verificar_curso = $stmt_verificar_curso->get_result();
 
-    if ($result_verificar->num_rows === 0) {
-        throw new Exception('Curso no disponible o sin cupos');
+    if ($result_verificar_curso->num_rows === 0) {
+        // Verificar específicamente qué falló
+        $sql_verificar_estado = "SELECT cupos, cupos_ocupados, estado_periodo FROM periodo_curso WHERE id_periodo_curso = ?";
+        $stmt_verificar_estado = $conexion->prepare($sql_verificar_estado);
+        $stmt_verificar_estado->bind_param("i", $id_periodo_curso);
+        $stmt_verificar_estado->execute();
+        $result_verificar_estado = $stmt_verificar_estado->get_result();
+        
+        if ($result_verificar_estado->num_rows === 0) {
+            throw new Exception('Curso no encontrado');
+        }
+        
+        $curso_estado = $result_verificar_estado->fetch_assoc();
+        if ($curso_estado['estado_periodo'] !== 'Inscripciones') {
+            throw new Exception('El curso no está en periodo de inscripciones. Estado actual: ' . $curso_estado['estado_periodo']);
+        }
+        if ($curso_estado['cupos_ocupados'] >= $curso_estado['cupos']) {
+            throw new Exception('No hay cupos disponibles');
+        }
+        
+        throw new Exception('Curso no disponible para inscripción');
     }
 
-    // Verificar que no está ya inscrito
+    $curso = $result_verificar_curso->fetch_assoc();
+
+    // 3. Verificar que no está ya inscrito
     $sql_verificar_inscripcion = "
         SELECT 1 FROM curso_estudiante 
         WHERE id_estudiante = ? 
@@ -47,9 +80,9 @@ try {
         throw new Exception('Ya estás inscrito en este curso');
     }
 
-    // 1. Insertar en la tabla INSCRIPCION (pago falso)
+    // 4. Insertar en la tabla INSCRIPCION
     $id_tipo_pago = 1; // Pago simulado
-    $id_descuento = NULL; // Por ahora null, luego se puede agregar descuentos
+    $id_descuento = NULL;
     
     $sql_inscripcion = "
         INSERT INTO inscripcion (id_tipo_pago, id_user, id_periodo_curso, id_descuento, fecha_inscripcion)
@@ -59,10 +92,12 @@ try {
     $stmt_inscripcion->bind_param("iiii", $id_tipo_pago, $id_estudiante, $id_periodo_curso, $id_descuento);
     
     if (!$stmt_inscripcion->execute()) {
-        throw new Exception('Error al guardar en inscripcion');
+        throw new Exception('Error al guardar en inscripcion: ' . $stmt_inscripcion->error);
     }
 
-    // 2. Insertar en CURSO_ESTUDIANTE
+    $id_inscripcion = $conexion->insert_id;
+
+    // 5. Insertar en CURSO_ESTUDIANTE
     $sql_curso_estudiante = "
         INSERT INTO curso_estudiante (id_estudiante, id_periodo_curso, estado, nota, asistencia, deskPoints, rankingPoints)
         VALUES (?, ?, 'Inscrito', 0, 0, 0, 0)
@@ -71,10 +106,10 @@ try {
     $stmt_curso_estudiante->bind_param("ii", $id_estudiante, $id_periodo_curso);
     
     if (!$stmt_curso_estudiante->execute()) {
-        throw new Exception('Error al guardar en curso_estudiante');
+        throw new Exception('Error al guardar en curso_estudiante: ' . $stmt_curso_estudiante->error);
     }
 
-    // 3. Actualizar cupos ocupados
+    // 6. Actualizar cupos ocupados
     $sql_actualizar_cupos = "
         UPDATE periodo_curso 
         SET cupos_ocupados = cupos_ocupados + 1 
@@ -84,7 +119,7 @@ try {
     $stmt_cupos->bind_param("i", $id_periodo_curso);
     
     if (!$stmt_cupos->execute()) {
-        throw new Exception('Error al actualizar cupos');
+        throw new Exception('Error al actualizar cupos: ' . $stmt_cupos->error);
     }
 
     // Confirmar transacción
@@ -92,8 +127,8 @@ try {
     
     echo json_encode([
         'exito' => true, 
-        'mensaje' => 'Inscripción exitosa. Pago procesado correctamente.',
-        'id_inscripcion' => $conexion->insert_id
+        'mensaje' => 'Inscripción exitosa',
+        'id_inscripcion' => $id_inscripcion
     ]);
 
 } catch (Exception $e) {
@@ -103,7 +138,9 @@ try {
 }
 
 // Cerrar conexiones
-if (isset($stmt_verificar)) $stmt_verificar->close();
+if (isset($stmt_verificar_estudiante)) $stmt_verificar_estudiante->close();
+if (isset($stmt_verificar_curso)) $stmt_verificar_curso->close();
+if (isset($stmt_verificar_estado)) $stmt_verificar_estado->close();
 if (isset($stmt_verificar_inscripcion)) $stmt_verificar_inscripcion->close();
 if (isset($stmt_inscripcion)) $stmt_inscripcion->close();
 if (isset($stmt_curso_estudiante)) $stmt_curso_estudiante->close();

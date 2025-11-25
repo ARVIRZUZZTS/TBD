@@ -25,13 +25,13 @@ export async function cargarInscripciones() {
             mostrarInscripcionesVacios(data.mensaje || "No hay cursos disponibles para tu grado");
         }
     } catch (error) {
-        console.error('Error al cargar inscripciones:', error);
         mostrarInscripcionesVacios("Error al cargar los cursos disponibles");
     }
 }
 
 function mostrarCursosInscripciones(cursos, gradoEstudiante) {
     const inscripcionesContainer = document.querySelector('#inscripcion .content-grid');
+    
     inscripcionesContainer.innerHTML = `
         <div class="content-card">
             <h3>Cursos Disponibles - Grado: ${gradoEstudiante}</h3>
@@ -39,10 +39,15 @@ function mostrarCursosInscripciones(cursos, gradoEstudiante) {
         </div>
     `;
     
-    cursos.forEach(curso => {
+    cursos.forEach((curso) => {
         const cuposDisponibles = curso.cupos - curso.cupos_ocupados;
         const fechaInicio = formatearFecha(curso.fecha_inicio);
         const fechaFin = formatearFecha(curso.fecha_fin);
+        
+        const tieneDescuento = curso.descuento_aplicado !== null;
+        const precioOriginal = parseFloat(curso.costo) || 0;
+        const precioFinal = parseFloat(curso.precio_final) || precioOriginal;
+        const ahorro = precioOriginal - precioFinal;
         
         const cursoCard = document.createElement('div');
         cursoCard.className = 'course-card';
@@ -88,38 +93,52 @@ function mostrarCursosInscripciones(cursos, gradoEstudiante) {
                 </div>
             </div>
             
-            <div class="course-points">
-                <div class="point-item">
-                    <span class="point-value">${curso.costo || 0} Bs</span>
-                    <span class="point-label">Costo</span>
-                </div>
-                <div class="point-item">
+            <div class="course-pricing">
+                ${tieneDescuento ? `
+                    <div class="descuento-aplicado">
+                        <span class="descuento-badge">${curso.descuento_aplicado}% OFF</span>
+                        <div class="precios-comparacion">
+                            <span class="precio-original tachado">${precioOriginal.toFixed(2)} Bs</span>
+                            <span class="precio-final">${precioFinal.toFixed(2)} Bs</span>
+                        </div>
+                        <div class="ahorro-info">Ahorras: ${ahorro.toFixed(2)} Bs</div>
+                    </div>
+                ` : `
+                    <div class="precio-normal">
+                        <span class="precio-final">${precioFinal.toFixed(2)} Bs</span>
+                    </div>
+                `}
+                <div class="cupos-info">
                     <span class="point-value">${cuposDisponibles}</span>
                     <span class="point-label">Cupos Disponibles</span>
                 </div>
             </div>
             
-            <button class="shiny course-button" onclick="inscribirEnCurso(${curso.id_periodo_curso})">
-                Inscribirse
+            <button class="shiny course-button" data-curso-id="${curso.id_periodo_curso}">
+                ${tieneDescuento ? 'Inscribirse con Descuento' : 'Inscribirse'}
             </button>
         `;
         inscripcionesContainer.appendChild(cursoCard);
     });
+    
+    // Agregar event listeners después de crear los botones
+    agregarEventListenersInscripcion();
 }
 
-function mostrarInscripcionesVacios(mensaje) {
-    const inscripcionesContainer = document.querySelector('#inscripcion .content-grid');
-    inscripcionesContainer.innerHTML = `
-        <div class="content-card">
-            <h3>${mensaje}</h3>
-            <p>No hay cursos disponibles para inscripción en este momento.</p>
-        </div>
-    `;
+function agregarEventListenersInscripcion() {
+    const botones = document.querySelectorAll('.course-button[data-curso-id]');
+    
+    botones.forEach(boton => {
+        boton.addEventListener('click', function() {
+            const idCurso = this.getAttribute('data-curso-id');
+            inscribirEnCurso(parseInt(idCurso));
+        });
+    });
 }
 
-// Exportar para uso global desde HTML
-window.inscribirEnCurso = async (idPeriodoCurso) => {
+async function inscribirEnCurso(idPeriodoCurso) {
     try {
+        
         const idEstudiante = obtenerIdEstudiante();
         
         if (!idEstudiante) {
@@ -132,6 +151,7 @@ window.inscribirEnCurso = async (idPeriodoCurso) => {
         
         if (data.exito && data.cursos) {
             const curso = data.cursos.find(c => c.id_periodo_curso === idPeriodoCurso);
+            
             if (curso) {
                 mostrarModalPago(curso);
                 return;
@@ -141,7 +161,16 @@ window.inscribirEnCurso = async (idPeriodoCurso) => {
         alert('Curso no encontrado');
         
     } catch (error) {
-        console.error('Error al preparar inscripción:', error);
         alert('Error al cargar información del curso');
     }
-};
+}
+
+function mostrarInscripcionesVacios(mensaje) {
+    const inscripcionesContainer = document.querySelector('#inscripcion .content-grid');
+    inscripcionesContainer.innerHTML = `
+        <div class="content-card">
+            <h3>${mensaje}</h3>
+            <p>No hay cursos disponibles para inscripción en este momento.</p>
+        </div>
+    `;
+}
