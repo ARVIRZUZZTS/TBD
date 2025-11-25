@@ -2,7 +2,12 @@
 let cursoSeleccionadoParaInscripcion = null;
 
 export function mostrarModalPago(curso) {
+    
     cursoSeleccionadoParaInscripcion = curso;
+    
+    const tieneDescuento = curso.descuento_aplicado !== null;
+    const precioFinal = curso.precio_final || curso.costo;
+    const precioOriginal = curso.costo;
     
     let modal = document.getElementById('modal-pago');
     if (!modal) {
@@ -22,7 +27,15 @@ export function mostrarModalPago(curso) {
                         <p><strong>Duración:</strong> ${curso.duracion} horas</p>
                         <p><strong>Modalidad:</strong> ${curso.modalidad === 'P' ? 'Presencial' : 'Virtual'}</p>
                         <div class="costo-info">
-                            <h4>Costo: <span id="modal-curso-costo">${curso.costo || 0}</span> Bs</h4>
+                            ${tieneDescuento ? `
+                                <div class="descuento-info">
+                                    <h4>Precio con Descuento: <span class="precio-final">${parseFloat(precioFinal).toFixed(2)} Bs</span></h4>
+                                    <p class="precio-original-tachado">Precio original: ${parseFloat(precioOriginal).toFixed(2)} Bs</p>
+                                    <p class="ahorro-text">¡Ahorras ${(precioOriginal - precioFinal).toFixed(2)} Bs!</p>
+                                </div>
+                            ` : `
+                                <h4>Costo: <span id="modal-curso-costo">${parseFloat(precioOriginal).toFixed(2)}</span> Bs</h4>
+                            `}
                         </div>
                     </div>
                     <div class="metodo-pago">
@@ -48,50 +61,56 @@ export function mostrarModalPago(curso) {
                 </div>
                 <div class="modal-footer">
                     <button class="back" id="cancelar-pago">Cancelar</button>
-                    <button class="shiny" id="confirmar-pago">Confirmar Pago e Inscripción</button>
+                    <button class="shiny" id="confirmar-pago">
+                        ${tieneDescuento ? 'Confirmar Pago con Descuento' : 'Confirmar Pago e Inscripción'}
+                    </button>
                 </div>
             </div>
         `;
+        
         document.body.appendChild(modal);
         
-        modal.querySelector('.close-modal').addEventListener('click', cerrarModalPago);
-        modal.querySelector('#cancelar-pago').addEventListener('click', cerrarModalPago);
-        modal.querySelector('#confirmar-pago').addEventListener('click', confirmarPago);
-        
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                cerrarModalPago();
-            }
-        });
     } else {
         document.getElementById('modal-curso-nombre').textContent = curso.nombre_curso;
-        document.getElementById('modal-curso-costo').textContent = curso.costo || 0;
+        if (tieneDescuento) {
+            document.querySelector('.precio-final').textContent = parseFloat(precioFinal).toFixed(2);
+            document.querySelector('.precio-original-tachado').textContent = `Precio original: ${parseFloat(precioOriginal).toFixed(2)} Bs`;
+            document.querySelector('.ahorro-text').textContent = `¡Ahorras ${(precioOriginal - precioFinal).toFixed(2)} Bs!`;
+        } else {
+            document.getElementById('modal-curso-costo').textContent = parseFloat(precioOriginal).toFixed(2);
+        }
     }
     
     modal.style.display = 'block';
+    
+    // Agregar event listeners
+    modal.querySelector('.close-modal').addEventListener('click', cerrarModalPago);
+    modal.querySelector('#cancelar-pago').addEventListener('click', cerrarModalPago);
+    modal.querySelector('#confirmar-pago').addEventListener('click', confirmarPago);
+    
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            cerrarModalPago();
+        }
+    });
+    
 }
-
 export function cerrarModalPago() {
     const modal = document.getElementById('modal-pago');
     if (modal) {
         modal.style.display = 'none';
     }
 }
-
-async function confirmarPago() {
+export async function confirmarPago() {
     try {
         const confirmarBtn = document.getElementById('confirmar-pago');
-        const metodoPago = document.querySelector('input[name="metodo-pago"]:checked').value;
-        
-        confirmarBtn.textContent = 'Procesando pago...';
         confirmarBtn.disabled = true;
-        
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        confirmarBtn.textContent = 'Inscribiendo...';
         
         const formData = new FormData();
-        formData.append('id_estudiante', localStorage.getItem('id_user') || sessionStorage.getItem('id_user'));
+        formData.append('id_estudiante', localStorage.getItem('id_user'));
         formData.append('id_periodo_curso', cursoSeleccionadoParaInscripcion.id_periodo_curso);
-        
+            
         const response = await fetch('php/inscribirCurso.php', {
             method: 'POST',
             body: formData
@@ -99,18 +118,19 @@ async function confirmarPago() {
         
         const data = await response.json();
         
-        cerrarModalPago();
-        
         if (data.exito) {
-            alert('Inscripción exitosa. Pago procesado correctamente.');
-            // Disparar evento para recargar inscripciones
-            window.dispatchEvent(new CustomEvent('recargarInscripciones'));
+            alert('Inscripción exitosa');
+            cerrarModalPago();
+            // Recargar la página
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
             alert('Error: ' + data.mensaje);
         }
+        
     } catch (error) {
-        console.error('Error en pago:', error);
-        alert('Error al procesar el pago');
+        alert('Error de conexión');
     } finally {
         const confirmarBtn = document.getElementById('confirmar-pago');
         if (confirmarBtn) {
@@ -119,3 +139,4 @@ async function confirmarPago() {
         }
     }
 }
+

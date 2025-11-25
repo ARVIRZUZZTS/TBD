@@ -9,69 +9,122 @@ if (empty($id_estudiante)) {
     exit;
 }
 
-$sql_grado = "SELECT grado FROM usuario WHERE id_user = ?";
-$stmt_grado = $conexion->prepare($sql_grado);
-$stmt_grado->bind_param("i", $id_estudiante);
-$stmt_grado->execute();
-$result_grado = $stmt_grado->get_result();
+try {
+    $sql_grado = "SELECT grado FROM usuario WHERE id_user = ?";
+    $stmt_grado = $conexion->prepare($sql_grado);
+    $stmt_grado->bind_param("i", $id_estudiante);
+    $stmt_grado->execute();
+    $result_grado = $stmt_grado->get_result();
 
-if ($result_grado->num_rows === 0) {
-    echo json_encode(['exito' => false, 'mensaje' => 'Estudiante no encontrado']);
-    exit;
+    if ($result_grado->num_rows === 0) {
+        echo json_encode(['exito' => false, 'mensaje' => 'Estudiante no encontrado']);
+        exit;
+    }
+
+    $estudiante = $result_grado->fetch_assoc();
+    $grado_estudiante = intval($estudiante['grado']);
+
+    // Obtener descuentos canjeados por el estudiante que aún son válidos
+    // CORRECCIÓN: usar 'recompensa' en lugar de 'id_descuento'
+    $sql_descuentos = "
+        SELECT d.id_descuento, d.id_periodo_curso, d.porcentaje_descuento
+        FROM recompensa_canjeada rc
+        INNER JOIN descuento d ON rc.recompensa = d.id_descuento  -- ¡CORREGIDO!
+        WHERE rc.id_estudiante = ?
+        AND d.fecha_fin >= CURDATE()
+    ";
+    
+    $stmt_descuentos = $conexion->prepare($sql_descuentos);
+    $stmt_descuentos->bind_param("i", $id_estudiante);
+    $stmt_descuentos->execute();
+    $result_descuentos = $stmt_descuentos->get_result();
+
+    $descuentosCanjeados = [];
+    while ($row = $result_descuentos->fetch_assoc()) {
+        $descuentosCanjeados[$row['id_periodo_curso']] = $row['porcentaje_descuento'];
+    }
+
+    // Ahora obtenemos los cursos disponibles para ese grado
+    $sql = "
+        SELECT 
+            pc.id_periodo_curso,
+            c.titulo as nombre_curso,
+            c.duracion,
+            c.modalidad,
+            u.nombre as nombre_profesor,
+            u.apellido as apellido_profesor,
+            pc.fecha_inicio,
+            pc.fecha_fin,
+            pc.cupos,
+            pc.cupos_ocupados,
+            pc.costo,
+            g.nombre_grado,
+            cat.nombre_categoria
+        FROM periodo_curso pc
+        INNER JOIN curso c ON pc.id_curso = c.id_curso
+        INNER JOIN usuario u ON pc.id_maestro = u.id_user
+        INNER JOIN grado g ON c.id_grado = g.id_grado
+        INNER JOIN categoria cat ON c.id_categoria = cat.id_categoria
+        WHERE c.id_grado = ? 
+        AND pc.estado_periodo = 'Inscripciones'
+        AND pc.cupos_ocupados < pc.cupos
+        AND NOT EXISTS (
+            SELECT 1 FROM curso_estudiante ce 
+            WHERE ce.id_estudiante = ? 
+            AND ce.id_periodo_curso = pc.id_periodo_curso
+        )
+        ORDER BY pc.fecha_inicio
+    ";
+
+    $stmt = $conexion->prepare($sql);
+    $stmt->bind_param("ii", $grado_estudiante, $id_estudiante);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $cursos = [];
+    while ($row = $result->fetch_assoc()) {
+        // Verificar si hay descuento para este curso
+        $descuentoAplicado = $descuentosCanjeados[$row['id_periodo_curso']] ?? null;
+        $precioFinal = $row['costo'];
+        
+        if ($descuentoAplicado) {
+            $precioFinal = $row['costo'] * (1 - $descuentoAplicado / 100);
+        }
+        
+        $cursos[] = [
+            'id_periodo_curso' => $row['id_periodo_curso'],
+            'nombre_curso' => $row['nombre_curso'],
+            'duracion' => $row['duracion'],
+            'modalidad' => $row['modalidad'],
+            'nombre_profesor' => $row['nombre_profesor'],
+            'apellido_profesor' => $row['apellido_profesor'],
+            'fecha_inicio' => $row['fecha_inicio'],
+            'fecha_fin' => $row['fecha_fin'],
+            'cupos' => $row['cupos'],
+            'cupos_ocupados' => $row['cupos_ocupados'],
+            'costo' => $row['costo'],
+            'nombre_grado' => $row['nombre_grado'],
+            'nombre_categoria' => $row['nombre_categoria'],
+            'descuento_aplicado' => $descuentoAplicado,
+            'precio_final' => $precioFinal
+        ];
+    }
+
+    echo json_encode([
+        'exito' => true,
+        'grado_estudiante' => $grado_estudiante,
+        'cursos' => $cursos
+    ]);
+
+} catch (Exception $e) {
+    echo json_encode([
+        'exito' => false, 
+        'mensaje' => 'Error en el servidor: ' . $e->getMessage()
+    ]);
 }
 
-$estudiante = $result_grado->fetch_assoc();
-$grado_estudiante = intval($estudiante['grado']); // Convertir a int
-
-// Ahora obtenemos los cursos disponibles para ese grado
-$sql = "
-    SELECT 
-        pc.id_periodo_curso,
-        c.titulo as nombre_curso,
-        c.duracion,
-        c.modalidad,
-        u.nombre as nombre_profesor,
-        u.apellido as apellido_profesor,
-        pc.fecha_inicio,
-        pc.fecha_fin,
-        pc.cupos,
-        pc.cupos_ocupados,
-        pc.costo,
-        g.nombre_grado,
-        cat.nombre_categoria
-    FROM periodo_curso pc
-    INNER JOIN curso c ON pc.id_curso = c.id_curso
-    INNER JOIN usuario u ON pc.id_maestro = u.id_user
-    INNER JOIN grado g ON c.id_grado = g.id_grado
-    INNER JOIN categoria cat ON c.id_categoria = cat.id_categoria
-    WHERE c.id_grado = ? 
-    AND pc.estado_periodo = 'Inscripciones'
-    AND pc.cupos_ocupados < pc.cupos
-    AND NOT EXISTS (
-        SELECT 1 FROM curso_estudiante ce 
-        WHERE ce.id_estudiante = ? 
-        AND ce.id_periodo_curso = pc.id_periodo_curso
-    )
-    ORDER BY pc.fecha_inicio
-";
-
-$stmt = $conexion->prepare($sql);
-$stmt->bind_param("ii", $grado_estudiante, $id_estudiante);
-$stmt->execute();
-$result = $stmt->get_result();
-
-$cursos = [];
-while ($row = $result->fetch_assoc()) {
-    $cursos[] = $row;
-}
-
-echo json_encode([
-    'exito' => true,
-    'grado_estudiante' => $grado_estudiante,
-    'cursos' => $cursos
-]);
-
-$stmt->close();
-$stmt_grado->close();
-$conexion->close();
+if (isset($stmt_grado)) $stmt_grado->close();
+if (isset($stmt_descuentos)) $stmt_descuentos->close();
+if (isset($stmt)) $stmt->close();
+if (isset($conexion)) $conexion->close();
 ?>
