@@ -29,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         
-        // Verificar si el módulo existe
         $checkModuloSql = "SELECT id_modulo FROM modulo WHERE id_modulo = ?";
         $checkModuloStmt = $conexion->prepare($checkModuloSql);
         $checkModuloStmt->bind_param("i", $id_modulo);
@@ -41,11 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         
-        // Iniciar transacción para asegurar que todo se guarde o nada
         $conexion->begin_transaction();
         
         try {
-            // Insertar nueva evaluación
             $sqlEvaluacion = "INSERT INTO evaluacion (id_modulo, titulo, descripcion, fecha_emision, hora_emision, fecha_inicio, hora_inicio, fecha_entrega, hora_entrega, deskpoints) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmtEvaluacion = $conexion->prepare($sqlEvaluacion);
