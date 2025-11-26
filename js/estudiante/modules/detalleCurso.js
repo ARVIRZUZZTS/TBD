@@ -48,7 +48,6 @@ export async function cargarDetalleCurso(idPeriodoCurso) {
         configurarFiltros();
 
     } catch (error) {
-        console.error('Error al cargar detalle del curso:', error);
         document.getElementById('lista-actividades').innerHTML = `
             <div class="error">Error al cargar el curso: ${error.message}</div>
         `;
@@ -86,6 +85,10 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
     }).join('');
     
     configurarDescargas();
+    setTimeout(() => {
+        configurarEntregas();
+        verificarEstadosEntregas();
+    }, 100);
 }
 
 function crearCardTarea(tarea) {
@@ -93,7 +96,7 @@ function crearCardTarea(tarea) {
     const tieneArchivo = tarea.archivo_url && tarea.archivo_url !== '';
     
     return `
-        <div class="actividad-card tarea" data-tipo="tarea">
+        <div class="actividad-card tarea" data-tipo="tarea" data-id="${tarea.id_tarea}">
             <div class="actividad-header">
                 <h3>${tarea.titulo}</h3>
                 <span class="actividad-badge tarea-badge">Tarea</span>
@@ -107,6 +110,9 @@ function crearCardTarea(tarea) {
                     <div class="modulo-info">
                         <strong>Módulo:</strong> ${tarea.modulo_titulo || 'General'}
                     </div>
+                    <div class="estado-info">
+                        <strong>Estado:</strong> <span class="estado-actividad estado-pendiente" id="estado-tarea-${tarea.id_tarea}">Pendiente</span>
+                    </div>
                     ${tieneArchivo ? `
                         <div class="archivo-info">
                             <strong>Archivo adjunto:</strong> 
@@ -117,7 +123,11 @@ function crearCardTarea(tarea) {
                 </div>
             </div>
             <div class="actividad-actions">
-                <button class="shiny small">Ver Detalles</button>
+                <button class="shiny small entregar-actividad-btn" 
+                        data-id="${tarea.id_tarea}" 
+                        data-tipo="tarea">
+                    Entregar Tarea
+                </button>
                 ${tieneArchivo ? `
                     <button class="back small descargar-archivo" 
                             data-archivo="${tarea.archivo_url.replace('uploads/', '')}"
@@ -136,7 +146,7 @@ function crearCardEvaluacion(evaluacion) {
     const tieneArchivo = evaluacion.archivo_url && evaluacion.archivo_url !== '';
     
     return `
-        <div class="actividad-card evaluacion" data-tipo="evaluacion">
+        <div class="actividad-card evaluacion" data-tipo="evaluacion" data-id="${evaluacion.id_evaluacion}">
             <div class="actividad-header">
                 <h3>${evaluacion.titulo}</h3>
                 <span class="actividad-badge evaluacion-badge">Evaluación</span>
@@ -150,11 +160,8 @@ function crearCardEvaluacion(evaluacion) {
                     <div class="fecha-info">
                         <strong>Entrega:</strong> ${fechaEntrega}
                     </div>
-                    <div class="puntos-info">
-                        <strong>Desk Points:</strong> ${evaluacion.deskpoints || 0}
-                    </div>
-                    <div class="modulo-info">
-                        <strong>Módulo:</strong> ${evaluacion.modulo_titulo || 'General'}
+                    <div class="estado-info">
+                        <strong>Estado:</strong> <span class="estado-actividad estado-pendiente" id="estado-evaluacion-${evaluacion.id_evaluacion}">Pendiente</span>
                     </div>
                     ${tieneArchivo ? `
                         <div class="archivo-info">
@@ -166,7 +173,11 @@ function crearCardEvaluacion(evaluacion) {
                 </div>
             </div>
             <div class="actividad-actions">
-                <button class="shiny small">Comenzar Evaluación</button>
+                <button class="shiny small entregar-actividad-btn" 
+                        data-id="${evaluacion.id_evaluacion}" 
+                        data-tipo="evaluacion">
+                    Comenzar Evaluación
+                </button>
                 ${tieneArchivo ? `
                     <button class="back small descargar-archivo" 
                             data-archivo="${evaluacion.archivo_url.replace('uploads/', '')}"
@@ -221,6 +232,115 @@ function configurarDescargas() {
     });
 }
 
+function configurarEntregas() {
+
+    
+    const botones = document.querySelectorAll('.entregar-actividad-btn');
+
+    
+    botones.forEach((button, index) => {
+        button.addEventListener('click', function() {
+            const idActividad = this.getAttribute('data-id');
+            const tipoActividad = this.getAttribute('data-tipo');
+            
+            entregarActividad(idActividad, tipoActividad);
+        });
+    });
+}
+
+async function entregarActividad(idActividad, tipoActividad) {
+    try {
+
+        const idEstudiante = localStorage.getItem('id_user');
+        
+        if (!idEstudiante) {
+            alert('Debes iniciar sesión para entregar actividades');
+            return;
+        }
+
+        // Formatear id_publicacion según el tipo
+        const idPublicacion = tipoActividad === 'tarea' 
+            ? `TA-${idActividad}` 
+            : `EV-${idActividad}`;
+        
+        const mensaje = tipoActividad === 'tarea' 
+            ? '¿Entregar esta tarea?' 
+            : '¿Comenzar esta evaluación?';
+            
+        if (!confirm(mensaje)) return;
+
+        const formData = new FormData();
+        formData.append('id_estudiante', idEstudiante);
+        formData.append('id_publicacion', idPublicacion); // ← ENVIAR FORMATEADO
+        formData.append('tipo_actividad', tipoActividad);
+
+        const response = await fetch('php/entregarActividad.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.exito) {
+            alert( data.mensaje);
+            actualizarUIEntrega(idActividad, tipoActividad);
+        } else {
+            alert( data.mensaje);
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión');
+    }
+}
+
+function actualizarUIEntrega(idActividad, tipoActividad) {
+    const estadoElement = document.getElementById(`estado-${tipoActividad}-${idActividad}`);
+    if (estadoElement) {
+        estadoElement.textContent = 'Entregado';
+        estadoElement.className = 'estado-actividad estado-entregado';
+    }
+
+    // Deshabilitar botón
+    const boton = document.querySelector(`[data-id="${idActividad}"][data-tipo="${tipoActividad}"]`);
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = tipoActividad === 'tarea' ? '✓ Tarea Entregada' : '✓ Evaluación Entregada';
+        boton.style.background = '#27ae60';
+        boton.style.cursor = 'not-allowed';
+    }
+}
+
+async function verificarEstadosEntregas() {
+    try {
+        const idEstudiante = localStorage.getItem('id_user');
+        
+        if (!idEstudiante) return;
+
+        const response = await fetch(`php/obtenerEntregas.php?id_estudiante=${idEstudiante}`);
+        const data = await response.json();
+
+        if (data.exito && data.entregas) {
+            
+            // Marcar como entregadas todas las actividades que están en la lista
+            data.entregas.forEach(idPublicacion => {
+                
+                // Extraer tipo e ID del formato TA-123 o EV-456
+                const [prefijo, idActividad] = idPublicacion.split('-');
+                const tipoActividad = prefijo === 'TA' ? 'tarea' : 'evaluacion';
+                
+                // Buscar si existe una actividad con este ID en el DOM
+                const actividadElement = document.querySelector(`[data-id="${idActividad}"]`);
+                if (actividadElement) {
+                    actualizarUIEntrega(idActividad, tipoActividad);
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error al verificar entregas:', error);
+    }
+}
+
 // Exportar para uso global desde HTML
 window.volverACursos = () => {
     const detalleView = document.getElementById('curso-detalle');
@@ -230,6 +350,5 @@ window.volverACursos = () => {
     }
     
     document.getElementById('cursos').classList.add('active');
-    // Necesitaríamos importar cargarCursosEstudiante aquí o usar evento
     window.dispatchEvent(new CustomEvent('recargarCursos'));
 };
