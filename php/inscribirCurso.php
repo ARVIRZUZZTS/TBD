@@ -1,10 +1,10 @@
 <?php
-// inscribirCurso.php - VERSIÓN CORREGIDA
 header("Content-Type: application/json");
 include 'conexion.php';
 
 $id_estudiante = $_POST['id_estudiante'] ?? '';
 $id_periodo_curso = $_POST['id_periodo_curso'] ?? '';
+$id_descuento = $_POST['id_descuento'] ?? null;
 
 if (empty($id_estudiante) || empty($id_periodo_curso)) {
     echo json_encode(['exito' => false, 'mensaje' => 'Datos incompletos']);
@@ -15,8 +15,8 @@ if (empty($id_estudiante) || empty($id_periodo_curso)) {
 $conexion->begin_transaction();
 
 try {
-    // 1. Verificar que el estudiante existe
-    $sql_verificar_estudiante = "SELECT id_user FROM usuario WHERE id_user = ? ";
+    // 1. Verificar que el estudiante existe (mantener igual)
+    $sql_verificar_estudiante = "SELECT id_user FROM usuario WHERE id_user = ?";
     $stmt_verificar_estudiante = $conexion->prepare($sql_verificar_estudiante);
     $stmt_verificar_estudiante->bind_param("i", $id_estudiante);
     $stmt_verificar_estudiante->execute();
@@ -26,7 +26,29 @@ try {
         throw new Exception('Estudiante no encontrado');
     }
 
-    // 2. Verificar que el curso existe y tiene cupos
+    // 2. Verificar descuento si se proporcionó (ADAPTADO)
+    if ($id_descuento) {
+        $sql_verificar_descuento = "
+            SELECT 1 FROM recompensa_canjeada 
+            WHERE id_estudiante = ? 
+            AND recompensa = ? 
+            AND NOT EXISTS (
+                SELECT 1 FROM inscripcion i 
+                WHERE i.id_user = recompensa_canjeada.id_estudiante 
+                AND i.id_descuento = recompensa_canjeada.recompensa
+            )
+        ";
+        $stmt_verificar_descuento = $conexion->prepare($sql_verificar_descuento);
+        $stmt_verificar_descuento->bind_param("ii", $id_estudiante, $id_descuento);
+        $stmt_verificar_descuento->execute();
+        $result_verificar_descuento = $stmt_verificar_descuento->get_result();
+        
+        if ($result_verificar_descuento->num_rows === 0) {
+            throw new Exception('Descuento no válido o ya utilizado');
+        }
+    }
+
+    // 3. Verificar que el curso existe y tiene cupos (mantener igual)
     $sql_verificar_curso = "
         SELECT cupos, cupos_ocupados, costo, estado_periodo
         FROM periodo_curso 
@@ -41,7 +63,7 @@ try {
     $result_verificar_curso = $stmt_verificar_curso->get_result();
 
     if ($result_verificar_curso->num_rows === 0) {
-        // Verificar específicamente qué falló
+        // Verificar específicamente qué falló (mantener igual)
         $sql_verificar_estado = "SELECT cupos, cupos_ocupados, estado_periodo FROM periodo_curso WHERE id_periodo_curso = ?";
         $stmt_verificar_estado = $conexion->prepare($sql_verificar_estado);
         $stmt_verificar_estado->bind_param("i", $id_periodo_curso);
@@ -65,7 +87,7 @@ try {
 
     $curso = $result_verificar_curso->fetch_assoc();
 
-    // 3. Verificar que no está ya inscrito
+    // 4. Verificar que no está ya inscrito (mantener igual)
     $sql_verificar_inscripcion = "
         SELECT 1 FROM curso_estudiante 
         WHERE id_estudiante = ? 
@@ -80,16 +102,21 @@ try {
         throw new Exception('Ya estás inscrito en este curso');
     }
 
-    // 4. Insertar en la tabla INSCRIPCION
+    // 5. Insertar en la tabla INSCRIPCION con el descuento
     $id_tipo_pago = 1; // Pago simulado
-    $id_descuento = NULL;
     
     $sql_inscripcion = "
         INSERT INTO inscripcion (id_tipo_pago, id_user, id_periodo_curso, id_descuento, fecha_inscripcion)
         VALUES (?, ?, ?, ?, NOW())
     ";
     $stmt_inscripcion = $conexion->prepare($sql_inscripcion);
-    $stmt_inscripcion->bind_param("iiii", $id_tipo_pago, $id_estudiante, $id_periodo_curso, $id_descuento);
+    
+    // Si no hay descuento, usar NULL
+    if ($id_descuento) {
+        $stmt_inscripcion->bind_param("iiii", $id_tipo_pago, $id_estudiante, $id_periodo_curso, $id_descuento);
+    } else {
+        $stmt_inscripcion->bind_param("iiii", $id_tipo_pago, $id_estudiante, $id_periodo_curso, $id_descuento);
+    }
     
     if (!$stmt_inscripcion->execute()) {
         throw new Exception('Error al guardar en inscripcion: ' . $stmt_inscripcion->error);
@@ -97,7 +124,7 @@ try {
 
     $id_inscripcion = $conexion->insert_id;
 
-    // 5. Insertar en CURSO_ESTUDIANTE
+    // 6. Insertar en CURSO_ESTUDIANTE (mantener igual)
     $sql_curso_estudiante = "
         INSERT INTO curso_estudiante (id_estudiante, id_periodo_curso, estado, nota, asistencia, deskPoints, rankingPoints)
         VALUES (?, ?, 'Inscrito', 0, 0, 0, 0)
@@ -109,7 +136,7 @@ try {
         throw new Exception('Error al guardar en curso_estudiante: ' . $stmt_curso_estudiante->error);
     }
 
-    // 6. Actualizar cupos ocupados
+    // 7. Actualizar cupos ocupados (mantener igual)
     $sql_actualizar_cupos = "
         UPDATE periodo_curso 
         SET cupos_ocupados = cupos_ocupados + 1 
@@ -145,5 +172,4 @@ if (isset($stmt_verificar_inscripcion)) $stmt_verificar_inscripcion->close();
 if (isset($stmt_inscripcion)) $stmt_inscripcion->close();
 if (isset($stmt_curso_estudiante)) $stmt_curso_estudiante->close();
 if (isset($stmt_cupos)) $stmt_cupos->close();
-$conexion->close();
 ?>

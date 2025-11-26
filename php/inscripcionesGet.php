@@ -24,14 +24,18 @@ try {
     $estudiante = $result_grado->fetch_assoc();
     $grado_estudiante = intval($estudiante['grado']);
 
-    // Obtener descuentos canjeados por el estudiante que aún son válidos
-    // CORRECCIÓN: usar 'recompensa' en lugar de 'id_descuento'
+    // CONSULTA ADAPTADA para la estructura actual de recompensa_canjeada
     $sql_descuentos = "
         SELECT d.id_descuento, d.id_periodo_curso, d.porcentaje_descuento
         FROM recompensa_canjeada rc
-        INNER JOIN descuento d ON rc.recompensa = d.id_descuento  -- ¡CORREGIDO!
+        INNER JOIN descuento d ON rc.recompensa = d.id_descuento  
         WHERE rc.id_estudiante = ?
         AND d.fecha_fin >= CURDATE()
+        AND NOT EXISTS (
+            SELECT 1 FROM inscripcion i 
+            WHERE i.id_user = rc.id_estudiante 
+            AND i.id_descuento = d.id_descuento
+        )
     ";
     
     $stmt_descuentos = $conexion->prepare($sql_descuentos);
@@ -41,10 +45,13 @@ try {
 
     $descuentosCanjeados = [];
     while ($row = $result_descuentos->fetch_assoc()) {
-        $descuentosCanjeados[$row['id_periodo_curso']] = $row['porcentaje_descuento'];
+        $descuentosCanjeados[$row['id_periodo_curso']] = [
+            'id_descuento' => $row['id_descuento'],
+            'porcentaje' => $row['porcentaje_descuento']
+        ];
     }
 
-    // Ahora obtenemos los cursos disponibles para ese grado
+    // Consulta de cursos disponibles (mantener igual)
     $sql = "
         SELECT 
             pc.id_periodo_curso,
@@ -84,7 +91,9 @@ try {
     $cursos = [];
     while ($row = $result->fetch_assoc()) {
         // Verificar si hay descuento para este curso
-        $descuentoAplicado = $descuentosCanjeados[$row['id_periodo_curso']] ?? null;
+        $descuentoInfo = $descuentosCanjeados[$row['id_periodo_curso']] ?? null;
+        $descuentoAplicado = $descuentoInfo ? $descuentoInfo['porcentaje'] : null;
+        $idDescuento = $descuentoInfo ? $descuentoInfo['id_descuento'] : null;
         $precioFinal = $row['costo'];
         
         if ($descuentoAplicado) {
@@ -106,6 +115,7 @@ try {
             'nombre_grado' => $row['nombre_grado'],
             'nombre_categoria' => $row['nombre_categoria'],
             'descuento_aplicado' => $descuentoAplicado,
+            'id_descuento' => $idDescuento,
             'precio_final' => $precioFinal
         ];
     }
@@ -122,7 +132,6 @@ try {
         'mensaje' => 'Error en el servidor: ' . $e->getMessage()
     ]);
 }
-
 if (isset($stmt_grado)) $stmt_grado->close();
 if (isset($stmt_descuentos)) $stmt_descuentos->close();
 if (isset($stmt)) $stmt->close();
