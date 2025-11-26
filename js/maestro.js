@@ -350,6 +350,9 @@ function showCourseDetails(courseId, courseTitle, courseInscritos) {
                         <span class="inscritos-count">${courseInscritos}</span>
                         <span class="inscritos-label">Estudiantes Inscritos</span>
                     </div>
+                    <button class="shiny config-horario-btn" id="config-horario">
+                        Configurar Horario
+                    </button>
                 </div>
             </div>
             
@@ -424,6 +427,10 @@ function showCourseDetails(courseId, courseTitle, courseInscritos) {
     // Event listener para reintentar carga de módulos
     document.getElementById('retry-load-modules').addEventListener('click', function() {
         loadCourseModules(courseId);
+    });
+
+    document.getElementById('config-horario').addEventListener('click', function() {
+        showConfigHorarioModal(courseId, courseTitle);
     });
 }
 
@@ -1421,6 +1428,407 @@ function displayModulesWithContent(modules) {
     `).join('');
     
     modulesList.innerHTML = modulesHTML;
+}
+
+function showConfigHorarioModal(courseId, courseTitle) {
+    const modalHTML = `
+        <div id="config-horario-modal" class="modal-overlay">
+            <div class="modal-content" style="max-width: 750px;">
+                <div class="modal-header">
+                    <h3>Configurar Horario - ${escapeHTML(courseTitle)}</h3>
+                    <button class="modal-close" id="close-horario-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="config-horario-form">
+                        <!-- Sección de Modalidad -->
+                        <div class="form-group">
+                            <label>Modalidad de Clase:</label>
+                            <div class="modalidad-selector">
+                                <label class="modalidad-radio">
+                                    <input type="radio" name="modalidad" value="presencial" checked>
+                                    <span class="radio-custom"></span>
+                                    <span class="modalidad-text">Presencial</span>
+                                </label>
+                                <label class="modalidad-radio">
+                                    <input type="radio" name="modalidad" value="virtual">
+                                    <span class="radio-custom"></span>
+                                    <span class="modalidad-text">Virtual</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Sección de Aula (solo visible para presencial) -->
+                        <div class="form-group" id="aula-container">
+                            <label for="aula-clase">Aula:</label>
+                            <input type="text" id="aula-clase" name="aula" placeholder="Ej: Aula 101, Laboratorio B, etc." maxlength="50">
+                            <small>Especifica el aula o sala donde se impartirá la clase</small>
+                        </div>
+
+                        <!-- Sección de Horarios por Día -->
+                        <div class="form-group">
+                            <label>Configurar Horarios por Día:</label>
+                            <div class="dias-horarios-container">
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="1" data-dia="Lunes">
+                                        <span>Lunes</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="1" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="1" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="2" data-dia="Martes">
+                                        <span>Martes</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="2" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="2" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="3" data-dia="Miércoles">
+                                        <span>Miércoles</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="3" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="3" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="4" data-dia="Jueves">
+                                        <span>Jueves</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="4" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="4" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="5" data-dia="Viernes">
+                                        <span>Viernes</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="5" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="5" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="6" data-dia="Sábado">
+                                        <span>Sábado</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="6" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="6" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="0" data-dia="Domingo">
+                                        <span>Domingo</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="0" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="0" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="horario-preview" id="horario-preview">
+                            <h4>Vista Previa del Horario:</h4>
+                            <div id="preview-content" class="preview-content">
+                                <p class="preview-placeholder">Selecciona los días y configura sus horarios</p>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="back" id="close-horario-btn">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar Horario</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Inicializar flatpickr
+    initializeFlatpickr();
+    
+    // Configurar event listeners
+    setupHorarioModal(courseId, courseTitle);
+}
+
+function initializeFlatpickr() {
+    // Configurar selector de tiempo
+    flatpickr(".time-picker", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        locale: "es",
+        minuteIncrement: 30,
+        defaultHour: 8,
+        defaultMinute: 0
+    });
+
+    // Configurar selector de fecha
+    flatpickr(".date-picker", {
+        dateFormat: "Y-m-d",
+        locale: "es",
+        minDate: "today"
+    });
+}
+
+function setupHorarioModal(courseId, courseTitle) {
+    const modal = document.getElementById('config-horario-modal');
+    const form = document.getElementById('config-horario-form');
+    const aulaContainer = document.getElementById('aula-container');
+    const aulaInput = document.getElementById('aula-clase');
+    
+    // Event listener para cambio de modalidad
+    document.querySelectorAll('input[name="modalidad"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'presencial') {
+                aulaContainer.style.display = 'block';
+                aulaInput.required = true;
+            } else {
+                aulaContainer.style.display = 'none';
+                aulaInput.required = false;
+                aulaInput.value = '';
+            }
+            updateHorarioPreview();
+        });
+    });
+    
+    // Event listeners para checkboxes de días
+    document.querySelectorAll('input[name="dias[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const dia = this.value;
+            const horaInicio = document.querySelector(`.hora-inicio-dia[data-dia="${dia}"]`);
+            const horaFin = document.querySelector(`.hora-fin-dia[data-dia="${dia}"]`);
+            
+            if (this.checked) {
+                horaInicio.disabled = false;
+                horaFin.disabled = false;
+                horaInicio.required = true;
+                horaFin.required = true;
+            } else {
+                horaInicio.disabled = true;
+                horaFin.disabled = true;
+                horaInicio.required = false;
+                horaFin.required = false;
+                horaInicio.value = '';
+                horaFin.value = '';
+            }
+            updateHorarioPreview();
+        });
+    });
+    
+    // Event listeners para cambios en los horarios y aula
+    document.querySelectorAll('.hora-inicio-dia, .hora-fin-dia, #aula-clase').forEach(input => {
+        input.addEventListener('change', updateHorarioPreview);
+        input.addEventListener('input', updateHorarioPreview);
+    });
+
+    // Event listeners para cerrar modal
+    document.getElementById('close-horario-modal').addEventListener('click', closeHorarioModal);
+    document.getElementById('close-horario-btn').addEventListener('click', closeHorarioModal);
+    
+    // Event listener para enviar formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        guardarHorario(courseId, courseTitle);
+    });
+    
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeHorarioModal();
+        }
+    });
+    
+    // Inicializar estado de modalidad
+    const modalidadPresencial = document.querySelector('input[name="modalidad"][value="presencial"]');
+    if (modalidadPresencial.checked) {
+        aulaContainer.style.display = 'block';
+        aulaInput.required = true;
+    } else {
+        aulaContainer.style.display = 'none';
+        aulaInput.required = false;
+    }
+}
+
+function updateHorarioPreview() {
+    const diasSeleccionados = Array.from(document.querySelectorAll('input[name="dias[]"]:checked'));
+    const modalidad = document.querySelector('input[name="modalidad"]:checked').value;
+    const aula = document.getElementById('aula-clase').value;
+    
+    const previewContent = document.getElementById('preview-content');
+    
+    if (diasSeleccionados.length === 0) {
+        previewContent.innerHTML = '<p class="preview-placeholder">Selecciona los días y configura sus horarios</p>';
+        return;
+    }
+    
+    const diasMap = {
+        '0': 'Domingo',
+        '1': 'Lunes',
+        '2': 'Martes',
+        '3': 'Miércoles',
+        '4': 'Jueves',
+        '5': 'Viernes',
+        '6': 'Sábado'
+    };
+    
+    let previewHTML = '<div class="preview-list">';
+    
+    // Información de modalidad y aula
+    previewHTML += `
+        <div class="preview-info">
+            <strong>Modalidad:</strong> ${modalidad === 'presencial' ? '🏫 Presencial' : '💻 Virtual'}
+            ${modalidad === 'presencial' && aula ? ` | <strong>Aula:</strong> ${escapeHTML(aula)}` : ''}
+        </div>
+    `;
+    
+    let tieneHorariosCompletos = false;
+    
+    diasSeleccionados.forEach(checkbox => {
+        const dia = checkbox.value;
+        const diaNombre = checkbox.getAttribute('data-dia');
+        const horaInicio = document.querySelector(`.hora-inicio-dia[data-dia="${dia}"]`).value;
+        const horaFin = document.querySelector(`.hora-fin-dia[data-dia="${dia}"]`).value;
+        
+        if (horaInicio && horaFin) {
+            tieneHorariosCompletos = true;
+            previewHTML += `
+                <div class="preview-item">
+                    <span class="preview-dia">${diaNombre}</span>
+                    <span class="preview-horario">${horaInicio} - ${horaFin}</span>
+                    ${modalidad === 'presencial' && aula ? `<span class="preview-aula">🏫 ${escapeHTML(aula)}</span>` : '<span class="preview-virtual">💻 Virtual</span>'}
+                </div>
+            `;
+        } else {
+            previewHTML += `
+                <div class="preview-item preview-incompleto">
+                    <span class="preview-dia">${diaNombre}: </span>
+                    <span class="preview-horario">Horario no configurado</span>
+                </div>
+            `;
+        }
+    });
+    
+    previewHTML += '</div>';
+    
+    if (!tieneHorariosCompletos && diasSeleccionados.length > 0) {
+        previewHTML += '<p class="preview-warning">⚠️ Configura los horarios para los días seleccionados</p>';
+    }
+    
+    if (modalidad === 'presencial' && !aula) {
+        previewHTML += '<p class="preview-warning">⚠️ Especifica el aula para las clases presenciales</p>';
+    }
+    
+    previewContent.innerHTML = previewHTML;
+}
+
+function guardarHorario(courseId, courseTitle) {
+    const diasSeleccionados = Array.from(document.querySelectorAll('input[name="dias[]"]:checked'));
+    const modalidad = document.querySelector('input[name="modalidad"]:checked').value;
+    const aula = document.getElementById('aula-clase').value;
+    
+    const horarios = [];
+    let errores = [];
+    
+    // Validaciones de modalidad y aula
+    if (modalidad === 'presencial' && !aula.trim()) {
+        errores.push('Especifica el aula para las clases presenciales');
+    }
+    
+    diasSeleccionados.forEach(checkbox => {
+        const dia = parseInt(checkbox.value);
+        const diaNombre = checkbox.getAttribute('data-dia');
+        const horaInicio = document.querySelector(`.hora-inicio-dia[data-dia="${dia}"]`).value;
+        const horaFin = document.querySelector(`.hora-fin-dia[data-dia="${dia}"]`).value;
+        
+        if (!horaInicio || !horaFin) {
+            errores.push(`${diaNombre}: Horario incompleto`);
+            return;
+        }
+        
+        horarios.push({
+            dia: dia,
+            diaNombre: diaNombre,
+            horaInicio: horaInicio,
+            horaFin: horaFin
+        });
+    });
+    
+    if (errores.length > 0) {
+        alert('Por favor, corrige los siguientes errores:\n' + errores.join('\n'));
+        return;
+    }
+    
+    if (horarios.length === 0) {
+        alert('Por favor, selecciona al menos un día con horario completo');
+        return;
+    }
+    
+    const horarioData = {
+        courseId: courseId,
+        courseTitle: courseTitle,
+        modalidad: modalidad,
+        aula: modalidad === 'presencial' ? aula.trim() : null,
+        horarios: horarios
+    };
+    
+    console.log('Guardando horario:', horarioData);
+    
+    // Enviar datos al servidor
+    fetch("php/guardarHorario.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(horarioData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Horario guardado exitosamente para el curso: ' + courseTitle);
+            closeHorarioModal();
+        } else {
+            alert('Error al guardar horario: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al guardar horario. Por favor, intente nuevamente.');
+    });
+}
+
+function closeHorarioModal() {
+    const modal = document.getElementById('config-horario-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 function formatFileSize(bytes) {
