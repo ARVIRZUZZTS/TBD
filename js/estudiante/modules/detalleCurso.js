@@ -48,7 +48,6 @@ export async function cargarDetalleCurso(idPeriodoCurso) {
         configurarFiltros();
 
     } catch (error) {
-        console.error('Error al cargar detalle del curso:', error);
         document.getElementById('lista-actividades').innerHTML = `
             <div class="error">Error al cargar el curso: ${error.message}</div>
         `;
@@ -233,23 +232,17 @@ function configurarDescargas() {
     });
 }
 
-// ===== SISTEMA DE ENTREGAS ===== //
-
 function configurarEntregas() {
-    console.log("🔍 Configurando event listeners para entregas...");
+
     
     const botones = document.querySelectorAll('.entregar-actividad-btn');
-    console.log("🔍 Botones encontrados:", botones.length);
+
     
     botones.forEach((button, index) => {
-        console.log(`🔍 Configurando botón ${index}:`, button);
-        
         button.addEventListener('click', function() {
-            console.log("🔍 CLICK en botón de entrega");
             const idActividad = this.getAttribute('data-id');
             const tipoActividad = this.getAttribute('data-tipo');
             
-            console.log("🔍 Datos:", { idActividad, tipoActividad });
             entregarActividad(idActividad, tipoActividad);
         });
     });
@@ -257,44 +250,42 @@ function configurarEntregas() {
 
 async function entregarActividad(idActividad, tipoActividad) {
     try {
-        console.log("🔍 entregarActividad EJECUTADA");
-        console.log("🔍 ID:", idActividad, "Tipo:", tipoActividad);
 
         const idEstudiante = localStorage.getItem('id_user');
-        console.log("🔍 ID Estudiante:", idEstudiante);
         
         if (!idEstudiante) {
             alert('Debes iniciar sesión para entregar actividades');
             return;
         }
 
-        // Confirmación
+        // Formatear id_publicacion según el tipo
+        const idPublicacion = tipoActividad === 'tarea' 
+            ? `TA-${idActividad}` 
+            : `EV-${idActividad}`;
+        
         const mensaje = tipoActividad === 'tarea' 
             ? '¿Entregar esta tarea?' 
             : '¿Comenzar esta evaluación?';
             
         if (!confirm(mensaje)) return;
 
-        // Enviar al PHP
         const formData = new FormData();
         formData.append('id_estudiante', idEstudiante);
-        formData.append('id_actividad', idActividad);
+        formData.append('id_publicacion', idPublicacion); // ← ENVIAR FORMATEADO
         formData.append('tipo_actividad', tipoActividad);
 
-        console.log("🔍 Enviando a PHP...");
         const response = await fetch('php/entregarActividad.php', {
             method: 'POST',
             body: formData
         });
 
         const data = await response.json();
-        console.log("🔍 Respuesta PHP:", data);
 
         if (data.exito) {
-            alert('✅ ' + data.mensaje);
+            alert( data.mensaje);
             actualizarUIEntrega(idActividad, tipoActividad);
         } else {
-            alert('❌ ' + data.mensaje);
+            alert( data.mensaje);
         }
 
     } catch (error) {
@@ -304,7 +295,6 @@ async function entregarActividad(idActividad, tipoActividad) {
 }
 
 function actualizarUIEntrega(idActividad, tipoActividad) {
-    // Actualizar estado en la UI
     const estadoElement = document.getElementById(`estado-${tipoActividad}-${idActividad}`);
     if (estadoElement) {
         estadoElement.textContent = 'Entregado';
@@ -331,18 +321,18 @@ async function verificarEstadosEntregas() {
         const data = await response.json();
 
         if (data.exito && data.entregas) {
-            console.log("🔍 Entregas encontradas:", data.entregas);
             
             // Marcar como entregadas todas las actividades que están en la lista
             data.entregas.forEach(idPublicacion => {
-                console.log("🔍 Verificando entrega para:", idPublicacion);
+                
+                // Extraer tipo e ID del formato TA-123 o EV-456
+                const [prefijo, idActividad] = idPublicacion.split('-');
+                const tipoActividad = prefijo === 'TA' ? 'tarea' : 'evaluacion';
                 
                 // Buscar si existe una actividad con este ID en el DOM
-                const actividadElement = document.querySelector(`[data-id="${idPublicacion}"]`);
+                const actividadElement = document.querySelector(`[data-id="${idActividad}"]`);
                 if (actividadElement) {
-                    const tipoActividad = actividadElement.getAttribute('data-tipo');
-                    console.log("🔍 Actualizando UI para:", idPublicacion, tipoActividad);
-                    actualizarUIEntrega(idPublicacion, tipoActividad);
+                    actualizarUIEntrega(idActividad, tipoActividad);
                 }
             });
         }

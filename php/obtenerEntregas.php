@@ -10,7 +10,8 @@ if (empty($id_estudiante)) {
 }
 
 try {
-    $sql = "SELECT id_publicacion FROM entregas WHERE id_user = ?";
+    // Obtener solo los id_publicacion que empiezan con TA- o EV-
+    $sql = "SELECT id_publicacion FROM entregas WHERE id_user = ? AND (id_publicacion LIKE 'TA-%' OR id_publicacion LIKE 'EV-%')";
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_estudiante);
     $stmt->execute();
