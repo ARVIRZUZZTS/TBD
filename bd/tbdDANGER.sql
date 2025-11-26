@@ -67,6 +67,7 @@ CREATE TRIGGER `tr_archivos_adjuntos_in` AFTER INSERT ON `archivos_adjuntos` FOR
 END
 $$
 DELIMITER ;
+
 DELIMITER $$
 CREATE TRIGGER `tr_archivos_adjuntos_up` AFTER UPDATE ON `archivos_adjuntos` FOR EACH ROW BEGIN
     DECLARE cambios TEXT DEFAULT '';
