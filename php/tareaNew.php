@@ -98,10 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $id_archivo = $conexion->insert_id;
                     
-                    // Relacionar archivo con la tarea en archivos_publicacion
+                    // Relacionar archivo con la tarea en archivos_publicacion (USANDO PREFIJO)
                     $sqlRelacion = "INSERT INTO archivos_publicacion (id_archivo, id_publicacion) VALUES (?, ?)";
                     $stmtRelacion = $conexion->prepare($sqlRelacion);
-                    $stmtRelacion->bind_param("ii", $id_archivo, $id_tarea);
+                    $id_publicacion_con_prefijo = 'TA-' . $id_tarea;
+                    $stmtRelacion->bind_param("is", $id_archivo, $id_publicacion_con_prefijo);
                     
                     if (!$stmtRelacion->execute()) {
                         throw new Exception('Error al relacionar el archivo: ' . $stmtRelacion->error);
@@ -120,6 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'success' => true, 
                 'message' => 'Tarea creada exitosamente' . ($archivo_subido ? ' con archivo adjunto' : ''),
                 'id_tarea' => $id_tarea,
+                'id_publicacion' => 'TA-' . $id_tarea,
                 'con_archivo' => $archivo_subido
             ]);
             
@@ -170,10 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param("issssss", $id_modulo, $titulo, $descripcion, $fecha_emision, $hora_emision, $fecha_entrega, $hora_entrega);
             
             if ($stmt->execute()) {
+                $id_tarea = $conexion->insert_id;
+                
                 echo json_encode([
                     'success' => true, 
                     'message' => 'Tarea creada exitosamente',
-                    'id_tarea' => $conexion->insert_id,
+                    'id_tarea' => $id_tarea,
+                    'id_publicacion' => 'TA-' . $id_tarea,
                     'con_archivo' => false
                 ]);
             } else {
