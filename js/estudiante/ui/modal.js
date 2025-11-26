@@ -18,7 +18,7 @@ export function mostrarModalPago(curso) {
             <div class="modal-content">
                 <div class="modal-header">
                     <h2>Confirmar Inscripción y Pago</h2>
-                    <span class="close-modal">&times;</span>
+                    <span class="close-modal">X</span>
                 </div>
                 <div class="modal-body">
                     <div id="info-curso-modal">
