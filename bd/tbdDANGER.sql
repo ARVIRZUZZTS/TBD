@@ -58,7 +58,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_archivos_adjuntos_in` AFTER INSERT ON `archivos_adjuntos` FOR EACH ROW BEGIN
-	INSERT INTO xb_archivos_adjuntos (accion, fecha, descipcion)
+	INSERT INTO xb_archivos_adjuntos (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -148,7 +148,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_archivos_publicacion_in` AFTER INSERT ON `archivos_publicacion` FOR EACH ROW BEGIN
-	INSERT INTO xb_archivos_publicacion (accion, fecha, descipcion)
+	INSERT INTO xb_archivos_publicacion (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -230,7 +230,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_area_in` AFTER INSERT ON `area` FOR EACH ROW BEGIN
-    INSERT INTO xb_area (accion, fecha, descipcion)
+    INSERT INTO xb_area (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -292,7 +292,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_aula_in` AFTER INSERT ON `aula` FOR EACH ROW BEGIN
-    INSERT INTO xb_aula (accion, fecha, descipcion)
+    INSERT INTO xb_aula (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -379,7 +379,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_beca_in` AFTER INSERT ON `beca` FOR EACH ROW BEGIN
-    INSERT INTO xb_beca (accion, fecha, descipcion)
+    INSERT INTO xb_beca (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -517,7 +517,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_categoria_in` AFTER INSERT ON `categoria` FOR EACH ROW BEGIN
-    INSERT INTO xb_categoria (accion, fecha, descipcion)
+    INSERT INTO xb_categoria (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -580,7 +580,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_comentario_in` AFTER INSERT ON `comentario` FOR EACH ROW BEGIN
-    INSERT INTO xb_comentario (accion, fecha, descipcion)
+    INSERT INTO xb_comentario (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -679,7 +679,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_curso_in` AFTER INSERT ON `curso` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso (accion, fecha, descipcion)
+    INSERT INTO xb_curso (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -852,7 +852,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_curso_estudiante_in` AFTER INSERT ON `curso_estudiante` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso_estudiante (accion, fecha, descipcion)
+    INSERT INTO xb_curso_estudiante (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -958,7 +958,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_curso_maestro_in` AFTER INSERT ON `curso_maestro` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso_maestro (accion, fecha, descipcion)
+    INSERT INTO xb_curso_maestro (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -1045,7 +1045,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_datos_maestro_in` AFTER INSERT ON `datos_maestro` FOR EACH ROW BEGIN
-    INSERT INTO xb_datos_maestro (accion, fecha, descipcion)
+    INSERT INTO xb_datos_maestro (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -1133,7 +1133,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_descuento_in` AFTER INSERT ON `descuento` FOR EACH ROW BEGIN
-    INSERT INTO xb_descuento (accion, fecha, descipcion)
+    INSERT INTO xb_descuento (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
@@ -1219,7 +1219,7 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `tr_dia_horario_in` AFTER INSERT ON `dia_horario` FOR EACH ROW BEGIN
-    INSERT INTO xb_dia_horario (accion, fecha, descipcion)
+    INSERT INTO xb_dia_horario (accion, fecha, descripcion)
     VALUES (
         'INSERT',
         NOW(),
