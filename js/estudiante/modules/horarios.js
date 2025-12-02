@@ -33,6 +33,12 @@ export function mostrarHorarios(cursos) {
     const horariosContainer = document.querySelector('#horarios .content-grid');
     horariosContainer.innerHTML = '';
     
+    // Eliminar bloque de filtros anterior si existe
+    const filtrosExistentes = document.querySelector('#horarios .filtros-horarios');
+    if (filtrosExistentes) {
+        filtrosExistentes.remove();
+    }
+    
     // Crear botones de filtro para cada curso
     const filtrosContainer = document.createElement('div');
     filtrosContainer.className = 'filtros-horarios';
