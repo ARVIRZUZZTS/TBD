@@ -164,7 +164,7 @@ try {
     echo json_encode(['exito' => false, 'mensaje' => $e->getMessage()]);
 }
 
-// Cerrar conexiones
+// Cerrar conexiones...
 if (isset($stmt_verificar_estudiante)) $stmt_verificar_estudiante->close();
 if (isset($stmt_verificar_curso)) $stmt_verificar_curso->close();
 if (isset($stmt_verificar_estado)) $stmt_verificar_estado->close();

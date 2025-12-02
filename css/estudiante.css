@@ -328,7 +328,7 @@
   box-shadow: 0 2px 8px rgba(87, 45, 13, 0.1);
   transition: var(--transition);
   border-left: 4px solid var(--shiny);
-  min-height: 300px;
+  min-height: 150px;
   display: flex;
   flex-direction: column;
 }
@@ -493,7 +493,8 @@ nav { margin-top: -8vh; overflow-x: hidden; overflow-y: auto; height:65%; }
 }
 
 .estado-pendiente { color: #e74c3c; }
-.estado-entregado { color: #27ae60; }
+.estado-entregado { color: #27ae60;
+size: 20%; }
 
 .entregar-actividad-btn:disabled {
     background: #27ae60 !important;
@@ -506,7 +507,7 @@ nav { margin-top: -8vh; overflow-x: hidden; overflow-y: auto; height:65%; }
     position: fixed;
     top: 20px;
     right: 20px;
-    background: #27ae60;
+    background: white;
     color: white;
     padding: 15px 20px;
     border-radius: 8px;

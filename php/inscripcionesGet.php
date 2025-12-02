@@ -132,6 +132,8 @@ try {
         'mensaje' => 'Error en el servidor: ' . $e->getMessage()
     ]);
 }
+
+// Cerrar conexiones...
 if (isset($stmt_grado)) $stmt_grado->close();
 if (isset($stmt_descuentos)) $stmt_descuentos->close();
 if (isset($stmt)) $stmt->close();
