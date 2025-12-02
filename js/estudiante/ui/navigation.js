@@ -2,6 +2,7 @@
 import { cargarCursosEstudiante } from '../modules/cursos.js';
 import { cargarInscripciones } from '../modules/inscripciones.js';
 import { cargarTienda } from '../modules/tienda.js';
+import { cargarHorarios } from '../modules/horarios.js';
 
 export function inicializarNavegacion() {
     const navButtons = document.querySelectorAll('.nav-btn');
@@ -45,6 +46,9 @@ function cargarContenidoPestana(targetTab) {
             break;
         case 'inscripcion':
             cargarInscripciones();
+            break;
+        case 'horarios':
+            cargarHorarios();
             break;
         case 'tienda':
             cargarTienda();
