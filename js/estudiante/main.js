@@ -2,7 +2,6 @@
 import { inicializarNavegacion } from './ui/navigation.js';
 import { cargarDatosEstudiante } from './modules/auth.js';
 import { inicializarEventosGlobales } from './modules/tienda.js';
-import { cargarHorarios } from './modules/horarios.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM completamente cargado");

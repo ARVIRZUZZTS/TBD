@@ -1,0 +1,1147 @@
+// modules/cursos.js - lógica de cursos para el portal del maestro
+import { escapeHTML, formatDate, formatFileSize } from './utils.js';
+
+export async function cargarMisCursos() {
+    const loadingElement = document.getElementById('courses-loading');
+    const coursesContainer = document.getElementById('courses-container');
+    const errorElement = document.getElementById('courses-error');
+
+    if (!loadingElement || !coursesContainer) return;
+
+    loadingElement.style.display = 'block';
+    coursesContainer.innerHTML = '';
+    if (errorElement) errorElement.style.display = 'none';
+
+    let idMaestro = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+
+    try {
+        const res = await fetch('php/pcGetByMaestro.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idMaestro })
+        });
+        const data = await res.json();
+        loadingElement.style.display = 'none';
+        if (data.success) {
+            if (data.cursos && data.cursos.length > 0) {
+                displayCourses(data.cursos);
+            } else {
+                coursesContainer.innerHTML = `
+                    <div class="no-courses-message">
+                        <div class="placeholder-icon">📚</div>
+                        <h3>No hay cursos disponibles</h3>
+                        <p>No se le han asignado cursos por el momento.</p>
+                    </div>
+                `;
+            }
+        } else {
+            if (errorElement) errorElement.style.display = 'block';
+        }
+    } catch (err) {
+        console.error('Error al cargar cursos:', err);
+        loadingElement.style.display = 'none';
+        if (errorElement) errorElement.style.display = 'block';
+    }
+}
+
+export function displayCourses(cursos) {
+    const coursesContainer = document.getElementById('courses-container');
+    if (!coursesContainer) return;
+
+    if (!cursos || cursos.length === 0) {
+        coursesContainer.innerHTML = `
+            <div class="no-courses-message">
+                <div class="placeholder-icon">📚</div>
+                <h3>No hay cursos disponibles</h3>
+                <p>No se encontraron cursos en la base de datos.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const coursesHTML = cursos.map(curso => {
+        const isPendiente = curso.estado === 'Pendiente';
+        return `
+        <div class="course-card available-course">
+            <h3 class="course-title">${escapeHTML(curso.titulo)}</h3>
+            <div class="course-details">
+                <p class="course-info"><strong>Duración:</strong> ${escapeHTML(String(curso.duracion || ''))}</p>
+                <p class="course-info"><strong>Modalidad:</strong> ${escapeHTML(curso.modalidad || '')}</p>
+                <p class="course-info"><strong>Categoría:</strong> ${escapeHTML(curso.categoria || '')}</p>
+                <p class="course-info"><strong>Área:</strong> ${escapeHTML(curso.area || '')}</p>
+                <p class="course-info"><strong>Grado:</strong> ${escapeHTML(curso.grado || '')}</p>
+                <p class="course-info"><strong>Periodo:</strong> ${escapeHTML(curso.periodo || '')}</p>
+                ${!isPendiente ? `<p class="course-info"><strong>Inscritos:</strong> ${escapeHTML(String(curso.inscritos || 0))}</p>` : ''}
+                <p class="course-info"><strong>Estado:</strong> ${escapeHTML(curso.estado || '')}</p>
+            </div>
+            <div class="action-buttons">
+                ${isPendiente ? `<button class="shiny accept-course" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}">Agregar Curso</button>` : ''}
+                ${!isPendiente ? `<button class="shiny view-details" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}" data-course-inscritos="${escapeHTML(String(curso.inscritos || 0))}">Ver Detalles</button>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    coursesContainer.innerHTML = coursesHTML;
+
+    // attach listeners
+    document.querySelectorAll('.view-details').forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            const courseInscritos = this.getAttribute('data-course-inscritos');
+            showCourseDetails(courseId, courseTitle, courseInscritos);
+        });
+    });
+
+    document.querySelectorAll('.accept-course').forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            acceptCourse(courseId, courseTitle);
+        });
+    });
+}
+
+// Functions below are internal but used by the UI; keep them non-exported
+function acceptCourse(courseId, courseTitle) {
+    const confirmModalHTML = `
+        <div id="confirm-accept-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirmar Aceptación</h3>
+                    <button class="modal-close" id="close-confirm-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Desea aceptar el curso "<strong>${escapeHTML(courseTitle)}</strong>"?</p>
+                    <div class="form-actions">
+                        <button type="button" class="back" id="reject-course">No</button>
+                        <button type="button" class="shiny" id="confirm-accept">Sí</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', confirmModalHTML);
+
+    const confirmModal = document.getElementById('confirm-accept-modal');
+
+    document.getElementById('close-confirm-modal').addEventListener('click', () => {
+        confirmModal.remove();
+    });
+
+    document.getElementById('reject-course').addEventListener('click', () => {
+        confirmModal.remove();
+        deleteCourse(courseId, courseTitle);
+    });
+
+    document.getElementById('confirm-accept').addEventListener('click', () => {
+        confirmModal.remove();
+        showCourseDetailsModal(courseId, courseTitle);
+    });
+
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === confirmModal) {
+            confirmModal.remove();
+        }
+    });
+}
+
+function deleteCourse(courseId, courseTitle) {
+    fetch('php/pcDelete.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_periodo_curso: courseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Curso rechazado exitosamente');
+            cargarMisCursos();
+        } else {
+            alert('Error al rechazar curso: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al rechazar curso. Por favor, intente nuevamente.');
+    });
+}
+
+function showCourseDetails(courseId, courseTitle, courseInscritos) {
+    const contentArea = document.querySelector('.content-area');
+    localStorage.setItem('current_course_id', courseId);
+
+    // Remove any existing details
+    const existing = document.getElementById('course-details');
+    if (existing) existing.remove();
+
+    const courseDetailsHTML = `
+        <div id="course-details">
+            <div class="course-header">
+                <div class="course-title-section">
+                    <h2>${escapeHTML(courseTitle)}</h2>
+                </div>
+                <div class="course-stats">
+                    <div class="inscritos-badge">
+                        <span class="inscritos-count">${escapeHTML(String(courseInscritos || '0'))}</span>
+                        <span class="inscritos-label">Estudiantes Inscritos</span>
+                    </div>
+                    <button class="shiny config-horario-btn" id="config-horario">
+                        Configurar Horario
+                    </button>
+                </div>
+            </div>
+            
+            <div class="course-actions">
+                <button class="shiny action-btn" data-action="crear-modulo">
+                    <span class="btn-icon">📚</span>
+                    Crear Módulo
+                </button>
+                <button class="shiny action-btn" data-action="crear-tema">
+                    <span class="btn-icon">📖</span>
+                    Crear Tema
+                </button>
+                <button class="shiny action-btn" data-action="crear-evaluacion">
+                    <span class="btn-icon">📊</span>
+                    Crear Evaluación
+                </button>
+                <button class="shiny action-btn" data-action="crear-tarea">
+                    <span class="btn-icon">📝</span>
+                    Crear Tarea
+                </button>
+            </div>
+            
+            <div class="course-content">
+                <div id="modules-container">
+                    <div class="loading-message" id="modules-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando módulos...</p>
+                    </div>
+                    <div id="modules-list" class="modules-grid" style="display: none;"></div>
+                    <div id="modules-empty" class="no-modules-message" style="display: none;">
+                        <div class="placeholder-icon">📚</div>
+                        <h3>No hay módulos creados</h3>
+                        <p>Comienza creando tu primer módulo para este curso.</p>
+                    </div>
+                    <div id="modules-error" class="error-message" style="display: none;">
+                        <p>Error al cargar los módulos. Por favor, intente nuevamente.</p>
+                        <button class="shiny" id="retry-load-modules">Reintentar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="back-to-courses">
+                <button class="back" id="back-to-courses-list">← Volver a Mis Cursos</button>
+            </div>
+        </div>
+    `;
+
+    // Hide other sections
+    document.querySelectorAll('.content-area > div').forEach(section => section.style.display = 'none');
+
+    contentArea.insertAdjacentHTML('beforeend', courseDetailsHTML);
+
+    // Cargar módulos del curso
+    loadCourseModules(courseId);
+
+    // Agregar event listeners para los botones de acción
+    document.querySelectorAll('.action-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            handleCourseAction(action, courseId, courseTitle);
+        });
+    });
+
+    // Event listener para volver a la lista de cursos
+    const backBtn = document.getElementById('back-to-courses-list');
+    if (backBtn) backBtn.addEventListener('click', function() {
+        const details = document.getElementById('course-details');
+        if (details) details.remove();
+        document.getElementById('current-courses').style.display = 'block';
+        cargarMisCursos();
+    });
+
+    // Event listener para reintentar carga de módulos
+    const retryBtn = document.getElementById('retry-load-modules');
+    if (retryBtn) retryBtn.addEventListener('click', function() {
+        loadCourseModules(courseId);
+    });
+
+    const configBtn = document.getElementById('config-horario');
+    if (configBtn) configBtn.addEventListener('click', function() {
+        showConfigHorarioModal(courseId, courseTitle);
+    });
+}
+
+// --- Module content load functions (simplified wrappers) ---
+async function loadCourseModules(courseId) {
+    const loadingElement = document.getElementById('modules-loading');
+    const modulesList = document.getElementById('modules-list');
+    const emptyElement = document.getElementById('modules-empty');
+    const errorElement = document.getElementById('modules-error');
+
+    if (!loadingElement) return;
+    loadingElement.style.display = 'block';
+    if (modulesList) modulesList.style.display = 'none';
+    if (emptyElement) emptyElement.style.display = 'none';
+    if (errorElement) errorElement.style.display = 'none';
+
+    try {
+        const res = await fetch('php/moduloGetByPC.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_periodo_curso: courseId })
+        });
+        const data = await res.json();
+        loadingElement.style.display = 'none';
+        if (data.success && data.modulos && data.modulos.length > 0) {
+            const modulesWithContent = await loadModuleContent(data.modulos);
+            displayModulesWithContent(modulesWithContent);
+            if (modulesList) modulesList.style.display = 'block';
+        } else {
+            if (emptyElement) emptyElement.style.display = 'block';
+        }
+    } catch (err) {
+        console.error('Error al cargar módulos:', err);
+        loadingElement.style.display = 'none';
+        if (errorElement) errorElement.style.display = 'block';
+    }
+}
+
+async function loadModuleContent(modulos) {
+    const result = [];
+    for (const mod of modulos) {
+        const [temas, tareas, evaluaciones] = await Promise.all([
+            loadTemasByModulo(mod.id_modulo),
+            loadTareasByModulo(mod.id_modulo),
+            loadEvaluacionesByModulo(mod.id_modulo)
+        ]);
+        result.push({ ...mod, temas, tareas, evaluaciones });
+    }
+    return result;
+}
+
+function loadTemasByModulo(id_modulo) {
+    return fetch('php/temasGetByModulo.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_modulo }) })
+        .then(r => r.json()).then(d => d.success ? d.temas : []).catch(() => []);
+}
+
+function loadTareasByModulo(id_modulo) {
+    return fetch('php/tareaGetByModulo.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_modulo }) })
+        .then(r => r.json()).then(d => d.success ? d.tareas : []).catch(() => []);
+}
+
+function loadEvaluacionesByModulo(id_modulo) {
+    return fetch('php/evaluacionGetByModulo.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_modulo }) })
+        .then(r => r.json()).then(d => d.success ? d.evaluaciones : []).catch(() => []);
+}
+
+function displayModulesWithContent(modules) {
+    const modulesList = document.getElementById('modules-list');
+    if (!modulesList) return;
+
+    const modulesHTML = modules.map(modulo => `
+        <div class="module-card">
+            <div class="module-content">
+                <div class="module-info">
+                    <h4 class="module-title">${escapeHTML(modulo.titulo)}</h4>
+                    <span class="module-order">Orden: ${escapeHTML(String(modulo.orden || ''))}</span>
+                </div>
+            </div>
+            ${modulo.temas.length > 0 ? `<div class="temas-container">${modulo.temas.map(tema => `<div class="tema-card"><div class="tema-content"><div class="tema-info"><h5 class="tema-title">📖 ${escapeHTML(tema.titulo)}</h5>${tema.archivo_url ? `<div class="archivo-adjunto"><a href="php/descargar.php?archivo=${tema.archivo_url.replace('uploads/', '')}" target="_blank">📎 ${escapeHTML(tema.archivo_nombre || 'Archivo adjunto')}</a></div>` : ''}</div></div></div>`).join('')}</div>` : ''}
+            ${modulo.tareas.length > 0 ? `<div class="temas-container">${modulo.tareas.map(tarea => `<div class="tema-card"><div class="tema-content"><div class="tema-info"><h5 class="tema-title">📝 ${escapeHTML(tarea.titulo)}</h5><p class="tema-desc">${escapeHTML(tarea.descripcion || 'Sin descripción')}</p>${tarea.archivo_url ? `<div class="archivo-adjunto"><a href="php/descargar.php?archivo=${tarea.archivo_url.replace('uploads/', '')}" target="_blank">📎 ${escapeHTML(tarea.archivo_nombre || 'Archivo adjunto')}</a></div>` : ''}<small>Entrega: ${formatDate(tarea.fecha_entrega)} ${tarea.hora_entrega || ''}</small></div></div></div>`).join('')}</div>` : ''}
+            ${modulo.evaluaciones.length > 0 ? `<div class="temas-container">${modulo.evaluaciones.map(e => `<div class="tema-card"><div class="tema-content"><div class="tema-info"><h5 class="tema-title">📊 ${escapeHTML(e.titulo)}</h5><p class="tema-desc">${escapeHTML(e.descripcion || 'Sin descripción')}</p>${e.archivo_url ? `<div class="archivo-adjunto"><a href="php/descargar.php?archivo=${e.archivo_url.replace('uploads/', '')}" target="_blank">📎 ${escapeHTML(e.archivo_nombre || 'Archivo adjunto')}</a></div>` : ''}<small>Inicio: ${formatDate(e.fecha_inicio)} ${e.hora_inicio || ''}</small><small>Entrega: ${formatDate(e.fecha_entrega)} ${e.hora_entrega || ''}</small><small>Puntos: ${escapeHTML(String(e.deskpoints || ''))}</small></div></div></div>`).join('')}</div>` : ''}
+        </div>
+    `).join('');
+
+    modulesList.innerHTML = modulesHTML;
+}
+
+// --- MODALES Y FUNCIONES AUXILIARES (restauradas) ---
+
+function showCourseDetailsModal(courseId, courseTitle) {
+    const today = new Date().toISOString().split('T')[0];
+
+    const detailsModalHTML = `
+        <div id="course-details-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Configurar Curso: ${escapeHTML(courseTitle)}</h3>
+                    <button class="modal-close" id="close-details-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="course-details-form">
+                        <div class="form-group">
+                            <label for="fecha-inicio">Fecha de Inicio:</label>
+                            <input type="date" id="fecha-inicio" name="fecha_inicio" required min="${today}">
+                            <small>La fecha de inicio no puede ser anterior a la fecha actual</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fecha-fin">Fecha de Fin:</label>
+                            <input type="date" id="fecha-fin" name="fecha_fin" required>
+                            <small>La fecha de fin debe ser al menos 2 semanas después de la fecha de inicio</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cupos">Número de Cupos:</label>
+                            <input type="number" id="cupos" name="cupos" required min="1" max="500" placeholder="Máximo 500 cupos">
+                            <small>El número máximo de cupos permitido es 500</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-details">Cancelar</button>
+                            <button type="submit" class="shiny">Aceptar Curso</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', detailsModalHTML);
+
+    const detailsModal = document.getElementById('course-details-modal');
+    const form = document.getElementById('course-details-form');
+
+    document.getElementById('close-details-modal').addEventListener('click', () => {
+        detailsModal.remove();
+    });
+
+    document.getElementById('cancel-details').addEventListener('click', () => {
+        detailsModal.remove();
+    });
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitCourseAcceptance(courseId, courseTitle);
+    });
+
+    detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+            detailsModal.remove();
+        }
+    });
+}
+
+function submitCourseAcceptance(courseId, courseTitle) {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin = document.getElementById('fecha-fin').value;
+    const cupos = parseInt(document.getElementById('cupos').value);
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!fechaInicio || !fechaFin || !cupos) {
+        alert('Por favor, complete todos los campos');
+        return;
+    }
+    
+    if (fechaInicio < today) {
+        alert('La fecha de inicio no puede ser anterior a la fecha actual');
+        return;
+    }
+    
+    if (fechaFin <= fechaInicio) {
+        alert('La fecha de fin debe ser posterior a la fecha de inicio');
+        return;
+    }
+    
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const diferenciaMs = fin - inicio;
+    const diferenciaDias = diferenciaMs / (1000 * 60 * 60 * 24);
+    const diferenciaSemanas = diferenciaDias / 7;
+    
+    if (diferenciaSemanas < 2) {
+        alert('La fecha de fin debe ser al menos 2 semanas después de la fecha de inicio');
+        return;
+    }
+    
+    if (cupos < 1 || cupos > 500) {
+        alert('El número de cupos debe estar entre 1 y 500');
+        return;
+    }
+    
+    fetch('php/pcAceptarCurso.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_periodo_curso: courseId, fecha_inicio: fechaInicio, fecha_fin: fechaFin, cupos: cupos })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Curso aceptado exitosamente');
+            const modal = document.getElementById('course-details-modal');
+            if (modal) modal.remove();
+            cargarMisCursos();
+        } else {
+            alert('Error al aceptar curso: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al aceptar curso. Por favor, intente nuevamente.');
+    });
+}
+
+function showCreateModuleModal(courseId) {
+    const modalHTML = `
+        <div id="create-module-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Crear Nuevo Módulo</h3>
+                    <button class="modal-close" id="close-module-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-module-form">
+                        <div class="form-group">
+                            <label for="module-title">Título del Módulo:</label>
+                            <input type="text" id="module-title" name="title" required maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="module-order">Orden del Módulo:</label>
+                            <input type="number" id="module-order" name="order" required min="1">
+                            <small>Define la posición del módulo (1 = primero, 2 = segundo, etc.)</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-module">Cancelar</button>
+                            <button type="submit" class="shiny">Crear Módulo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const modal = document.getElementById('create-module-modal');
+    const form = document.getElementById('create-module-form');
+
+    document.getElementById('close-module-modal').addEventListener('click', closeModuleModal);
+    document.getElementById('cancel-module').addEventListener('click', closeModuleModal);
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        createModule(courseId);
+    });
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModuleModal();
+    });
+}
+
+function createModule(courseId) {
+    const title = document.getElementById('module-title').value.trim();
+    const order = parseInt(document.getElementById('module-order').value);
+    
+    if (!title) { alert('Por favor, ingresa un título para el módulo'); return; }
+    if (order <= 0) { alert('El orden debe ser un número positivo'); return; }
+
+    fetch('php/moduloNew.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_periodo_curso: courseId, titulo: title, orden: order })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Módulo creado exitosamente');
+            closeModuleModal();
+            loadCourseModules(courseId);
+        } else {
+            alert('Error al crear módulo: ' + data.message);
+        }
+    })
+    .catch(err => { console.error('Error:', err); alert('Error al crear módulo. Por favor, intente nuevamente.'); });
+}
+
+function closeModuleModal() { const modal = document.getElementById('create-module-modal'); if (modal) modal.remove(); }
+
+function showCreateTemaModal(courseId, courseTitle) {
+    fetch('php/moduloGetByPC.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_periodo_curso: courseId }) })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.modulos.length > 0) {
+            let modulosOptions = data.modulos.map(modulo => `<option value="${modulo.id_modulo}">${escapeHTML(modulo.titulo)}</option>`).join('');
+            const modalHTML = `
+                <div id="create-tema-modal" class="modal-overlay">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Crear Nuevo Tema</h3>
+                            <button class="modal-close" id="close-tema-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="create-tema-form" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="tema-modulo">Módulo:</label>
+                                    <select id="tema-modulo" name="id_modulo" required>
+                                        <option value="">Selecciona un módulo</option>
+                                        ${modulosOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tema-title">Título del Tema:</label>
+                                    <input type="text" id="tema-title" name="title" required maxlength="50">
+                                </div>
+                                <div class="form-group">
+                                    <label for="tema-archivo">Archivo Adjunto:</label>
+                                    <input type="file" id="tema-archivo" name="archivo" accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg,.mp4,.avi,.mov,.zip,.rar">
+                                    <small>Formatos permitidos: PDF, PPT, DOC, PNG, JPG, MP4, AVI, MOV, ZIP, RAR (Máx. 10MB)</small>
+                                    <div id="tema-archivo-preview" style="display: none; margin-top: 10px;"></div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="back" id="cancel-tema">Cancelar</button>
+                                    <button type="submit" class="shiny">Crear Tema</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            setupTemaModal();
+        } else {
+            alert('No hay módulos disponibles. Primero crea un módulo para este curso.');
+        }
+    })
+    .catch(err => { console.error('Error al cargar módulos:', err); alert('Error al cargar los módulos. Por favor, intente nuevamente.'); });
+}
+
+function setupTemaModal() {
+    const modal = document.getElementById('create-tema-modal');
+    const form = document.getElementById('create-tema-form');
+    const archivoInput = document.getElementById('tema-archivo');
+    const archivoPreview = document.getElementById('tema-archivo-preview');
+    const archivoNombre = document.getElementById('tema-archivo-nombre');
+    const quitarArchivoBtn = document.getElementById('tema-quitar-archivo');
+
+    document.getElementById('close-tema-modal').addEventListener('click', closeTemaModal);
+    document.getElementById('cancel-tema').addEventListener('click', closeTemaModal);
+
+    archivoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) { alert('El archivo es demasiado grande. Máximo 10MB permitido.'); archivoInput.value = ''; return; }
+            const allowedTypes = ['application/pdf','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg','image/jpg','video/mp4','video/avi','video/quicktime','application/zip','application/x-rar-compressed'];
+            if (!allowedTypes.includes(file.type)) { alert('Tipo de archivo no permitido. Use PDF, PPT, DOC, PNG, JPG, MP4, AVI, MOV, ZIP o RAR.'); archivoInput.value = ''; return; }
+            archivoPreview.innerHTML = `<span>${file.name}</span> <button type="button" id="tema-quitar-archivo" class="back small">×</button>`;
+            archivoPreview.style.display = 'block';
+            const quitar = document.getElementById('tema-quitar-archivo'); if (quitar) quitar.addEventListener('click', function(){ archivoInput.value=''; archivoPreview.style.display='none'; });
+        }
+    });
+
+    form.addEventListener('submit', function(e) { e.preventDefault(); createTema(); });
+
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeTemaModal(); });
+}
+
+function createTema() {
+    const id_modulo = document.getElementById('tema-modulo').value;
+    const titulo = document.getElementById('tema-title').value.trim();
+    const archivoInput = document.getElementById('tema-archivo');
+    const archivo = archivoInput.files[0];
+    if (!id_modulo) { alert('Por favor, selecciona un módulo'); return; }
+    if (!titulo) { alert('Por favor, ingresa un título para el tema'); return; }
+    const formData = new FormData(); formData.append('id_modulo', id_modulo); formData.append('titulo', titulo); if (archivo) formData.append('archivo', archivo);
+    fetch('php/temasNew.php', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => { if (data.success) { alert('Tema creado exitosamente' + (archivo ? ' con archivo adjunto' : '')); closeTemaModal(); const courseId = localStorage.getItem('current_course_id'); loadCourseModules(courseId); } else { alert('Error al crear tema: ' + data.message); } })
+    .catch(err => { console.error('Error:', err); alert('Error al crear tema. Por favor, intente nuevamente.'); });
+}
+
+function closeTemaModal() { const modal = document.getElementById('create-tema-modal'); if (modal) modal.remove(); }
+
+function showCreateTareaModal(courseId, courseTitle) {
+    fetch('php/moduloGetByPC.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_periodo_curso: courseId }) })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.modulos.length > 0) {
+            let modulosOptions = data.modulos.map(modulo => `<option value="${modulo.id_modulo}">${escapeHTML(modulo.titulo)}</option>`).join('');
+            const modalHTML = `
+                <div id="create-tarea-modal" class="modal-overlay">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Crear Nueva Tarea</h3>
+                            <button class="modal-close" id="close-tarea-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="create-tarea-form" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="tarea-modulo">Módulo:</label>
+                                    <select id="tarea-modulo" name="id_modulo" required>
+                                        <option value="">Selecciona un módulo</option>
+                                        ${modulosOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-title">Título de la Tarea:</label>
+                                    <input type="text" id="tarea-title" name="title" required maxlength="50">
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-descripcion">Descripción:</label>
+                                    <textarea id="tarea-descripcion" name="descripcion" rows="4" maxlength="1000"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-archivo">Archivo Adjunto:</label>
+                                    <input type="file" id="tarea-archivo" name="archivo" accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg">
+                                    <small>Formatos permitidos: PDF, PPT, DOC, PNG, JPG (Máx. 10MB)</small>
+                                    <div id="archivo-preview" style="display: none; margin-top: 10px;"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-fecha-emision">Fecha de Emisión:</label>
+                                    <input type="date" id="tarea-fecha-emision" name="fecha_emision" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-hora-emision">Hora de Emisión:</label>
+                                    <input type="time" id="tarea-hora-emision" name="hora_emision" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-fecha-entrega">Fecha de Entrega:</label>
+                                    <input type="date" id="tarea-fecha-entrega" name="fecha_entrega" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tarea-hora-entrega">Hora de Entrega:</label>
+                                    <input type="time" id="tarea-hora-entrega" name="hora_entrega" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="back" id="cancel-tarea">Cancelar</button>
+                                    <button type="submit" class="shiny">Crear Tarea</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            setupTareaModal();
+        } else { alert('No hay módulos disponibles. Primero crea un módulo para este curso.'); }
+    })
+    .catch(err => { console.error('Error al cargar módulos:', err); alert('Error al cargar los módulos. Por favor, intente nuevamente.'); });
+}
+
+function setupTareaModal() {
+    const modal = document.getElementById('create-tarea-modal');
+    const form = document.getElementById('create-tarea-form');
+    const archivoInput = document.getElementById('tarea-archivo');
+    const archivoPreview = document.getElementById('archivo-preview');
+
+    const now = new Date();
+    const fechaActual = now.toISOString().split('T')[0];
+    const horaActual = now.toTimeString().slice(0, 5);
+
+    document.getElementById('tarea-fecha-emision').value = fechaActual;
+    document.getElementById('tarea-hora-emision').value = horaActual;
+    document.getElementById('tarea-fecha-emision').readOnly = true;
+    document.getElementById('tarea-hora-emision').readOnly = true;
+
+    document.getElementById('close-tarea-modal').addEventListener('click', closeTareaModal);
+    document.getElementById('cancel-tarea').addEventListener('click', closeTareaModal);
+
+    archivoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) { alert('El archivo es demasiado grande. Máximo 10MB permitido.'); archivoInput.value = ''; return; }
+            const allowedTypes = ['application/pdf','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg','image/jpg'];
+            if (!allowedTypes.includes(file.type)) { alert('Tipo de archivo no permitido. Use PDF, PPT, DOC, PNG o JPG.'); archivoInput.value = ''; return; }
+            archivoPreview.innerHTML = `<span>${file.name}</span> <button type="button" id="quitar-archivo" class="back small">×</button>`;
+            archivoPreview.style.display = 'block';
+            const quitar = document.getElementById('quitar-archivo'); if (quitar) quitar.addEventListener('click', function(){ archivoInput.value=''; archivoPreview.style.display='none'; });
+        }
+    });
+
+    form.addEventListener('submit', function(e) { e.preventDefault(); createTarea(); });
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeTareaModal(); });
+}
+
+function createTarea() {
+    const id_modulo = document.getElementById('tarea-modulo').value;
+    const titulo = document.getElementById('tarea-title').value.trim();
+    const descripcion = document.getElementById('tarea-descripcion').value.trim();
+    const fecha_emision = document.getElementById('tarea-fecha-emision').value;
+    const hora_emision = document.getElementById('tarea-hora-emision').value;
+    const fecha_entrega = document.getElementById('tarea-fecha-entrega').value;
+    const hora_entrega = document.getElementById('tarea-hora-entrega').value;
+    const archivoInput = document.getElementById('tarea-archivo');
+    const archivo = archivoInput.files[0];
+    if (!id_modulo) { alert('Por favor, selecciona un módulo'); return; }
+    if (!titulo) { alert('Por favor, ingresa un título para la tarea'); return; }
+    if (!fecha_emision || !hora_emision || !fecha_entrega || !hora_entrega) { alert('Por favor, completa todas las fechas y horas'); return; }
+    const formData = new FormData();
+    formData.append('id_modulo', id_modulo); formData.append('titulo', titulo); formData.append('descripcion', descripcion);
+    formData.append('fecha_emision', fecha_emision); formData.append('hora_emision', hora_emision); formData.append('fecha_entrega', fecha_entrega); formData.append('hora_entrega', hora_entrega);
+    if (archivo) formData.append('archivo', archivo);
+    fetch('php/tareaNew.php', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => { if (data.success) { alert('Tarea creada exitosamente' + (archivo ? ' con archivo adjunto' : '')); closeTareaModal(); const courseId = localStorage.getItem('current_course_id'); loadCourseModules(courseId); } else { alert('Error al crear tarea: ' + data.message); } })
+    .catch(err => { console.error('Error:', err); alert('Error al crear tarea. Por favor, intente nuevamente.'); });
+}
+
+function closeTareaModal() { const modal = document.getElementById('create-tarea-modal'); if (modal) modal.remove(); }
+
+function showCreateEvaluacionModal(courseId, courseTitle) {
+    fetch('php/moduloGetByPC.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id_periodo_curso: courseId }) })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.modulos.length > 0) {
+            let modulosOptions = data.modulos.map(modulo => `<option value="${modulo.id_modulo}">${escapeHTML(modulo.titulo)}</option>`).join('');
+            const modalHTML = `
+                <div id="create-evaluacion-modal" class="modal-overlay">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Crear Nueva Evaluación</h3>
+                            <button class="modal-close" id="close-evaluacion-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="create-evaluacion-form" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="evaluacion-modulo">Módulo:</label>
+                                    <select id="evaluacion-modulo" name="id_modulo" required>
+                                        <option value="">Selecciona un módulo</option>
+                                        ${modulosOptions}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-title">Título de la Evaluación:</label>
+                                    <input type="text" id="evaluacion-title" name="title" required maxlength="50">
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-descripcion">Descripción:</label>
+                                    <textarea id="evaluacion-descripcion" name="descripcion" rows="4" maxlength="1000"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-archivo">Archivo Adjunto:</label>
+                                    <input type="file" id="evaluacion-archivo" name="archivo" accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg,.zip,.rar">
+                                    <small>Formatos permitidos: PDF, PPT, DOC, PNG, JPG, ZIP, RAR (Máx. 10MB)</small>
+                                    <div id="evaluacion-archivo-preview" style="display: none; margin-top: 10px;"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-fecha-emision">Fecha de Emisión:</label>
+                                    <input type="date" id="evaluacion-fecha-emision" name="fecha_emision" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-hora-emision">Hora de Emisión:</label>
+                                    <input type="time" id="evaluacion-hora-emision" name="hora_emision" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-fecha-inicio">Fecha de Inicio:</label>
+                                    <input type="date" id="evaluacion-fecha-inicio" name="fecha_inicio" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-hora-inicio">Hora de Inicio:</label>
+                                    <input type="time" id="evaluacion-hora-inicio" name="hora_inicio" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-fecha-entrega">Fecha de Entrega:</label>
+                                    <input type="date" id="evaluacion-fecha-entrega" name="fecha_entrega" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-hora-entrega">Hora de Entrega:</label>
+                                    <input type="time" id="evaluacion-hora-entrega" name="hora_entrega" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="evaluacion-deskpoints">Puntos:</label>
+                                    <input type="number" id="evaluacion-deskpoints" name="deskpoints" required min="1">
+                                </div>
+                                <div class="form-actions">
+                                    <button type="button" class="back" id="cancel-evaluacion">Cancelar</button>
+                                    <button type="submit" class="shiny">Crear Evaluación</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            setupEvaluacionModal();
+        } else { alert('No hay módulos disponibles. Primero crea un módulo para este curso.'); }
+    })
+    .catch(err => { console.error('Error al cargar módulos:', err); alert('Error al cargar los módulos. Por favor, intente nuevamente.'); });
+}
+
+function setupEvaluacionModal() {
+    const modal = document.getElementById('create-evaluacion-modal');
+    const form = document.getElementById('create-evaluacion-form');
+    const archivoInput = document.getElementById('evaluacion-archivo');
+    const archivoPreview = document.getElementById('evaluacion-archivo-preview');
+
+    const now = new Date();
+    const fechaActual = now.toISOString().split('T')[0];
+    const horaActual = now.toTimeString().slice(0, 5);
+    
+    document.getElementById('evaluacion-fecha-emision').value = fechaActual;
+    document.getElementById('evaluacion-hora-emision').value = horaActual;
+    document.getElementById('evaluacion-fecha-emision').readOnly = true;
+    document.getElementById('evaluacion-hora-emision').readOnly = true;
+
+    document.getElementById('close-evaluacion-modal').addEventListener('click', closeEvaluacionModal);
+    document.getElementById('cancel-evaluacion').addEventListener('click', closeEvaluacionModal);
+    
+    archivoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) { alert('El archivo es demasiado grande. Máximo 10MB permitido.'); archivoInput.value = ''; return; }
+            const allowedTypes = ['application/pdf','application/vnd.ms-powerpoint','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','image/png','image/jpeg','image/jpg','application/zip','application/x-rar-compressed'];
+            if (!allowedTypes.includes(file.type)) { alert('Tipo de archivo no permitido. Use PDF, PPT, DOC, PNG, JPG, ZIP o RAR.'); archivoInput.value = ''; return; }
+            archivoPreview.innerHTML = `<span>${file.name}</span> <button type="button" id="evaluacion-quitar-archivo" class="back small">×</button>`;
+            archivoPreview.style.display = 'block';
+            const quitar = document.getElementById('evaluacion-quitar-archivo'); if (quitar) quitar.addEventListener('click', function(){ archivoInput.value=''; archivoPreview.style.display='none'; });
+        }
+    });
+    
+    form.addEventListener('submit', function(e) { e.preventDefault(); createEvaluacion(); });
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeEvaluacionModal(); });
+}
+
+function createEvaluacion() {
+    const id_modulo = document.getElementById('evaluacion-modulo').value;
+    const titulo = document.getElementById('evaluacion-title').value.trim();
+    const descripcion = document.getElementById('evaluacion-descripcion').value.trim();
+    const fecha_emision = document.getElementById('evaluacion-fecha-emision').value;
+    const hora_emision = document.getElementById('evaluacion-hora-emision').value;
+    const fecha_inicio = document.getElementById('evaluacion-fecha-inicio').value;
+    const hora_inicio = document.getElementById('evaluacion-hora-inicio').value;
+    const fecha_entrega = document.getElementById('evaluacion-fecha-entrega').value;
+    const hora_entrega = document.getElementById('evaluacion-hora-entrega').value;
+    const deskpoints = document.getElementById('evaluacion-deskpoints').value;
+    const archivoInput = document.getElementById('evaluacion-archivo');
+    const archivo = archivoInput.files[0];
+    if (!id_modulo) { alert('Por favor, selecciona un módulo'); return; }
+    if (!titulo) { alert('Por favor, ingresa un título para la evaluación'); return; }
+    if (!fecha_emision || !hora_emision || !fecha_inicio || !hora_inicio || !fecha_entrega || !hora_entrega) { alert('Por favor, completa todas las fechas y horas'); return; }
+    if (!deskpoints || deskpoints <= 0) { alert('Por favor, ingresa un valor válido para los puntos'); return; }
+    const formData = new FormData();
+    formData.append('id_modulo', id_modulo); formData.append('titulo', titulo); formData.append('descripcion', descripcion);
+    formData.append('fecha_emision', fecha_emision); formData.append('hora_emision', hora_emision); formData.append('fecha_inicio', fecha_inicio); formData.append('hora_inicio', hora_inicio);
+    formData.append('fecha_entrega', fecha_entrega); formData.append('hora_entrega', hora_entrega); formData.append('deskpoints', deskpoints);
+    if (archivo) formData.append('archivo', archivo);
+    fetch('php/evaluacionNew.php', { method: 'POST', body: formData })
+    .then(res => res.json())
+    .then(data => { if (data.success) { alert('Evaluación creada exitosamente' + (archivo ? ' con archivo adjunto' : '')); closeEvaluacionModal(); const courseId = localStorage.getItem('current_course_id'); loadCourseModules(courseId); } else { alert('Error al crear evaluación: ' + data.message); } })
+    .catch(err => { console.error('Error:', err); alert('Error al crear evaluación. Por favor, intente nuevamente.'); });
+}
+
+function closeEvaluacionModal() { const modal = document.getElementById('create-evaluacion-modal'); if (modal) modal.remove(); }
+
+function closeModuleModal() { const modal = document.getElementById('create-module-modal'); if (modal) modal.remove(); }
+
+// HORARIO: restore full modal
+function showConfigHorarioModal(courseId, courseTitle) {
+    const modalHTML = `
+        <div id="config-horario-modal" class="modal-overlay">
+            <div class="modal-content" style="max-width: 750px;">
+                <div class="modal-header">
+                    <h3>Configurar Horario - ${escapeHTML(courseTitle)}</h3>
+                    <button class="modal-close" id="close-horario-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="config-horario-form">
+                        <div class="form-group">
+                            <label>Modalidad de Clase:</label>
+                            <div class="modalidad-selector">
+                                <label class="modalidad-radio">
+                                    <input type="radio" name="modalidad" value="presencial" checked>
+                                    <span class="radio-custom"></span>
+                                    <span class="modalidad-text">Presencial</span>
+                                </label>
+                                <label class="modalidad-radio">
+                                    <input type="radio" name="modalidad" value="virtual">
+                                    <span class="radio-custom"></span>
+                                    <span class="modalidad-text">Virtual</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="aula-container">
+                            <label for="aula-clase">Aula:</label>
+                            <input type="text" id="aula-clase" name="aula" placeholder="Ej: Aula 101, Laboratorio B, etc." maxlength="50">
+                            <small>Especifica el aula o sala donde se impartirá la clase</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Configurar Horarios por Día:</label>
+                            <div class="dias-horarios-container">
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="1" data-dia="Lunes">
+                                        <span>Lunes</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="1" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="1" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                <!-- other days... (kept identical to original) -->
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="2" data-dia="Martes">
+                                        <span>Martes</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="2" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="2" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="3" data-dia="Miércoles">
+                                        <span>Miércoles</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="3" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="3" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="4" data-dia="Jueves">
+                                        <span>Jueves</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="4" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="4" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="5" data-dia="Viernes">
+                                        <span>Viernes</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="5" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="5" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="6" data-dia="Sábado">
+                                        <span>Sábado</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="6" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="6" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                                <div class="dia-horario-item">
+                                    <label class="dia-checkbox">
+                                        <input type="checkbox" name="dias[]" value="0" data-dia="Domingo">
+                                        <span>Domingo</span>
+                                    </label>
+                                    <div class="horario-inputs">
+                                        <input type="text" class="time-picker hora-inicio-dia" data-dia="0" placeholder="Hora inicio" disabled>
+                                        <span class="horario-separador">-</span>
+                                        <input type="text" class="time-picker hora-fin-dia" data-dia="0" placeholder="Hora fin" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="horario-preview" id="horario-preview">
+                            <h4>Vista Previa del Horario:</h4>
+                            <div id="preview-content" class="preview-content">
+                                <p class="preview-placeholder">Selecciona los días y configura sus horarios</p>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="back" id="close-horario-btn">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar Horario</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    initializeFlatpickr();
+    setupHorarioModal(courseId, courseTitle);
+}
+
+function initializeFlatpickr() {
+    if (typeof flatpickr !== 'function') return;
+    flatpickr('.time-picker', { enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true, locale: 'es', minuteIncrement: 30, defaultHour: 8, defaultMinute: 0 });
+    flatpickr('.date-picker', { dateFormat: 'Y-m-d', locale: 'es', minDate: 'today' });
+}
+
+function setupHorarioModal(courseId, courseTitle) {
+    const modal = document.getElementById('config-horario-modal');
+    const form = document.getElementById('config-horario-form');
+    const aulaContainer = document.getElementById('aula-container');
+    const aulaInput = document.getElementById('aula-clase');
+
+    document.querySelectorAll('input[name="modalidad"]').forEach(radio => radio.addEventListener('change', function() {
+        if (this.value === 'presencial') { aulaContainer.style.display = 'block'; aulaInput.required = true; } else { aulaContainer.style.display = 'none'; aulaInput.required = false; aulaInput.value = ''; }
+        updateHorarioPreview();
+    }));
+
+    document.querySelectorAll('input[name="dias[]"]').forEach(checkbox => checkbox.addEventListener('change', function() {
+        const dia = this.value; const horaInicio = document.querySelector(`.hora-inicio-dia[data-dia="${dia}"]`); const horaFin = document.querySelector(`.hora-fin-dia[data-dia="${dia}"]`);
+        if (this.checked) { horaInicio.disabled = false; horaFin.disabled = false; horaInicio.required = true; horaFin.required = true; } else { horaInicio.disabled = true; horaFin.disabled = true; horaInicio.required = false; horaFin.required = false; horaInicio.value = ''; horaFin.value = ''; }
+        updateHorarioPreview();
+    }));
+
+    document.querySelectorAll('.hora-inicio-dia, .hora-fin-dia, #aula-clase').forEach(input => { input.addEventListener('change', updateHorarioPreview); input.addEventListener('input', updateHorarioPreview); });
+
+    document.getElementById('close-horario-modal').addEventListener('click', closeHorarioModal);
+    document.getElementById('close-horario-btn').addEventListener('click', closeHorarioModal);
+
+    form.addEventListener('submit', function(e) { e.preventDefault(); guardarHorario(courseId, courseTitle); });
+
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeHorarioModal(); });
+
+    const modalidadPresencial = document.querySelector('input[name="modalidad"][value="presencial"]');
+    if (modalidadPresencial && modalidadPresencial.checked) { aulaContainer.style.display = 'block'; aulaInput.required = true; } else { aulaContainer.style.display = 'none'; aulaInput.required = false; }
+}
+
+function updateHorarioPreview() {
+    const diasSeleccionados = Array.from(document.querySelectorAll('input[name="dias[]"]:checked'));
+    const modalidad = document.querySelector('input[name="modalidad"]:checked').value;
+    const aula = document.getElementById('aula-clase').value;
+    const previewContent = document.getElementById('preview-content');
+    if (!previewContent) return;
+    if (diasSeleccionados.length === 0) { previewContent.innerHTML = '<p class="preview-placeholder">Selecciona los días y configura sus horarios</p>'; return; }
+    const diasMap = {'0':'Domingo','1':'Lunes','2':'Martes','3':'Miércoles','4':'Jueves','5':'Viernes','6':'Sábado'};
+    let previewHTML = '<div class="preview-list">';
+    previewHTML += `<div class="preview-info"><strong>Modalidad:</strong> ${modalidad === 'presencial' ? '🏫 Presencial' : '💻 Virtual'} ${modalidad === 'presencial' && aula ? ` | <strong>Aula:</strong> ${escapeHTML(aula)}` : ''}</div>`;
+    let tieneHorariosCompletos = false;
+    diasSeleccionados.forEach(checkbox => {
+        const dia = checkbox.value; const diaNombre = checkbox.getAttribute('data-dia'); const horaInicio = document.querySelector(`.hora-inicio-dia[data-dia="${dia}"]`).value; const horaFin = document.querySelector(`.hora-fin-dia[data-dia="${dia}"]`).value;
+        if (horaInicio && horaFin) { tieneHorariosCompletos = true; previewHTML += `<div class="preview-item"><span class="preview-dia">${diaNombre}</span><span class="preview-horario">${horaInicio} - ${horaFin}</span>${modalidad === 'presencial' && aula ? `<span class="preview-aula">🏫 ${escapeHTML(aula)}</span>` : '<span class="preview-virtual">💻 Virtual</span>'}</div>`; }
+        else { previewHTML += `<div class="preview-item preview-incompleto"><span class="preview-dia">${diaNombre}: </span><span class="preview-horario">Horario no configurado</span></div>`; }
+    });
+    previewHTML += '</div>';
+    if (!tieneHorariosCompletos && diasSeleccionados.length > 0) previewHTML += '<p class="preview-warning">⚠️ Configura los horarios para los días seleccionados</p>';
+    if (modalidad === 'presencial' && !aula) previewHTML += '<p class="preview-warning">⚠️ Especifica el aula para las clases presenciales</p>';
+    previewContent.innerHTML = previewHTML;
+}
+
+function guardarHorario(courseId, courseTitle) {
+    const diasSeleccionados = Array.from(document.querySelectorAll('input[name="dias[]"]:checked'));
+    const modalidad = document.querySelector('input[name="modalidad"]:checked').value;
+    const aula = document.getElementById('aula-clase').value;
+    const horarios = []; const errores = [];
+    if (modalidad === 'presencial' && !aula.trim()) errores.push('Especifica el aula para las clases presenciales');
+    diasSeleccionados.forEach(checkbox => {
+        const dia = parseInt(checkbox.value); const diaNombre = checkbox.getAttribute('data-dia'); const horaInicio = document.querySelector(`.hora-inicio-dia[data-dia="${dia}"]`).value; const horaFin = document.querySelector(`.hora-fin-dia[data-dia="${dia}"]`).value;
+        if (!horaInicio || !horaFin) { errores.push(`${diaNombre}: Horario incompleto`); return; }
+        horarios.push({ dia: dia, diaNombre: diaNombre, horaInicio: horaInicio, horaFin: horaFin });
+    });
+    if (errores.length > 0) { alert('Por favor, corrige los siguientes errores:\n' + errores.join('\n')); return; }
+    if (horarios.length === 0) { alert('Por favor, selecciona al menos un día con horario completo'); return; }
+    const horarioData = { courseId: courseId, courseTitle: courseTitle, modalidad: modalidad, aula: modalidad === 'presencial' ? aula.trim() : null, horarios: horarios };
+    fetch('php/guardarHorario.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(horarioData) })
+    .then(res => res.json())
+    .then(data => { if (data.success) { alert('Horario guardado exitosamente para el curso: ' + courseTitle); closeHorarioModal(); } else { alert('Error al guardar horario: ' + data.message); } })
+    .catch(err => { console.error('Error:', err); alert('Error al guardar horario. Por favor, intente nuevamente.'); });
+}
+
+function closeHorarioModal() { const modal = document.getElementById('config-horario-modal'); if (modal) modal.remove(); }
+
+// Exponer funciones que puedan usarse externamente si es necesario
+export { showCourseDetails, cargarMisCursos };
