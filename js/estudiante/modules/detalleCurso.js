@@ -306,7 +306,7 @@ function actualizarUIEntrega(idActividad, tipoActividad) {
     if (boton) {
         boton.disabled = true;
         boton.textContent = tipoActividad === 'tarea' ? '✓ Tarea Entregada' : '✓ Evaluación Entregada';
-        boton.style.background = '#27ae60';
+        boton.style.background = 'var(--butt)';
         boton.style.cursor = 'not-allowed';
     }
 }

@@ -6,3 +6,6 @@ eliminar trigger actualizar puntos nota y subirlo desde triggers sql
 
 borrar el doble   `id_publicacion` varchar(20) NOT NULL,  
 
+26/1172025
+XB_CURSO_ESTUDIANTE revisar
+entregas valor 0 como default

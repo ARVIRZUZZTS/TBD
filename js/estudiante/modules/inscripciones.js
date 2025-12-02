@@ -136,9 +136,9 @@ function agregarEventListenersInscripcion() {
     });
 }
 
+
 async function inscribirEnCurso(idPeriodoCurso) {
     try {
-        
         const idEstudiante = obtenerIdEstudiante();
         
         if (!idEstudiante) {
@@ -153,6 +153,7 @@ async function inscribirEnCurso(idPeriodoCurso) {
             const curso = data.cursos.find(c => c.id_periodo_curso === idPeriodoCurso);
             
             if (curso) {
+                // PASAR LA INFORMACIÓN DEL DESCUENTO AL MODAL
                 mostrarModalPago(curso);
                 return;
             }
@@ -162,6 +163,38 @@ async function inscribirEnCurso(idPeriodoCurso) {
         
     } catch (error) {
         alert('Error al cargar información del curso');
+    }
+}
+
+async function procesarInscripcionConDescuento(idPeriodoCurso, idDescuento = null) {
+    try {
+        const idEstudiante = obtenerIdEstudiante();
+        const formData = new FormData();
+        formData.append('id_estudiante', idEstudiante);
+        formData.append('id_periodo_curso', idPeriodoCurso);
+        
+        if (idDescuento) {
+            formData.append('id_descuento', idDescuento);
+        }
+
+        const response = await fetch('php/inscribirCurso.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.exito) {
+            alert('Inscripción exitosa');
+            // Recargar la vista de cursos
+            cargarInscripciones();
+            // Opcional: cambiar a la pestaña de cursos
+            document.querySelector('[data-tab="cursos"]').click();
+        } else {
+            alert('Error: ' + data.mensaje);
+        }
+    } catch (error) {
+        alert('Error de conexión');
     }
 }
 
