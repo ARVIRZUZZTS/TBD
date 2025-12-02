@@ -239,7 +239,7 @@ export function mostrarBoucherConfirmacion(curso, datosPago = {}) {
             <div class="boucher-header">
                 <div class="boucher-logo">
                     <h2>OnDesk</h2>
-                    <p class="subtitulo">Comprobante de Inscripción</p>
+                    <h1 class="subtitulo">Comprobante de Inscripción</h1>
                 </div>
                 <div class="boucher-metadata">
                     <div class="metadata-item">
