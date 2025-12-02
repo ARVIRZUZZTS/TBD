@@ -933,3 +933,181 @@ nav { margin-top: -8vh; overflow-x: hidden; overflow-y: auto; height:65%; }
   font-size: 16px;
 }
 
+
+
+/* ===== HORARIOS ===== */
+.filtros-horarios {
+  width: 100%;
+  margin-bottom: 3vh;
+  padding: 2vh;
+  background-color: var(--back);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+}
+
+.filtros-horarios h3 {
+  margin: 0 0 1.5vh 0;
+  color: var(--nigger);
+}
+
+.filtro-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1vh;
+}
+
+.filtro-btn {
+  padding: 0.8vh 1.5vh;
+  border-radius: 10px;
+  background-color: var(--shiny);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5vh;
+  transition: var(--transition);
+}
+
+.filtro-btn:hover:not(.active) {
+  background-color: var(--shinyHover);
+  transform: translateY(-2px);
+}
+
+.filtro-btn.active {
+  background-color: var(--nigger);
+  box-shadow: 0 4px 8px rgba(87, 45, 13, 0.3);
+}
+
+.filtro-btn-todos {
+  background-color: var(--back);
+  color: var(--nigger);
+  border: 2px solid var(--shiny);
+}
+
+.filtro-btn-todos.active {
+  background-color: var(--shiny);
+  color: white;
+  border-color: var(--nigger);
+}
+
+#horarios .content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2vh;
+  grid-template-columns: none;
+}
+
+.horario-card {
+  background-color: white;
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 2vh;
+  transition: var(--transition);
+}
+
+.horario-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.horario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2vh;
+  padding-bottom: 1.5vh;
+  border-bottom: 2px solid var(--shinyHover);
+}
+
+.horario-curso-info {
+  flex: 1;
+}
+
+.horario-curso-title {
+  margin: 0 0 0.5vh 0;
+  color: var(--shiny);
+  font-size: 2.5vh;
+}
+
+.horario-profesor {
+  margin: 0.5vh 0;
+  color: var(--nigger);
+  font-size: 1.6vh;
+  font-weight: 500;
+}
+
+.horario-fechas {
+  margin: 0.5vh 0 0 0;
+  color: var(--nigger);
+  font-size: 1.5vh;
+}
+
+.horario-contenido {
+  width: 100%;
+}
+
+.horario-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--back);
+}
+
+.horario-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.horario-table thead {
+  background-color: var(--shinyHover);
+  color: white;
+}
+
+.horario-table th {
+  padding: 1vh;
+  text-align: left;
+  font-weight: bold;
+  font-size: 1.6vh;
+  color: white;
+}
+
+.horario-table td {
+  padding: 1.2vh;
+  border-bottom: 1px solid var(--back);
+  font-size: 1.5vh;
+}
+
+.horario-table tbody tr {
+  transition: var(--transition);
+}
+
+.horario-table tbody tr:hover {
+  background-color: var(--inp);
+}
+
+.horario-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dia-cell {
+  font-weight: 600;
+  color: var(--shiny);
+  width: 15%;
+}
+
+.hora-cell {
+  text-align: center;
+  width: 20%;
+  font-family: 'Courier New', monospace;
+}
+
+.aula-cell {
+  font-weight: 500;
+  color: var(--nigger);
+  width: 20%;
+}
+
+.capacidad-cell {
+  text-align: center;
+  color: var(--nigger);
+  width: 20%;
+}
