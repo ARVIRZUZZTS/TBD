@@ -2,14 +2,16 @@
 import { inicializarNavegacion } from './ui/navigation.js';
 import { cargarDatosEstudiante } from './modules/auth.js';
 import { inicializarEventosGlobales } from './modules/tienda.js';
+import { inicializarTema } from './modules/theme.js';
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM completamente cargado");
-    
+
     // Inicializar módulos
     inicializarNavegacion();
     cargarDatosEstudiante();
     inicializarEventosGlobales();
+    inicializarTema();
 });
 
 // Exportar funciones globales para HTML
