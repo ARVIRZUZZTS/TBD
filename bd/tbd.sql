@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 19-11-2025 a las 21:45:58
+-- Tiempo de generación: 03-12-2025 a las 01:30:59
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -20,6 +20,79 @@ SET time_zone = "+00:00";
 --
 -- Base de datos: `tbd`
 --
+
+DELIMITER $$
+--
+-- Procedimientos
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `estado_clase_cont` ()   BEGIN
+    DECLARE hora_actual TIME;
+    DECLARE dia_actual VARCHAR(20);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE cur_id_pc INT;
+    DECLARE cur_id_dc INT;
+    DECLARE cur_hini TIME;
+    DECLARE cur_hfin TIME;
+    DECLARE dia_ingles VARCHAR(20);
+    
+    DECLARE cur_clases CURSOR FOR
+    SELECT DISTINCT
+        h.id_periodo_clase,
+        dh.id_dia_clase,
+        dh.hora_inicio,
+        dh.hora_fin
+    FROM dia_horario dh
+    JOIN horario h ON dh.id_dia_clase = h.id_dia_clase
+    JOIN periodo_curso pc ON h.id_periodo_clase = pc.id_periodo_curso
+    WHERE dh.dia = dia_actual  -- Usar el día en español
+      AND pc.estado_periodo = 'En Curso';
+    
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    
+    SET hora_actual = CURRENT_TIME();
+    
+    SET dia_ingles = DAYNAME(CURDATE());
+    
+    SET dia_actual = CASE dia_ingles
+        WHEN 'Monday' THEN 'Lunes'
+        WHEN 'Tuesday' THEN 'Martes'
+        WHEN 'Wednesday' THEN 'Miércoles'
+        WHEN 'Thursday' THEN 'Jueves'
+        WHEN 'Friday' THEN 'Viernes'
+        WHEN 'Saturday' THEN 'Sábado'
+        WHEN 'Sunday' THEN 'Domingo'
+        ELSE dia_ingles
+    END;
+    
+    OPEN cur_clases;
+    
+    read_loop: LOOP
+        FETCH cur_clases INTO cur_id_pc, cur_id_dc, cur_hini, cur_hfin;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+        
+        IF hora_actual >= cur_hini AND hora_actual <= cur_hfin THEN
+            UPDATE curso_estudiante ce
+            JOIN periodo_curso pc ON ce.id_periodo_curso = pc.id_periodo_curso
+            SET ce.estado = 'En Clase'
+            WHERE ce.id_periodo_curso = cur_id_pc
+              AND pc.estado_periodo = 'En Curso'
+              AND ce.estado = 'En Curso';
+              
+        ELSEIF hora_actual > cur_hfin THEN
+            UPDATE curso_estudiante
+            SET estado = 'En Curso'
+            WHERE id_periodo_curso = cur_id_pc
+              AND estado = 'En Clase';
+        END IF;
+        
+    END LOOP;
+    
+    CLOSE cur_clases;
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -46,40 +119,70 @@ INSERT INTO `archivos_adjuntos` (`id_archivo`, `titulo`, `tipo`, `ruta_archivo`,
 -- Disparadores `archivos_adjuntos`
 --
 DELIMITER $$
-CREATE TRIGGER `tr_DEL_archivos_adjuntos` AFTER DELETE ON `archivos_adjuntos` FOR EACH ROW BEGIN
-  INSERT INTO xb_DEL_archivos_adjuntos (accion, fecha)
-  VALUES ('DELETE', NOW());
+CREATE TRIGGER `tr_archivos_adjuntos_dl` AFTER DELETE ON `archivos_adjuntos` FOR EACH ROW BEGIN
+	INSERT INTO xb_archivos_adjuntos (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_archivo)
+	);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `tr_IN_archivos_adjuntos` AFTER INSERT ON `archivos_adjuntos` FOR EACH ROW BEGIN
-  INSERT INTO xb_IN_archivos_adjuntos (accion, fecha)
-  VALUES ('INSERT', NOW());
+CREATE TRIGGER `tr_archivos_adjuntos_in` AFTER INSERT ON `archivos_adjuntos` FOR EACH ROW BEGIN
+	INSERT INTO xb_archivos_adjuntos (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id: ', NEW.id_archivo)
+	);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `tr_UP_archivos_adjuntos` AFTER UPDATE ON `archivos_adjuntos` FOR EACH ROW BEGIN
-  INSERT INTO xb_UP_archivos_adjuntos (accion, antes, despues, fecha)
-  VALUES (
-    'UPDATE',
-    CONCAT(
-      'id_archivo=', OLD.id_archivo, ', ',
-      'titulo=', OLD.titulo, ', ',
-      'tipo=', OLD.tipo, ', ',
-      'ruta_archivo=', OLD.ruta_archivo, ', ',
-      'fecha_subida=', OLD.fecha_subida
-    ),
-    CONCAT(
-      'id_archivo=', NEW.id_archivo, ', ',
-      'titulo=', NEW.titulo, ', ',
-      'tipo=', NEW.tipo, ', ',
-      'ruta_archivo=', NEW.ruta_archivo, ', ',
-      'fecha_subida=', NEW.fecha_subida
-    ),
-    NOW()
-  );
+CREATE TRIGGER `tr_archivos_adjuntos_up` AFTER UPDATE ON `archivos_adjuntos` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.titulo <> NEW.titulo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'titulo: ', OLD.titulo, ' -> ', NEW.titulo, '\n'
+        );
+    END IF;
+
+    IF OLD.tipo <> NEW.tipo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'tipo: ', OLD.tipo, ' -> ', NEW.tipo, '\n'
+        );
+    END IF;
+
+    IF OLD.ruta_archivo <> NEW.ruta_archivo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ruta_archivo: ', OLD.ruta_archivo, ' -> ', NEW.ruta_archivo, '\n'
+        );
+    END IF;
+
+    IF OLD.fecha_subida <> NEW.fecha_subida THEN
+        SET cambios = CONCAT(
+            cambios,
+            'fecha_subida: ', OLD.fecha_subida, ' -> ', NEW.fecha_subida, '\n'
+        );
+    END IF;
+
+    IF cambios <> '' THEN
+        INSERT INTO xB_archivos_adjuntos (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_archivo, '\n',
+                cambios
+            )
+        );
+    END IF;
+
 END
 $$
 DELIMITER ;
@@ -92,48 +195,70 @@ DELIMITER ;
 
 CREATE TABLE `archivos_publicacion` (
   `id_archivo` int(11) NOT NULL,
-  `id_publicacion` varchar(20) NOT NULL,  
-  PRIMARY KEY (`id_archivo`,`id_publicacion`)
+  `id_publicacion` varchar(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Volcado de datos para la tabla `archivos_publicacion`
 --
 
 INSERT INTO `archivos_publicacion` (`id_archivo`, `id_publicacion`) VALUES
-(1, 2);
+(1, '2');
 
 --
 -- Disparadores `archivos_publicacion`
 --
 DELIMITER $$
-CREATE TRIGGER `tr_DEL_archivos_publicacion` AFTER DELETE ON `archivos_publicacion` FOR EACH ROW BEGIN
-  INSERT INTO xb_DEL_archivos_publicacion (accion, fecha)
-  VALUES ('DELETE', NOW());
+CREATE TRIGGER `tr_archivos_publicacion_dl` AFTER DELETE ON `archivos_publicacion` FOR EACH ROW BEGIN
+	INSERT INTO xb_archivos_publicacion (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_archivo)
+	);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `tr_IN_archivos_publicacion` AFTER INSERT ON `archivos_publicacion` FOR EACH ROW BEGIN
-  INSERT INTO xb_IN_archivos_publicacion (accion, fecha)
-  VALUES ('INSERT', NOW());
+CREATE TRIGGER `tr_archivos_publicacion_in` AFTER INSERT ON `archivos_publicacion` FOR EACH ROW BEGIN
+	INSERT INTO xb_archivos_publicacion (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_archivo)
+	);
 END
 $$
 DELIMITER ;
 DELIMITER $$
-CREATE TRIGGER `tr_UP_archivos_publicacion` AFTER UPDATE ON `archivos_publicacion` FOR EACH ROW BEGIN
-  INSERT INTO xb_UP_archivos_publicacion (accion, antes, despues, fecha)
-  VALUES (
-    'UPDATE',
-    CONCAT(
-      'id_archivo=', OLD.id_archivo, ', ',
-      'id_publicacion=', OLD.id_publicacion
-    ),
-    CONCAT(
-      'id_archivo=', NEW.id_archivo, ', ',
-      'id_publicacion=', NEW.id_publicacion
-    ),
-    NOW()
-  );
+CREATE TRIGGER `tr_archivos_publicacion_up` AFTER UPDATE ON `archivos_publicacion` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_archivo <> NEW.id_archivo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID ARCHIVO: ', OLD.id_archivo, ' -> ', NEW.id_archivo , '\n'
+        );
+    END IF;
+
+    IF OLD.id_publicacion <> NEW.id_publicacion THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID PUBLICACION: ', OLD.id_publicacion, ' -> ', NEW.id_publicacion, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_archivos_publicacion (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_archivo , '\n',
+                cambios
+            )
+        );
+    END IF;
+
 END
 $$
 DELIMITER ;
@@ -162,6 +287,57 @@ INSERT INTO `area` (`id_area`, `nombre_area`) VALUES
 (6, 'Salud'),
 (7, 'Deportes');
 
+--
+-- Disparadores `area`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_area_dl` AFTER DELETE ON `area` FOR EACH ROW BEGIN
+    INSERT INTO xb_area (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_area)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_area_in` AFTER INSERT ON `area` FOR EACH ROW BEGIN
+    INSERT INTO xb_area (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_area)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_area_up` AFTER UPDATE ON `area` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.nombre_area <> NEW.nombre_area THEN
+        SET cambios = CONCAT(
+            cambios,
+            'NOMBRE AREA: ', OLD.nombre_area, ' -> ', NEW.nombre_area , '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_area (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_area , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -172,6 +348,57 @@ CREATE TABLE `aula` (
   `id_aula` int(11) NOT NULL,
   `capacidad` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Disparadores `aula`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_aula_dl` AFTER DELETE ON `aula` FOR EACH ROW BEGIN
+    INSERT INTO xb_aula (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_aula)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_aula_in` AFTER INSERT ON `aula` FOR EACH ROW BEGIN
+    INSERT INTO xb_aula (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_aula)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_aula_up` AFTER UPDATE ON `aula` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.capacidad <> NEW.capacidad THEN
+        SET cambios = CONCAT(
+            cambios,
+            'CAPACIDAD: ', OLD.capacidad, ' -> ', NEW.capacidad , '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_aula (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_aula , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -204,11 +431,93 @@ INSERT INTO `beca` (`id_beca`, `id_estudiante`, `id_admin`, `id_area`, `porcenta
 -- Disparadores `beca`
 --
 DELIMITER $$
-CREATE TRIGGER `trg_validar_fechas_beca` BEFORE INSERT ON `beca` FOR EACH ROW BEGIN
+CREATE TRIGGER `a_validar_fechas_beca` BEFORE INSERT ON `beca` FOR EACH ROW BEGIN
     IF NEW.fecha_fin < NEW.fecha_inicio THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'La fecha de fin no puede ser anterior a la fecha de inicio.';
     END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_beca_dl` AFTER DELETE ON `beca` FOR EACH ROW BEGIN
+    INSERT INTO xb_beca (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_beca)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_beca_in` AFTER INSERT ON `beca` FOR EACH ROW BEGIN
+    INSERT INTO xb_beca (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_beca)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_beca_up` AFTER UPDATE ON `beca` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_estudiante <> NEW.id_estudiante THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID ESTUDIANTE: ', OLD.id_estudiante, ' -> ', NEW.id_estudiante , '\n'
+        );
+    END IF;
+
+    IF OLD.id_area <> NEW.id_area THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID AREA: ', OLD.id_area, ' -> ', NEW.id_area, '\n'
+        );
+    END IF;
+    
+    IF OLD.porcentaje <> NEW.porcentaje THEN
+        SET cambios = CONCAT(
+            cambios,
+            'PORCENTAJE: ', OLD.porcentaje, ' -> ', NEW.porcentaje, '\n'
+        );
+    END IF;
+    
+    IF OLD.estado_beca <> NEW.estado_beca THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ESTADO BECA: ', OLD.estado_beca, ' -> ', NEW.estado_beca, '\n'
+        );
+    END IF;
+    
+    IF OLD.fecha_inicio <> NEW.fecha_inicio THEN
+        SET cambios = CONCAT(
+            cambios,
+            'FECHA INICIO: ', OLD.fecha_inicio, ' -> ', NEW.fecha_inicio, '\n'
+        );
+    END IF;
+    
+    IF OLD.fecha_fin <> NEW.fecha_fin THEN
+        SET cambios = CONCAT(
+            cambios,
+            'FECHA FIN: ', OLD.fecha_fin, ' -> ', NEW.fecha_fin, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_beca (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_beca , '\n',
+                cambios
+            )
+        );
+    END IF;
+
 END
 $$
 DELIMITER ;
@@ -265,6 +574,57 @@ INSERT INTO `categoria` (`id_categoria`, `nombre_categoria`) VALUES
 (4, 'Curso Certificado'),
 (5, 'Foro');
 
+--
+-- Disparadores `categoria`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_categoria_dl` AFTER DELETE ON `categoria` FOR EACH ROW BEGIN
+    INSERT INTO xb_categoria (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_categoria)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_categoria_in` AFTER INSERT ON `categoria` FOR EACH ROW BEGIN
+    INSERT INTO xb_categoria (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_categoria)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_categoria_up` AFTER UPDATE ON `categoria` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.nombre_categoria <> NEW.nombre_categoria THEN
+        SET cambios = CONCAT(
+            cambios,
+            'NOMBRE CATEGORIA: ', OLD.nombre_categoria, ' -> ', NEW.nombre_categoria , '\n'
+        );
+    END IF;
+
+    IF cambios <> '' THEN
+        INSERT INTO xB_categoria (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_categoria , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -273,9 +633,68 @@ INSERT INTO `categoria` (`id_categoria`, `nombre_categoria`) VALUES
 
 CREATE TABLE `comentario` (
   `id_comentario` int(11) NOT NULL,
+  `id_periodo_curso` int(11) NOT NULL,
   `id_publicacion` int(11) DEFAULT NULL,
   `mensaje` varchar(1001) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Disparadores `comentario`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_comentario_dl` AFTER DELETE ON `comentario` FOR EACH ROW BEGIN
+    INSERT INTO xb_comentario (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_comentario)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_comentario_in` AFTER INSERT ON `comentario` FOR EACH ROW BEGIN
+    INSERT INTO xb_comentario (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_comentario)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_comentario_up` AFTER UPDATE ON `comentario` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_publicacion <> NEW.id_publicacion THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID PUBLICACION: ', OLD.id_publicacion, ' -> ', NEW.id_publicacion , '\n'
+        );
+    END IF;
+
+    IF OLD.mensaje <> NEW.mensaje THEN
+        SET cambios = CONCAT(
+            cambios,
+            'MENSAJE: ', OLD.mensaje, ' -> ', NEW.mensaje, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xb_comentario (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_comentario , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -318,6 +737,99 @@ INSERT INTO `curso` (`id_curso`, `id_categoria`, `id_area`, `id_grado`, `duracio
 (10, 4, 5, 1, 300, 'Suma', 'V', '2025-11-14', '2026-01-02'),
 (11, 4, 5, 6, 100, 'JAVA avanzado', 'V', '2025-06-04', '2025-08-23');
 
+--
+-- Disparadores `curso`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_curso_dl` AFTER DELETE ON `curso` FOR EACH ROW BEGIN
+    INSERT INTO xb_curso (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_curso)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_in` AFTER INSERT ON `curso` FOR EACH ROW BEGIN
+    INSERT INTO xb_curso (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_curso)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_up` AFTER UPDATE ON `curso` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_categoria <> NEW.id_categoria THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID CATEGORIA: ', OLD.id_categoria, ' -> ', NEW.id_categoria , '\n'
+        );
+    END IF;
+
+    IF OLD.id_area <> NEW.id_area THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID AREA: ', OLD.id_area, ' -> ', NEW.id_area, '\n'
+        );
+    END IF;
+    
+    IF OLD.duracion <> NEW.duracion THEN
+        SET cambios = CONCAT(
+            cambios,
+            'DURACION: ', OLD.duracion, ' -> ', NEW.duracion, '\n'
+        );
+    END IF;
+    
+    IF OLD.titulo <> NEW.titulo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'TITULO: ', OLD.titulo, ' -> ', NEW.titulo, '\n'
+        );
+    END IF;
+    
+    IF OLD.modalidad <> NEW.modalidad THEN
+        SET cambios = CONCAT(
+            cambios,
+            'MODALIDAD: ', OLD.modalidad, ' -> ', NEW.modalidad, '\n'
+        );
+    END IF;
+    
+    IF OLD.inicio_gestion <> NEW.inicio_gestion THEN
+        SET cambios = CONCAT(
+            cambios,
+            'INICIO GESTION: ', OLD.inicio_gestion, ' -> ', NEW.inicio_gestion, '\n'
+        );
+    END IF;
+    
+    IF OLD.fin_gestion <> NEW.fin_gestion THEN
+        SET cambios = CONCAT(
+            cambios,
+            'FIN GESTION: ', OLD.fin_gestion, ' -> ', NEW.fin_gestion, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_curso (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_curso , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -340,9 +852,9 @@ CREATE TABLE `curso_estudiante` (
 --
 
 INSERT INTO `curso_estudiante` (`id_curso_estudiante`, `id_estudiante`, `id_periodo_curso`, `estado`, `nota`, `asistencia`, `deskPoints`, `rankingPoints`) VALUES
-(1, 33, 3, 'Inscrito', 53, 0, 0, 0),
-(2, 33, 3, 'Inscrito', 99, 0, 0, 0),
-(3, 27, 3, 'Inscrito', 0, 0, 0, 0),
+(1, 33, 3, 'En Curso', 53, 0, 0, 0),
+(2, 33, 3, 'En Curso', 99, 0, 0, 0),
+(3, 27, 3, 'En Curso', 0, 0, 0, 0),
 (4, 27, 2, 'Inscrito', 0, 0, 0, 0),
 (5, 33, 2, 'Inscrito', 0, 0, 0, 0),
 (6, 32, 3, 'Inscrito', 0, 0, 0, 0),
@@ -401,6 +913,95 @@ CREATE TRIGGER `inscripcion_estudiante` AFTER INSERT ON `curso_estudiante` FOR E
 END
 $$
 DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_estudiante_dl` AFTER DELETE ON `curso_estudiante` FOR EACH ROW BEGIN
+    INSERT INTO xb_ (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_curso_estudiante)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_estudiante_in` AFTER INSERT ON `curso_estudiante` FOR EACH ROW BEGIN
+    INSERT INTO xb_curso_estudiante (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_curso_estudiante)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_estudiante_up` AFTER UPDATE ON `curso_estudiante` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_estudiante <> NEW.id_estudiante THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID ESTUDIANTE: ', OLD.id_estudiante, ' -> ', NEW.id_estudiante , '\n'
+        );
+    END IF;
+
+    IF OLD.id_periodo_curso <> NEW.id_periodo_curso THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID PERIODO CURSO: ', OLD.id_periodo_curso, ' -> ', NEW.id_periodo_curso, '\n'
+        );
+    END IF;
+    
+    IF OLD.estado <> NEW.estado THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ESTADO: ', OLD.estado, ' -> ', NEW.estado, '\n'
+        );
+    END IF;
+    
+    IF OLD.nota <> NEW.nota THEN
+        SET cambios = CONCAT(
+            cambios,
+            'NOTA: ', OLD.nota, ' -> ', NEW.nota, '\n'
+        );
+    END IF;
+    
+    IF OLD.asistencia <> NEW.asistencia THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ASISTENCIA: ', OLD.asistencia, ' -> ', NEW.asistencia, '\n'
+        );
+    END IF;
+    
+    IF OLD.deskPoints <> NEW.deskPoints THEN
+        SET cambios = CONCAT(
+            cambios,
+            'DESKPOINTS: ', OLD.deskPoints, ' -> ', NEW.deskPoints, '\n'
+        );
+    END IF;
+    
+    IF OLD.rankingPoints <> NEW.rankingPoints THEN
+        SET cambios = CONCAT(
+            cambios,
+            'RANKINGPOINTS: ', OLD.rankingPoints, ' -> ', NEW.rankingPoints, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xb_curso_estudiante (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_curso_estudiante , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -414,6 +1015,71 @@ CREATE TABLE `curso_maestro` (
   `id_periodo_curso` int(11) DEFAULT NULL,
   `pago_maestro` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Disparadores `curso_maestro`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_curso_maestro_dl` AFTER DELETE ON `curso_maestro` FOR EACH ROW BEGIN
+    INSERT INTO xb_curso_maestro (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_curso_maestro)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_maestro_in` AFTER INSERT ON `curso_maestro` FOR EACH ROW BEGIN
+    INSERT INTO xb_curso_maestro (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_curso_maestro)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_curso_maestro_up` AFTER UPDATE ON `curso_maestro` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_maestro <> NEW.id_maestro THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID MAESTRO: ', OLD.id_maestro, ' -> ', NEW.id_maestro , '\n'
+        );
+    END IF;
+
+    IF OLD.id_periodo_curso <> NEW.id_periodo_curso THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID PERIODO CURSO: ', OLD.id_periodo_curso, ' -> ', NEW.id_periodo_curso, '\n'
+        );
+    END IF;
+    
+    IF OLD.pago_maestro <> NEW.pago_maestro THEN
+        SET cambios = CONCAT(
+            cambios,
+            'PAGO MAESTRO: ', OLD.pago_maestro, ' -> ', NEW.pago_maestro, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_curso_maestro (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_curso_maestro , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -436,6 +1102,71 @@ INSERT INTO `datos_maestro` (`id_dato`, `id_user`, `titulo`, `sueldo`) VALUES
 (1, 24, 'ing informatica', 70),
 (2, 25, 'ING ELECTRONICA', 70),
 (3, 26, 'fasd', 3);
+
+--
+-- Disparadores `datos_maestro`
+--
+DELIMITER $$
+CREATE TRIGGER `tr__dl` AFTER DELETE ON `datos_maestro` FOR EACH ROW BEGIN
+    INSERT INTO xb_datos_maestro (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_dato)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_datos_maestro_in` AFTER INSERT ON `datos_maestro` FOR EACH ROW BEGIN
+    INSERT INTO xb_datos_maestro (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_dato)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_datos_maestro_up` AFTER UPDATE ON `datos_maestro` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_user <> NEW.id_user THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID USER: ', OLD.id_user, ' -> ', NEW.id_user , '\n'
+        );
+    END IF;
+
+    IF OLD.titulo <> NEW.titulo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'TITULO: ', OLD.titulo, ' -> ', NEW.titulo, '\n'
+        );
+    END IF;
+    
+    IF OLD.sueldo <> NEW.sueldo THEN
+        SET cambios = CONCAT(
+            cambios,
+            'SUELDO: ', OLD.sueldo, ' -> ', NEW.sueldo, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_datos_maestro (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_dato , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -460,6 +1191,78 @@ INSERT INTO `descuento` (`id_descuento`, `id_periodo_curso`, `costo_canje`, `fec
 ('RD-2', 3, 5, '2026-01-29', 20),
 ('RD-3', 2, 5, '2025-12-20', 50);
 
+--
+-- Disparadores `descuento`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_descuento_dl` AFTER DELETE ON `descuento` FOR EACH ROW BEGIN
+    INSERT INTO xb_descuento (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_descuento)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_descuento_in` AFTER INSERT ON `descuento` FOR EACH ROW BEGIN
+    INSERT INTO xb_descuento (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_descuento)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_descuento_up` AFTER UPDATE ON `descuento` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_periodo_curso <> NEW.id_periodo_curso THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID PERIODO CURSO: ', OLD.id_periodo_curso, ' -> ', NEW.id_periodo_curso , '\n'
+        );
+    END IF;
+
+    IF OLD.costo_canje <> NEW.costo_canje THEN
+        SET cambios = CONCAT(
+            cambios,
+            'COSTO CANJE: ', OLD.costo_canje, ' -> ', NEW.costo_canje, '\n'
+        );
+    END IF;
+    
+    IF OLD.fecha_fin <> NEW.fecha_fin THEN
+        SET cambios = CONCAT(
+            cambios,
+            'FECHA FIN: ', OLD.fecha_fin, ' -> ', NEW.fecha_fin, '\n'
+        );
+    END IF;
+    
+    IF OLD.porcentaje_descuento <> NEW.porcentaje_descuento THEN
+        SET cambios = CONCAT(
+            cambios,
+            'PORCENTAJE DESCUENTO: ', OLD.porcentaje_descuento, ' -> ', NEW.porcentaje_descuento, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_descuento (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_descuento , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -474,6 +1277,85 @@ CREATE TABLE `dia_horario` (
   `id_aula` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `dia_horario`
+--
+
+INSERT INTO `dia_horario` (`id_dia_clase`, `dia`, `hora_inicio`, `hora_fin`, `id_aula`) VALUES
+(3, 'Martes', '19:15:00', '19:20:00', 0);
+
+--
+-- Disparadores `dia_horario`
+--
+DELIMITER $$
+CREATE TRIGGER `tr_dia_horario_dl` AFTER DELETE ON `dia_horario` FOR EACH ROW BEGIN
+    INSERT INTO xb_dia_horario (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_dia_clase)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_dia_horario_in` AFTER INSERT ON `dia_horario` FOR EACH ROW BEGIN
+    INSERT INTO xb_dia_horario (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_dia_clase)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_dia_horario_up` AFTER UPDATE ON `dia_horario` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.dia <> NEW.dia THEN
+        SET cambios = CONCAT(
+            cambios,
+            'DIA: ', OLD.dia, ' -> ', NEW.dia , '\n'
+        );
+    END IF;
+
+    IF OLD.hora_inicio <> NEW.hora_inicio THEN
+        SET cambios = CONCAT(
+            cambios,
+            'HORA INICIO: ', OLD.hora_inicio, ' -> ', NEW.hora_inicio, '\n'
+        );
+    END IF;
+    
+    IF OLD.hora_fin <> NEW.hora_fin THEN
+        SET cambios = CONCAT(
+            cambios,
+            'HORA FIN: ', OLD.hora_fin, ' -> ', NEW.hora_fin, '\n'
+        );
+    END IF;    
+    
+    IF OLD.id_aula <> NEW.id_aula THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID AULA: ', OLD.id_aula, ' -> ', NEW.id_aula, '\n'
+        );
+    END IF;    
+    
+    IF cambios <> '' THEN
+        INSERT INTO xb_dia_horario (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_dia_clase , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
+
 -- --------------------------------------------------------
 
 --
@@ -482,6 +1364,7 @@ CREATE TABLE `dia_horario` (
 
 CREATE TABLE `entregas` (
   `id_entrega` int(11) NOT NULL,
+  `id_publicacion` varchar(11) NOT NULL,
   `id_user` int(11) DEFAULT NULL,
   `nota` decimal(10,2) DEFAULT NULL,
   `hora_entrega` time DEFAULT NULL,
@@ -492,14 +1375,102 @@ CREATE TABLE `entregas` (
 -- Volcado de datos para la tabla `entregas`
 --
 
-INSERT INTO `entregas` (`id_entrega`, `id_user`, `nota`, `hora_entrega`, `fecha_entrega`) VALUES
-(1, 27, 80.00, '15:00:00', '2025-12-23'),
-(2, 33, 60.00, '18:00:00', '2025-12-23'),
-(3, 33, 100.00, '18:00:00', '2025-12-23');
+INSERT INTO `entregas` (`id_entrega`, `id_publicacion`, `id_user`, `nota`, `hora_entrega`, `fecha_entrega`) VALUES
+(1, '1', 27, 80.00, '15:00:00', '2025-12-23'),
+(2, '1', 33, 60.00, '18:00:00', '2025-12-23'),
+(3, '2', 33, 100.00, '18:00:00', '2025-12-23');
 
 --
 -- Disparadores `entregas`
 --
+DELIMITER $$
+CREATE TRIGGER `a_ctualizar_puntos_nota` AFTER UPDATE ON `entregas` FOR EACH ROW BEGIN
+	IF NEW.nota <> OLD.nota THEN
+    	UPDATE puntos
+        SET
+        	saldo_actual = saldo_actual + (NEW.nota * 0.3),
+            puntos_totales = puntos_totales + (NEW.nota *0.3),
+            rankingPoints = rankingPoints + NEW.nota
+		WHERE id_user = NEW.id_user;
+	END IF;
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_entregas_dl` AFTER DELETE ON `entregas` FOR EACH ROW BEGIN
+    INSERT INTO xb_entregas (accion,fecha,descripcion)
+    VALUES (
+        'DELETE',
+        NOW(),
+        CONCAT('Se elimino id: ', OLD.id_entrega)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_entregas_in` AFTER INSERT ON `entregas` FOR EACH ROW BEGIN
+    INSERT INTO xb_entregas (accion, fecha, descripcion)
+    VALUES (
+        'INSERT',
+        NOW(),
+        CONCAT('Se inserto id:', NEW.id_entrega)
+    );
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `tr_entregas_up` AFTER UPDATE ON `entregas` FOR EACH ROW BEGIN
+    DECLARE cambios TEXT DEFAULT '';
+    IF OLD.id_publicacion <> NEW.id_publicacion THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID PUBLICACION: ', OLD.id_publicacion, ' -> ', NEW.id_publicacion , '\n'
+        );
+    END IF;
+
+    IF OLD.id_user <> NEW.id_user THEN
+        SET cambios = CONCAT(
+            cambios,
+            'ID USER: ', OLD.id_user, ' -> ', NEW.id_user, '\n'
+        );
+    END IF;
+    
+    IF OLD.nota <> NEW.nota THEN
+        SET cambios = CONCAT(
+            cambios,
+            'NOTA: ', OLD.nota, ' -> ', NEW.nota, '\n'
+        );
+    END IF;
+    
+    IF OLD.hora_entrega <> NEW.hora_entrega THEN
+        SET cambios = CONCAT(
+            cambios,
+            'HORA ENTREGA: ', OLD.hora_entrega, ' -> ', NEW.hora_entrega, '\n'
+        );
+    END IF;    
+    
+    IF OLD.fecha_entrega <> NEW.fecha_entrega THEN
+        SET cambios = CONCAT(
+            cambios,
+            'FECHA ENTREGA: ', OLD.fecha_entrega, ' -> ', NEW.fecha_entrega, '\n'
+        );
+    END IF;
+    
+    IF cambios <> '' THEN
+        INSERT INTO xB_entregas (accion, fecha, descripcion)
+        VALUES (
+            'UPDATE',
+            NOW(),
+            CONCAT(
+                'Se actualizó id: ', NEW.id_entrega , '\n',
+                cambios
+            )
+        );
+    END IF;
+
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -526,8 +1497,7 @@ CREATE TABLE `evaluacion` (
 --
 
 INSERT INTO `evaluacion` (`id_evaluacion`, `id_modulo`, `titulo`, `descripcion`, `hora_emision`, `fecha_emision`, `hora_inicio`, `fecha_inicio`, `hora_entrega`, `fecha_entrega`, `deskPoints`) VALUES
-(1, 1, 'PP', 'dafdjafjasdklfjaskl', '15:57:00', '2025-11-08', '03:59:00', '2025-10-28', '19:02:00', '2025-11-08', 100),
-(2, 4, 'aga', 'fasdf', '15:38:00', '2025-11-12', '16:38:00', '2025-11-28', '17:40:00', '2026-01-29', 50);
+(3, 4, 'pp', 'industria', '19:49:00', '2025-11-25', '19:49:00', '2025-11-28', '00:49:00', '2025-11-30', 100);
 
 -- --------------------------------------------------------
 
@@ -564,6 +1534,13 @@ CREATE TABLE `horario` (
   `id_dia_clase` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `horario`
+--
+
+INSERT INTO `horario` (`id_periodo_clase`, `id_dia_clase`) VALUES
+(3, 3);
+
 -- --------------------------------------------------------
 
 --
@@ -597,7 +1574,7 @@ INSERT INTO `inscripcion` (`id_inscripcion`, `id_tipo_pago`, `id_user`, `id_peri
 -- Disparadores `inscripcion`
 --
 DELIMITER $$
-CREATE TRIGGER `trg_update_cupos` AFTER INSERT ON `inscripcion` FOR EACH ROW BEGIN
+CREATE TRIGGER `a_update_cupos` AFTER INSERT ON `inscripcion` FOR EACH ROW BEGIN
     UPDATE periodo_curso
     SET cupos_ocupados = cupos_ocupados + 1
     WHERE id_periodo_curso = NEW.id_periodo_curso;
@@ -694,10 +1671,10 @@ CREATE TABLE `periodo_curso` (
 INSERT INTO `periodo_curso` (`id_periodo_curso`, `id_curso`, `id_maestro`, `fecha_inicio`, `fecha_fin`, `cupos`, `cupos_ocupados`, `solicitudes_totales`, `costo`, `recaudado`, `estado_periodo`) VALUES
 (1, 7, 2, '0000-00-00', '0000-00-00', 0, 0, 0, 0, 0, 'Pendiente'),
 (2, 9, 3, '2025-11-20', '2025-12-20', 50, 9, 3, 20, 60, 'Inscripciones'),
-(3, 8, 25, '2025-11-19', '2026-01-29', 70, 16, 10, 10, 100, 'Inscripciones'),
+(3, 8, 25, '2025-11-19', '2026-01-29', 70, 16, 10, 10, 100, 'En Curso'),
 (4, 10, 2, '0000-00-00', '0000-00-00', 0, 0, 0, 0, 0, 'Pendiente'),
 (5, 8, 25, '0000-00-00', '0000-00-00', 0, 0, 0, 0, 0, 'Pendiente'),
-(6, 10, 3, '2025-12-13', '2026-02-04', 50, 0, 0, 0, 0, 'Inscripciones'),
+(6, 10, 3, '2025-12-13', '2026-02-04', 50, 0, 0, 0, 0, 'En Curso'),
 (7, 7, 3, '2025-11-12', '2025-11-27', 30, 0, 0, 0, 0, 'Inscripciones'),
 (8, 9, 3, '2025-11-12', '2025-11-28', 500, 2, 0, 0, 0, 'Inscripciones'),
 (9, 11, 2, '2025-06-05', '2025-10-22', 100, 91, 89, 10, 890, 'Finalizado');
@@ -746,7 +1723,7 @@ INSERT INTO `puntos` (`id_puntos`, `id_user`, `puntos_totales`, `puntos_gastados
 (4, 30, 30.00, 5.00, 25.00, 0),
 (5, 31, 0.00, 0.00, 0.00, 0),
 (6, 32, 0.00, 0.00, 0.00, 0),
-(7, 33, 48.00, 0.00, 48.00, 160);
+(7, 33, 48.00, 5.00, 43.00, 160);
 
 -- --------------------------------------------------------
 
@@ -820,13 +1797,14 @@ INSERT INTO `recompensa_canjeada` (`id_recompensa_canjeada`, `recompensa`, `id_e
 (2, 'RD-2', 30, '2025-11-11', '17:09:00'),
 (3, 'RD-3', 29, '2025-11-12', '12:22:00'),
 (4, 'RD-2', 27, '2025-11-12', '15:45:15'),
-(5, 'RD-3', 27, '2025-11-12', '15:46:18');
+(5, 'RD-3', 27, '2025-11-12', '15:46:18'),
+(6, 'RD-3', 33, '2025-11-26', '16:36:32');
 
 --
 -- Disparadores `recompensa_canjeada`
 --
 DELIMITER $$
-CREATE TRIGGER `resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
+CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
 	DECLARE costo DECIMAL(10,2);
     IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
     	SELECT costo_canje INTO costo
@@ -1032,137 +2010,501 @@ INSERT INTO `usuario` (`id_user`, `nombre`, `apellido`, `username`, `contrasenna
 (32, 'abdul', 'fjdaklj', 'abduli', '231222', '2231533125', '25463635', '8@2f.com', '42', 'Activo', '6'),
 (33, 'ema', 'mejia', 'ema', 'ema123', '78945363', '74673975', 'emamejia@gamil.com', '19', 'Activo', '6');
 
---
--- Disparadores `usuario`
---
-DELIMITER $$
-CREATE TRIGGER `trg_backup_usuario` BEFORE DELETE ON `usuario` FOR EACH ROW BEGIN
-    INSERT INTO usuarios_backup
-    VALUES (
-        OLD.id_user, OLD.nombre, OLD.apellido, OLD.username, OLD.contrasenna,
-        OLD.ci, OLD.telefono, OLD.correo, OLD.edad, OLD.estado
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `trg_delete_maestro_data` AFTER DELETE ON `usuario` FOR EACH ROW BEGIN
-    -- Eliminar registros relacionados en ROL_USUARIO
-    DELETE FROM ROL_USUARIO WHERE id_user = OLD.id_user;
-
-    -- Eliminar registros relacionados en DATOS_MAESTRO
-    DELETE FROM DATOS_MAESTRO WHERE id_user = OLD.id_user;
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `usuarios_backup`
+-- Estructura de tabla para la tabla `xb_archivos_adjuntos`
 --
 
-CREATE TABLE `usuarios_backup` (
-  `id_user` int(11) NOT NULL,
-  `nombre` varchar(31) DEFAULT NULL,
-  `apellido` varchar(31) DEFAULT NULL,
-  `username` varchar(16) DEFAULT NULL,
-  `contrasenna` varchar(31) NOT NULL,
-  `ci` varchar(11) DEFAULT NULL,
-  `telefono` varchar(16) DEFAULT NULL,
-  `correo` varchar(101) DEFAULT NULL,
-  `edad` varchar(4) DEFAULT NULL,
-  `estado` varchar(11) NOT NULL DEFAULT 'Activo'
+CREATE TABLE `xb_archivos_adjuntos` (
+  `idBit_archivos_adjuntos` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `xb_del_archivos_adjuntos`
+-- Estructura de tabla para la tabla `xb_archivos_publicacion`
 --
 
-CREATE TABLE `xb_del_archivos_adjuntos` (
-  `idxb_archivos_adjuntos` int(11) NOT NULL,
-  `accion` varchar(10) DEFAULT NULL,
-  `fecha` datetime DEFAULT NULL
+CREATE TABLE `xb_archivos_publicacion` (
+  `idBit_archivos_publicacion` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `xb_del_archivos_publicacion`
+-- Estructura de tabla para la tabla `xb_area`
 --
 
-CREATE TABLE `xb_del_archivos_publicacion` (
-  `idxb_archivos_publicacion` int(11) NOT NULL,
-  `accion` varchar(10) DEFAULT NULL,
-  `fecha` datetime DEFAULT NULL
+CREATE TABLE `xb_area` (
+  `idBit_area` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `xb_in_archivos_adjuntos`
+-- Estructura de tabla para la tabla `xb_aula`
 --
 
-CREATE TABLE `xb_in_archivos_adjuntos` (
-  `idxb_archivos_adjuntos` int(11) NOT NULL,
-  `accion` varchar(10) DEFAULT NULL,
-  `fecha` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `xb_in_archivos_adjuntos`
---
-
-INSERT INTO `xb_in_archivos_adjuntos` (`idxb_archivos_adjuntos`, `accion`, `fecha`) VALUES
-(1, 'INSERT', '2025-11-12 15:38:38');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `xb_in_archivos_publicacion`
---
-
-CREATE TABLE `xb_in_archivos_publicacion` (
-  `idxb_archivos_publicacion` int(11) NOT NULL,
-  `accion` varchar(10) DEFAULT NULL,
-  `fecha` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `xb_in_archivos_publicacion`
---
-
-INSERT INTO `xb_in_archivos_publicacion` (`idxb_archivos_publicacion`, `accion`, `fecha`) VALUES
-(1, 'INSERT', '2025-11-12 15:38:38');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `xb_up_archivos_adjuntos`
---
-
-CREATE TABLE `xb_up_archivos_adjuntos` (
-  `idxb_archivos_adjuntos` int(11) NOT NULL,
-  `accion` varchar(10) DEFAULT NULL,
-  `antes` text DEFAULT NULL,
-  `despues` text DEFAULT NULL,
-  `fecha` datetime DEFAULT NULL
+CREATE TABLE `xb_aula` (
+  `idBit_aula` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `xb_up_archivos_publicacion`
+-- Estructura de tabla para la tabla `xb_beca`
 --
 
-CREATE TABLE `xb_up_archivos_publicacion` (
-  `idxb_archivos_publicacion` int(11) NOT NULL,
-  `accion` varchar(10) DEFAULT NULL,
-  `antes` text DEFAULT NULL,
-  `despues` text DEFAULT NULL,
-  `fecha` datetime DEFAULT NULL
+CREATE TABLE `xb_beca` (
+  `idBit_beca` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_categoria`
+--
+
+CREATE TABLE `xb_categoria` (
+  `idBit_categoria` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_comentario`
+--
+
+CREATE TABLE `xb_comentario` (
+  `idBit_comentario` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_cosmetico`
+--
+
+CREATE TABLE `xb_cosmetico` (
+  `idBit_cosmetico` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_curso`
+--
+
+CREATE TABLE `xb_curso` (
+  `idBit_curso` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_curso_estudiante`
+--
+
+CREATE TABLE `xb_curso_estudiante` (
+  `idBit_curso_estudiante` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `xb_curso_estudiante`
+--
+
+INSERT INTO `xb_curso_estudiante` (`idBit_curso_estudiante`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'UPDATE', '2025-12-02 18:17:43', 'Se actualizó id: 1\nESTADO: Inscrito -> InscEn Curso\n'),
+(2, 'UPDATE', '2025-12-02 18:17:51', 'Se actualizó id: 1\nESTADO: InscEn Curso -> En Curso\n'),
+(3, 'UPDATE', '2025-12-02 18:18:08', 'Se actualizó id: 2\nESTADO: Inscrito -> En Curso\n'),
+(4, 'UPDATE', '2025-12-02 18:22:54', 'Se actualizó id: 3\nESTADO: Inscrito -> En Curso\n'),
+(5, 'UPDATE', '2025-12-02 19:15:09', 'Se actualizó id: 1\nESTADO: En Curso -> En Clase\n'),
+(6, 'UPDATE', '2025-12-02 19:15:09', 'Se actualizó id: 2\nESTADO: En Curso -> En Clase\n'),
+(7, 'UPDATE', '2025-12-02 19:15:09', 'Se actualizó id: 3\nESTADO: En Curso -> En Clase\n'),
+(8, 'UPDATE', '2025-12-02 19:20:09', 'Se actualizó id: 1\nESTADO: En Clase -> En Curso\n'),
+(9, 'UPDATE', '2025-12-02 19:20:09', 'Se actualizó id: 2\nESTADO: En Clase -> En Curso\n'),
+(10, 'UPDATE', '2025-12-02 19:20:09', 'Se actualizó id: 3\nESTADO: En Clase -> En Curso\n');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_curso_maestro`
+--
+
+CREATE TABLE `xb_curso_maestro` (
+  `idBit_curso_maestro` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_datos_maestro`
+--
+
+CREATE TABLE `xb_datos_maestro` (
+  `idBit_datos_maestro` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_descuento`
+--
+
+CREATE TABLE `xb_descuento` (
+  `idBit_descuento` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_dia_horario`
+--
+
+CREATE TABLE `xb_dia_horario` (
+  `idBit_dia_horario` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `xb_dia_horario`
+--
+
+INSERT INTO `xb_dia_horario` (`idBit_dia_horario`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'INSERT', '2025-12-02 18:15:02', 'Se inserto id:3'),
+(2, 'UPDATE', '2025-12-02 18:18:37', 'Se actualizó id: 3\nHORA INICIO: 18:17:00 -> 18:20:00\n'),
+(3, 'UPDATE', '2025-12-02 18:18:54', 'Se actualizó id: 3\nHORA FIN: 18:20:00 -> 18:25:00\n'),
+(4, 'UPDATE', '2025-12-02 18:24:11', 'Se actualizó id: 3\nHORA INICIO: 18:20:00 -> 18:28:00\n'),
+(5, 'UPDATE', '2025-12-02 18:24:25', 'Se actualizó id: 3\nHORA FIN: 18:25:00 -> 18:30:00\n'),
+(6, 'UPDATE', '2025-12-02 19:10:19', 'Se actualizó id: 3\nHORA INICIO: 18:28:00 -> 19:15:00\n'),
+(7, 'UPDATE', '2025-12-02 19:10:32', 'Se actualizó id: 3\nHORA FIN: 18:30:00 -> 19:20:00\n');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_entregas`
+--
+
+CREATE TABLE `xb_entregas` (
+  `idBit_entregas` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_evaluacion`
+--
+
+CREATE TABLE `xb_evaluacion` (
+  `idBit_evaluacion` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_grado`
+--
+
+CREATE TABLE `xb_grado` (
+  `idBit_grado` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_horario`
+--
+
+CREATE TABLE `xb_horario` (
+  `idBit_horario` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_inscripcion`
+--
+
+CREATE TABLE `xb_inscripcion` (
+  `idBit_inscripcion` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_insignias`
+--
+
+CREATE TABLE `xb_insignias` (
+  `idBit_insignias` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_insignias_estudiantes`
+--
+
+CREATE TABLE `xb_insignias_estudiantes` (
+  `idBit_insignias_estudiante` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_material`
+--
+
+CREATE TABLE `xb_material` (
+  `idBit_material` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_modulo`
+--
+
+CREATE TABLE `xb_modulo` (
+  `idBit_modulo` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_periodo_curso`
+--
+
+CREATE TABLE `xb_periodo_curso` (
+  `idBit_periodo_curso` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_permiso`
+--
+
+CREATE TABLE `xb_permiso` (
+  `idBit_permiso` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_puntos`
+--
+
+CREATE TABLE `xb_puntos` (
+  `idBit_puntos` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_ranking`
+--
+
+CREATE TABLE `xb_ranking` (
+  `idBit_ranking` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_recompensa_canjeada`
+--
+
+CREATE TABLE `xb_recompensa_canjeada` (
+  `idBit_recompensa_canjeada` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_rol`
+--
+
+CREATE TABLE `xb_rol` (
+  `idBit_rol` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_rol_permiso`
+--
+
+CREATE TABLE `xb_rol_permiso` (
+  `idBit_rol_permiso` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_rol_usuario`
+--
+
+CREATE TABLE `xb_rol_usuario` (
+  `idBit_rol_usuario` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_tarea`
+--
+
+CREATE TABLE `xb_tarea` (
+  `idBit_tarea` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_temas`
+--
+
+CREATE TABLE `xb_temas` (
+  `idBit_temas` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_tipo_cosmetico`
+--
+
+CREATE TABLE `xb_tipo_cosmetico` (
+  `idBit_tipo_cosmetico` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_tipo_pago`
+--
+
+CREATE TABLE `xb_tipo_pago` (
+  `idBit_tipo_pago` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `xb_usuario`
+--
+
+CREATE TABLE `xb_usuario` (
+  `idBit_usuario` int(11) NOT NULL,
+  `accion` enum('INSERT','UPDATE','DELETE') NOT NULL,
+  `fecha` datetime NOT NULL DEFAULT current_timestamp(),
+  `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -1178,8 +2520,8 @@ ALTER TABLE `archivos_adjuntos`
 --
 -- Indices de la tabla `archivos_publicacion`
 --
--- ALTER TABLE `archivos_publicacion`
---   ADD PRIMARY KEY (`id_archivo`,`id_publicacion`);
+ALTER TABLE `archivos_publicacion`
+  ADD PRIMARY KEY (`id_archivo`,`id_publicacion`);
 
 --
 -- Indices de la tabla `area`
@@ -1424,46 +2766,220 @@ ALTER TABLE `usuario`
   ADD PRIMARY KEY (`id_user`);
 
 --
--- Indices de la tabla `usuarios_backup`
+-- Indices de la tabla `xb_archivos_adjuntos`
 --
-ALTER TABLE `usuarios_backup`
-  ADD PRIMARY KEY (`id_user`);
+ALTER TABLE `xb_archivos_adjuntos`
+  ADD PRIMARY KEY (`idBit_archivos_adjuntos`);
 
 --
--- Indices de la tabla `xb_del_archivos_adjuntos`
+-- Indices de la tabla `xb_archivos_publicacion`
 --
-ALTER TABLE `xb_del_archivos_adjuntos`
-  ADD PRIMARY KEY (`idxb_archivos_adjuntos`);
+ALTER TABLE `xb_archivos_publicacion`
+  ADD PRIMARY KEY (`idBit_archivos_publicacion`);
 
 --
--- Indices de la tabla `xb_del_archivos_publicacion`
+-- Indices de la tabla `xb_area`
 --
-ALTER TABLE `xb_del_archivos_publicacion`
-  ADD PRIMARY KEY (`idxb_archivos_publicacion`);
+ALTER TABLE `xb_area`
+  ADD PRIMARY KEY (`idBit_area`);
 
 --
--- Indices de la tabla `xb_in_archivos_adjuntos`
+-- Indices de la tabla `xb_aula`
 --
-ALTER TABLE `xb_in_archivos_adjuntos`
-  ADD PRIMARY KEY (`idxb_archivos_adjuntos`);
+ALTER TABLE `xb_aula`
+  ADD PRIMARY KEY (`idBit_aula`);
 
 --
--- Indices de la tabla `xb_in_archivos_publicacion`
+-- Indices de la tabla `xb_beca`
 --
-ALTER TABLE `xb_in_archivos_publicacion`
-  ADD PRIMARY KEY (`idxb_archivos_publicacion`);
+ALTER TABLE `xb_beca`
+  ADD PRIMARY KEY (`idBit_beca`);
 
 --
--- Indices de la tabla `xb_up_archivos_adjuntos`
+-- Indices de la tabla `xb_categoria`
 --
-ALTER TABLE `xb_up_archivos_adjuntos`
-  ADD PRIMARY KEY (`idxb_archivos_adjuntos`);
+ALTER TABLE `xb_categoria`
+  ADD PRIMARY KEY (`idBit_categoria`);
 
 --
--- Indices de la tabla `xb_up_archivos_publicacion`
+-- Indices de la tabla `xb_comentario`
 --
-ALTER TABLE `xb_up_archivos_publicacion`
-  ADD PRIMARY KEY (`idxb_archivos_publicacion`);
+ALTER TABLE `xb_comentario`
+  ADD PRIMARY KEY (`idBit_comentario`);
+
+--
+-- Indices de la tabla `xb_cosmetico`
+--
+ALTER TABLE `xb_cosmetico`
+  ADD PRIMARY KEY (`idBit_cosmetico`);
+
+--
+-- Indices de la tabla `xb_curso`
+--
+ALTER TABLE `xb_curso`
+  ADD PRIMARY KEY (`idBit_curso`);
+
+--
+-- Indices de la tabla `xb_curso_estudiante`
+--
+ALTER TABLE `xb_curso_estudiante`
+  ADD PRIMARY KEY (`idBit_curso_estudiante`);
+
+--
+-- Indices de la tabla `xb_curso_maestro`
+--
+ALTER TABLE `xb_curso_maestro`
+  ADD PRIMARY KEY (`idBit_curso_maestro`);
+
+--
+-- Indices de la tabla `xb_datos_maestro`
+--
+ALTER TABLE `xb_datos_maestro`
+  ADD PRIMARY KEY (`idBit_datos_maestro`);
+
+--
+-- Indices de la tabla `xb_descuento`
+--
+ALTER TABLE `xb_descuento`
+  ADD PRIMARY KEY (`idBit_descuento`);
+
+--
+-- Indices de la tabla `xb_dia_horario`
+--
+ALTER TABLE `xb_dia_horario`
+  ADD PRIMARY KEY (`idBit_dia_horario`);
+
+--
+-- Indices de la tabla `xb_entregas`
+--
+ALTER TABLE `xb_entregas`
+  ADD PRIMARY KEY (`idBit_entregas`);
+
+--
+-- Indices de la tabla `xb_evaluacion`
+--
+ALTER TABLE `xb_evaluacion`
+  ADD PRIMARY KEY (`idBit_evaluacion`);
+
+--
+-- Indices de la tabla `xb_grado`
+--
+ALTER TABLE `xb_grado`
+  ADD PRIMARY KEY (`idBit_grado`);
+
+--
+-- Indices de la tabla `xb_horario`
+--
+ALTER TABLE `xb_horario`
+  ADD PRIMARY KEY (`idBit_horario`);
+
+--
+-- Indices de la tabla `xb_inscripcion`
+--
+ALTER TABLE `xb_inscripcion`
+  ADD PRIMARY KEY (`idBit_inscripcion`);
+
+--
+-- Indices de la tabla `xb_insignias`
+--
+ALTER TABLE `xb_insignias`
+  ADD PRIMARY KEY (`idBit_insignias`);
+
+--
+-- Indices de la tabla `xb_insignias_estudiantes`
+--
+ALTER TABLE `xb_insignias_estudiantes`
+  ADD PRIMARY KEY (`idBit_insignias_estudiante`);
+
+--
+-- Indices de la tabla `xb_material`
+--
+ALTER TABLE `xb_material`
+  ADD PRIMARY KEY (`idBit_material`);
+
+--
+-- Indices de la tabla `xb_modulo`
+--
+ALTER TABLE `xb_modulo`
+  ADD PRIMARY KEY (`idBit_modulo`);
+
+--
+-- Indices de la tabla `xb_periodo_curso`
+--
+ALTER TABLE `xb_periodo_curso`
+  ADD PRIMARY KEY (`idBit_periodo_curso`);
+
+--
+-- Indices de la tabla `xb_permiso`
+--
+ALTER TABLE `xb_permiso`
+  ADD PRIMARY KEY (`idBit_permiso`);
+
+--
+-- Indices de la tabla `xb_puntos`
+--
+ALTER TABLE `xb_puntos`
+  ADD PRIMARY KEY (`idBit_puntos`);
+
+--
+-- Indices de la tabla `xb_ranking`
+--
+ALTER TABLE `xb_ranking`
+  ADD PRIMARY KEY (`idBit_ranking`);
+
+--
+-- Indices de la tabla `xb_recompensa_canjeada`
+--
+ALTER TABLE `xb_recompensa_canjeada`
+  ADD PRIMARY KEY (`idBit_recompensa_canjeada`);
+
+--
+-- Indices de la tabla `xb_rol`
+--
+ALTER TABLE `xb_rol`
+  ADD PRIMARY KEY (`idBit_rol`);
+
+--
+-- Indices de la tabla `xb_rol_permiso`
+--
+ALTER TABLE `xb_rol_permiso`
+  ADD PRIMARY KEY (`idBit_rol_permiso`);
+
+--
+-- Indices de la tabla `xb_rol_usuario`
+--
+ALTER TABLE `xb_rol_usuario`
+  ADD PRIMARY KEY (`idBit_rol_usuario`);
+
+--
+-- Indices de la tabla `xb_tarea`
+--
+ALTER TABLE `xb_tarea`
+  ADD PRIMARY KEY (`idBit_tarea`);
+
+--
+-- Indices de la tabla `xb_temas`
+--
+ALTER TABLE `xb_temas`
+  ADD PRIMARY KEY (`idBit_temas`);
+
+--
+-- Indices de la tabla `xb_tipo_cosmetico`
+--
+ALTER TABLE `xb_tipo_cosmetico`
+  ADD PRIMARY KEY (`idBit_tipo_cosmetico`);
+
+--
+-- Indices de la tabla `xb_tipo_pago`
+--
+ALTER TABLE `xb_tipo_pago`
+  ADD PRIMARY KEY (`idBit_tipo_pago`);
+
+--
+-- Indices de la tabla `xb_usuario`
+--
+ALTER TABLE `xb_usuario`
+  ADD PRIMARY KEY (`idBit_usuario`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -1545,7 +3061,7 @@ ALTER TABLE `datos_maestro`
 -- AUTO_INCREMENT de la tabla `dia_horario`
 --
 ALTER TABLE `dia_horario`
-  MODIFY `id_dia_clase` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_dia_clase` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `entregas`
@@ -1557,7 +3073,7 @@ ALTER TABLE `entregas`
 -- AUTO_INCREMENT de la tabla `evaluacion`
 --
 ALTER TABLE `evaluacion`
-  MODIFY `id_evaluacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_evaluacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `grado`
@@ -1617,7 +3133,7 @@ ALTER TABLE `puntos`
 -- AUTO_INCREMENT de la tabla `recompensa_canjeada`
 --
 ALTER TABLE `recompensa_canjeada`
-  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `rol`
@@ -1656,46 +3172,220 @@ ALTER TABLE `usuario`
   MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
--- AUTO_INCREMENT de la tabla `usuarios_backup`
+-- AUTO_INCREMENT de la tabla `xb_archivos_adjuntos`
 --
-ALTER TABLE `usuarios_backup`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `xb_archivos_adjuntos`
+  MODIFY `idBit_archivos_adjuntos` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `xb_del_archivos_adjuntos`
+-- AUTO_INCREMENT de la tabla `xb_archivos_publicacion`
 --
-ALTER TABLE `xb_del_archivos_adjuntos`
-  MODIFY `idxb_archivos_adjuntos` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `xb_archivos_publicacion`
+  MODIFY `idBit_archivos_publicacion` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `xb_del_archivos_publicacion`
+-- AUTO_INCREMENT de la tabla `xb_area`
 --
-ALTER TABLE `xb_del_archivos_publicacion`
-  MODIFY `idxb_archivos_publicacion` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `xb_area`
+  MODIFY `idBit_area` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `xb_in_archivos_adjuntos`
+-- AUTO_INCREMENT de la tabla `xb_aula`
 --
-ALTER TABLE `xb_in_archivos_adjuntos`
-  MODIFY `idxb_archivos_adjuntos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+ALTER TABLE `xb_aula`
+  MODIFY `idBit_aula` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `xb_in_archivos_publicacion`
+-- AUTO_INCREMENT de la tabla `xb_beca`
 --
-ALTER TABLE `xb_in_archivos_publicacion`
-  MODIFY `idxb_archivos_publicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+ALTER TABLE `xb_beca`
+  MODIFY `idBit_beca` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `xb_up_archivos_adjuntos`
+-- AUTO_INCREMENT de la tabla `xb_categoria`
 --
-ALTER TABLE `xb_up_archivos_adjuntos`
-  MODIFY `idxb_archivos_adjuntos` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `xb_categoria`
+  MODIFY `idBit_categoria` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `xb_up_archivos_publicacion`
+-- AUTO_INCREMENT de la tabla `xb_comentario`
 --
-ALTER TABLE `xb_up_archivos_publicacion`
-  MODIFY `idxb_archivos_publicacion` int(11) NOT NULL AUTO_INCREMENT;
+ALTER TABLE `xb_comentario`
+  MODIFY `idBit_comentario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_cosmetico`
+--
+ALTER TABLE `xb_cosmetico`
+  MODIFY `idBit_cosmetico` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_curso`
+--
+ALTER TABLE `xb_curso`
+  MODIFY `idBit_curso` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_curso_estudiante`
+--
+ALTER TABLE `xb_curso_estudiante`
+  MODIFY `idBit_curso_estudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_curso_maestro`
+--
+ALTER TABLE `xb_curso_maestro`
+  MODIFY `idBit_curso_maestro` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_datos_maestro`
+--
+ALTER TABLE `xb_datos_maestro`
+  MODIFY `idBit_datos_maestro` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_descuento`
+--
+ALTER TABLE `xb_descuento`
+  MODIFY `idBit_descuento` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_dia_horario`
+--
+ALTER TABLE `xb_dia_horario`
+  MODIFY `idBit_dia_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_entregas`
+--
+ALTER TABLE `xb_entregas`
+  MODIFY `idBit_entregas` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_evaluacion`
+--
+ALTER TABLE `xb_evaluacion`
+  MODIFY `idBit_evaluacion` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_grado`
+--
+ALTER TABLE `xb_grado`
+  MODIFY `idBit_grado` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_horario`
+--
+ALTER TABLE `xb_horario`
+  MODIFY `idBit_horario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_inscripcion`
+--
+ALTER TABLE `xb_inscripcion`
+  MODIFY `idBit_inscripcion` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_insignias`
+--
+ALTER TABLE `xb_insignias`
+  MODIFY `idBit_insignias` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_insignias_estudiantes`
+--
+ALTER TABLE `xb_insignias_estudiantes`
+  MODIFY `idBit_insignias_estudiante` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_material`
+--
+ALTER TABLE `xb_material`
+  MODIFY `idBit_material` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_modulo`
+--
+ALTER TABLE `xb_modulo`
+  MODIFY `idBit_modulo` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_periodo_curso`
+--
+ALTER TABLE `xb_periodo_curso`
+  MODIFY `idBit_periodo_curso` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_permiso`
+--
+ALTER TABLE `xb_permiso`
+  MODIFY `idBit_permiso` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_puntos`
+--
+ALTER TABLE `xb_puntos`
+  MODIFY `idBit_puntos` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_ranking`
+--
+ALTER TABLE `xb_ranking`
+  MODIFY `idBit_ranking` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_recompensa_canjeada`
+--
+ALTER TABLE `xb_recompensa_canjeada`
+  MODIFY `idBit_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_rol`
+--
+ALTER TABLE `xb_rol`
+  MODIFY `idBit_rol` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_rol_permiso`
+--
+ALTER TABLE `xb_rol_permiso`
+  MODIFY `idBit_rol_permiso` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_rol_usuario`
+--
+ALTER TABLE `xb_rol_usuario`
+  MODIFY `idBit_rol_usuario` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_tarea`
+--
+ALTER TABLE `xb_tarea`
+  MODIFY `idBit_tarea` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_temas`
+--
+ALTER TABLE `xb_temas`
+  MODIFY `idBit_temas` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_tipo_cosmetico`
+--
+ALTER TABLE `xb_tipo_cosmetico`
+  MODIFY `idBit_tipo_cosmetico` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_tipo_pago`
+--
+ALTER TABLE `xb_tipo_pago`
+  MODIFY `idBit_tipo_pago` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `xb_usuario`
+--
+ALTER TABLE `xb_usuario`
+  MODIFY `idBit_usuario` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Restricciones para tablas volcadas
@@ -1753,12 +3443,6 @@ ALTER TABLE `datos_maestro`
 --
 ALTER TABLE `descuento`
   ADD CONSTRAINT `descuento_ibfk_1` FOREIGN KEY (`id_periodo_curso`) REFERENCES `periodo_curso` (`id_periodo_curso`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `dia_horario`
---
-ALTER TABLE `dia_horario`
-  ADD CONSTRAINT `dia_horario_ibfk_1` FOREIGN KEY (`id_aula`) REFERENCES `aula` (`id_aula`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `entregas`
@@ -1850,6 +3534,14 @@ ALTER TABLE `tarea`
 --
 ALTER TABLE `temas`
   ADD CONSTRAINT `temas_ibfk_1` FOREIGN KEY (`id_modulo`) REFERENCES `modulo` (`id_modulo`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+DELIMITER $$
+--
+-- Eventos
+--
+CREATE DEFINER=`root`@`localhost` EVENT `evento_verificar_clase` ON SCHEDULE EVERY 1 MINUTE STARTS '2025-12-02 17:51:09' ON COMPLETION NOT PRESERVE ENABLE DO CALL estado_clase_cont()$$
+
+DELIMITER ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

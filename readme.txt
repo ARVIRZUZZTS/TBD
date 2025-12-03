@@ -43,3 +43,6 @@ TRIGGERS ACTIVOS (de la imagen)
         - el php solo debe agregar en recompensa_canjeada lo necesario de ESA tabla
     - IV ya esta en un php/inscribirCurso.php 
     - V 
+
+
+estado (curso_estudiante) = "Inscrito" "En Curso" "En Clase" "Aprobado" "Reprobado"

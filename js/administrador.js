@@ -873,6 +873,7 @@ function estudiante() {
     botones.innerHTML = `
         <button class="shiny" onclick="estudiante()">Estudiante</button>
         <button class="shiny" onclick="becas()">Becas</button>
+        <button class="shiny" onclick="graficos()">Gráficos</button>
         <button class="shiny" onclick="ranking()">Ranking</button>
         <button class="back" onclick="back()">Atrás</button>
     `;
@@ -1376,7 +1377,330 @@ function guardarBeca(id_user) {
         alert("Error al guardar la beca");
     });
 }
+function graficos() {
+    const botones = document.getElementById("botones");
+    botones.innerHTML = `
+        <button class="shiny" onclick="estudiante()">Estudiante</button>
+        <button class="shiny" onclick="becas()">Becas</button>
+        <button class="shiny" onclick="ranking()">Ranking</button>
+        <button class="shiny" onclick="graficos()">Gráficos</button>
+        <button class="back" onclick="back()">Atrás</button>
+    `;
 
+    const dinamic = document.getElementById("dinamic");
+    dinamic.innerHTML = "";
+
+    const titleM = document.createElement("div");
+    titleM.id = "titleM";
+    titleM.innerHTML = `<h3>Gráficos Estadísticos</h3>`;
+    dinamic.appendChild(titleM);
+
+    const filtro = document.createElement("div");
+    filtro.className = "selectBox";
+    filtro.innerHTML = `
+        <div>
+            <h4>Seleccionar tipo de gráfico:</h4>
+            <select id="tipoGrafico" onchange="cargarGrafico()">
+                <option value="estudiantes">Estudiantes por Estado</option>
+                <option value="ranking">Estudiantes por Ranking</option>
+                <option value="categorias">Cursos por Categoría</option>
+                <option value="promedios">Estudiantes por Promedio</option>
+            </select>
+        </div>
+    `;
+    dinamic.appendChild(filtro);
+
+    const chartContainer = document.createElement("div");
+    chartContainer.id = "chart-container";
+    chartContainer.style.width = "100%";
+    chartContainer.style.maxWidth = "600px";
+    chartContainer.style.margin = "20px auto";
+    chartContainer.style.padding = "20px";
+    chartContainer.style.height = "50vh";
+    chartContainer.style.overflowY = "auto";
+    chartContainer.style.overflowX = "hidden";
+    chartContainer.style.backgroundColor = "white";
+    chartContainer.style.borderRadius = "10px";
+    chartContainer.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)";
+    
+    const canvas = document.createElement("canvas");
+    canvas.id = "graficoChart";
+    chartContainer.appendChild(canvas);
+    
+    const statsContainer = document.createElement("div");
+    statsContainer.id = "stats-container";
+    statsContainer.style.marginTop = "20px";
+    statsContainer.style.padding = "15px";
+    statsContainer.style.backgroundColor = "#f8f9fa";
+    statsContainer.style.borderRadius = "8px";
+    chartContainer.appendChild(statsContainer);
+
+    dinamic.appendChild(chartContainer);
+
+    cargarGrafico();
+}
+
+let graficoActual = null;
+
+function cargarGrafico() {
+    const tipo = document.getElementById("tipoGrafico").value;
+    const statsContainer = document.getElementById("stats-container");
+    
+    statsContainer.innerHTML = '<p style="text-align: center;">Cargando datos...</p>';
+    
+    fetch(`php/graficosGet.php?tipo=${tipo}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.exito) {
+            crearGraficoTarta(data);
+            mostrarEstadisticas(data);
+        } else {
+            statsContainer.innerHTML = `<p style="color: red; text-align: center;">${data.mensaje}</p>`;
+            if (graficoActual) {
+                graficoActual.destroy();
+                graficoActual = null;
+            }
+        }
+    })
+    .catch(err => {
+        console.error("Error al cargar gráfico:", err);
+        statsContainer.innerHTML = '<p style="color: red; text-align: center;">Error al cargar los datos del gráfico</p>';
+        if (graficoActual) {
+            graficoActual.destroy();
+            graficoActual = null;
+        }
+    });
+}
+
+function crearGraficoTarta(data) {
+    const ctx = document.getElementById('graficoChart').getContext('2d');
+    
+    if (graficoActual) {
+        graficoActual.destroy();
+    }
+    
+    const colores = generarColores(data.labels.length);
+    
+    let titulo = '';
+    let opcionesPersonalizadas = {};
+    
+    switch(data.tipo) {
+        case 'estudiantes':
+            titulo = 'Distribución de Estudiantes por Estado';
+            break;
+        case 'ranking':
+            titulo = 'Distribución de Estudiantes por Ranking';
+            // Opciones especiales para ranking
+            opcionesPersonalizadas = {
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: {
+                                size: 10  // Tamaño más pequeño para ranking
+                            },
+                            padding: 10,
+                            boxWidth: 12,  // Caja más pequeña
+                            boxHeight: 12,
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    return data.labels.map(function(label, i) {
+                                        const meta = chart.getDatasetMeta(0);
+                                        const style = meta.controller.getStyle(i);
+                                        
+                                        return {
+                                            text: label,
+                                            fillStyle: style.backgroundColor,
+                                            strokeStyle: style.borderColor,
+                                            lineWidth: style.borderWidth,
+                                            hidden: isNaN(data.datasets[0].data[i]) || meta.data[i].hidden,
+                                            index: i
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: {
+                        left: 0,
+                        right: 0,
+                        top: 0,
+                        bottom: 0
+                    }
+                }
+            };
+            break;
+        case 'categorias':
+            titulo = 'Distribución de Cursos por Categoría';
+            break;
+        case 'promedios':
+            titulo = 'Distribución de Estudiantes por Rango de Promedio';
+            break;
+    }
+    
+    // Configuración base
+    const opcionesBase = {
+        responsive: true,
+        maintainAspectRatio: false,  // Cambiado a false para mejor control
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    font: {
+                        size: 12
+                    },
+                    padding: 20,
+                    boxWidth: 15,
+                    boxHeight: 15
+                }
+            },
+            title: {
+                display: true,
+                text: titulo,
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = Math.round((value / total) * 100);
+                        return `${label}: ${value} (${percentage}%)`;
+                    }
+                }
+            }
+        },
+        // Agregar interactividad
+        onClick: function(evt, elements) {
+            if (elements.length > 0) {
+                const index = elements[0].index;
+                console.log('Clic en:', data.labels[index]);
+                // Aquí puedes agregar funcionalidad adicional si quieres
+            }
+        }
+    };
+    
+    // Fusionar opciones base con personalizadas
+    const opcionesFinales = deepMerge(opcionesBase, opcionesPersonalizadas);
+    
+    graficoActual = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: data.labels,
+            datasets: [{
+                data: data.valores,
+                backgroundColor: colores,
+                borderColor: 'white',
+                borderWidth: 2,
+                hoverBorderWidth: 3,
+                hoverOffset: 10  // Efecto hover
+            }]
+        },
+        options: opcionesFinales
+    });
+    
+    // Ajustar altura del contenedor basado en el tipo
+    const chartContainer = document.getElementById('chart-container');
+    if (data.tipo === 'ranking' && data.labels.length > 15) {
+        chartContainer.style.height = '70vh';  // Más alto para ranking
+        chartContainer.style.overflowY = 'scroll';
+    } else {
+        chartContainer.style.height = '50vh';
+    }
+}
+
+// Función auxiliar para fusionar objetos profundamente
+function deepMerge(target, source) {
+    const output = Object.assign({}, target);
+    if (isObject(target) && isObject(source)) {
+        Object.keys(source).forEach(key => {
+            if (isObject(source[key])) {
+                if (!(key in target))
+                    Object.assign(output, { [key]: source[key] });
+                else
+                    output[key] = deepMerge(target[key], source[key]);
+            } else {
+                Object.assign(output, { [key]: source[key] });
+            }
+        });
+    }
+    return output;
+}
+
+function isObject(item) {
+    return (item && typeof item === 'object' && !Array.isArray(item));
+}
+
+function generarColores(cantidad, tipo = '') {
+    const paleta = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+        '#9966FF', '#FF9F40', '#8AC926', '#1982C4',
+        '#6A4C93', '#F15BB5', '#00BBF9', '#00F5D4',
+        '#FF97B7', '#9B5DE5', '#FEE440', '#00F5D4'
+    ];
+    
+    // Paleta especial para ranking (colores por nivel)
+    if (tipo === 'ranking') {
+        const rankingPalette = {
+            'Hierro': ['#A19D94', '#8B8680', '#76726D', '#615D59'],
+            'Bronce': ['#CD7F32', '#B87333', '#A3672B', '#8E5C24'],
+            'Plata': ['#C0C0C0', '#A9A9A9', '#939393', '#7D7D7D'],
+            'Oro': ['#FFD700', '#E6C200', '#CCAD00', '#B39800'],
+            'Platino': ['#E5E4E2', '#CFCECB', '#B9B8B5', '#A3A29E'],
+            'Esmeralda': ['#50C878', '#46B46A', '#3DA05C', '#348C4E'],
+            'Diamante': ['#B9F2FF', '#A5D9E6', '#91C0CC', '#7DA7B3'],
+            'Maestro': ['#8A2BE2', '#7B26CB', '#6C22B4', '#5D1E9D'],
+            'Gran Maestro': ['#FF6B6B', '#E65F5F', '#CC5454', '#B34949'],
+            'Challenger': ['#FF4500', '#E63D00', '#CC3600', '#B32F00']
+        };
+        
+        const colores = [];
+        for (let i = 0; i < cantidad; i++) {
+            colores.push(paleta[i % paleta.length]);
+        }
+        return colores;
+    }
+    
+    const colores = [...paleta];
+    while (colores.length < cantidad) {
+        colores.push(`#${Math.floor(Math.random()*16777215).toString(16)}`);
+    }
+    
+    return colores.slice(0, cantidad);
+}
+
+function mostrarEstadisticas(data) {
+    const statsContainer = document.getElementById("stats-container");
+    const total = data.valores.reduce((a, b) => a + b, 0);
+    
+    let html = `<h4 style="margin-bottom: 15px; color: #333;">Estadísticas:</h4>`;
+    html += `<p><strong>Total registros:</strong> ${total}</p>`;
+    
+    const maxValor = Math.max(...data.valores);
+    const minValor = Math.min(...data.valores.filter(v => v > 0));
+    const maxIndex = data.valores.indexOf(maxValor);
+    const minIndex = data.valores.indexOf(minValor);
+    
+    html += `<p><strong>Mayor cantidad:</strong> ${data.labels[maxIndex]} (${maxValor} - ${Math.round((maxValor/total)*100)}%)</p>`;
+    html += `<p><strong>Menor cantidad:</strong> ${data.labels[minIndex]} (${minValor} - ${Math.round((minValor/total)*100)}%)</p>`;
+    
+    statsContainer.innerHTML = html;
+}
 function descuentos() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
