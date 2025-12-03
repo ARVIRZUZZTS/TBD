@@ -1,6 +1,9 @@
 const params = new URLSearchParams(window.location.search);
 let usuario = params.get("usuario");
 
+// Obtener ID del maestro desde localStorage o sessionStorage
+window.id_maestro = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+
 function showSection(sectionId) {
     document.querySelectorAll('.content-area > div').forEach(section => {
         section.style.display = 'none';
@@ -16,6 +19,11 @@ function showSection(sectionId) {
             // cargar horarios del maestro si la función está disponible
             if (typeof window.cargarHorariosMaestro === 'function') {
                 window.cargarHorariosMaestro();
+            }
+        } else if (sectionId === 'entregas') {
+            // cargar entregas del maestro si la función está disponible
+            if (typeof window.cargarEntregasMaestro === 'function') {
+                window.cargarEntregasMaestro();
             }
         }
     }

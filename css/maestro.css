@@ -938,3 +938,297 @@ body {
 .horario-table .hora-cell { width: 24%; font-family: 'Courier New', monospace; }
 .horario-table .aula-cell { width: 28%; }
 .horario-table .capacidad-cell { width: 20%; text-align: center; }
+
+/* ===== ENTREGAS MAESTRO ===== */
+.entregas-section h2 {
+    margin: 0 0 1.5vh 0;
+    color: var(--nigger);
+}
+
+.filtros-entregas {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    margin-bottom: 2vh;
+}
+
+.filtros-entregas label {
+    font-weight: 600;
+    color: var(--nigger);
+    font-size: 1.5vh;
+}
+
+.filtros-entregas select {
+    padding: 0.8vh 1.2vh;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e9ecef;
+    color: var(--nigger);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    font-size: 1.4vh;
+    max-width: 300px;
+}
+
+.filtros-entregas select:hover {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.entregas-tabla-container {
+    margin-top: 1.5vh;
+    overflow-x: auto;
+}
+
+.entregas-tabla {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.entregas-tabla thead {
+    background: linear-gradient(90deg, #ff8e1d, #ffc081);
+    color: white;
+}
+
+.entregas-tabla thead th {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 1.4vh;
+    font-weight: 600;
+}
+
+.entregas-tabla tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(87,45,13,0.04);
+    font-size: 1.35vh;
+}
+
+.entregas-tabla tbody tr:nth-child(odd) {
+    background: rgba(255,200,129,0.02);
+}
+
+.entregas-tabla tbody tr:hover {
+    background: rgba(255,142,29,0.04);
+}
+
+.entregas-tabla .entrega-fila.calificada {
+    background-color: rgba(76, 175, 80, 0.03);
+}
+
+.entregas-tabla .entrega-fila.sin-calificar {
+    background-color: rgba(255, 152, 0, 0.02);
+}
+
+.btn-calificar {
+    padding: 0.6vh 1.4vh;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #ff8e1d, #ffc081);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3vh;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-calificar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 142, 29, 0.3);
+}
+
+.btn-calificar:active {
+    transform: translateY(0);
+}
+
+/* Modal de calificación */
+.modal-calificacion {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-contenido {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5vh 2vh;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(90deg, #ff8e1d, #ffc081);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.8vh;
+}
+
+.btn-cerrar {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 2.5vh;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.btn-cerrar:hover {
+    transform: scale(1.2);
+}
+
+.modal-body {
+    padding: 2vh;
+}
+
+.info-estudiante {
+    background-color: #f8f9fa;
+    padding: 1.5vh;
+    border-radius: 8px;
+    margin-bottom: 1.5vh;
+    border-left: 4px solid #ff8e1d;
+}
+
+.info-estudiante p {
+    margin: 0.8vh 0;
+    font-size: 1.4vh;
+    color: var(--nigger);
+}
+
+.info-estudiante strong {
+    color: #ff8e1d;
+}
+
+.form-group {
+    margin-bottom: 1.5vh;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.8vh;
+    font-weight: 600;
+    color: var(--nigger);
+    font-size: 1.4vh;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8vh 1.2vh;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1.35vh;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #ff8e1d;
+    box-shadow: 0 0 0 3px rgba(255, 142, 29, 0.1);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 1vh;
+    justify-content: flex-end;
+    padding: 1.5vh 2vh;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-cancelar,
+.btn-guardar {
+    padding: 0.8vh 1.6vh;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 1.4vh;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-cancelar {
+    background-color: #e9ecef;
+    color: var(--nigger);
+}
+
+.btn-cancelar:hover {
+    background-color: #dee2e6;
+}
+
+.btn-guardar {
+    background: linear-gradient(90deg, #ff8e1d, #ffc081);
+    color: white;
+}
+
+.btn-guardar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 142, 29, 0.3);
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 3vh;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #6c757d;
+    font-size: 1.5vh;
+}
+
+.error-message {
+    text-align: center;
+    padding: 1.5vh;
+    background: #f8d7da;
+    color: #721c24;
+    border-radius: 8px;
+    border: 1px solid #f5c6cb;
+    margin-bottom: 1.5vh;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .entregas-tabla { min-width: 600px; }
+    .filtros-entregas select { max-width: 100%; }
+}
+
+@media (max-width: 600px) {
+    .entregas-tabla { font-size: 1.2vh; }
+    .entregas-tabla thead th,
+    .entregas-tabla tbody td { padding: 8px 10px; }
+    .btn-calificar { padding: 0.5vh 1vh; font-size: 1.1vh; }
+}

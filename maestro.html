@@ -23,6 +23,7 @@
                 <h3 class="menu-title">Opciones</h3>
                 <button class="menu-button shiny" data-section="current-courses">Cursos Actuales</button>
                 <button class="menu-button shiny" data-section="horarios">Horarios</button>
+                <button class="menu-button shiny" data-section="entregas">Entregas/Calificaciones</button>
             </div>
             
             <div class="menu-section">
@@ -64,6 +65,15 @@
                     </div>
                 </div>
 
+                <div id="entregas" style="display: none;" class="entregas-section">
+                    <h2>Entregas y Calificaciones</h2>
+                    <div id="entregas-maestro-section">
+                        <div id="entregas-maestro-container" class="content-grid">
+                            <!-- Entregas se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Placeholder para otras secciones -->
                 <div id="other-sections" style="display: none;">
                     <div class="placeholder-content">
@@ -79,5 +89,6 @@
 
     <script src="js/maestro.js"></script>
     <script src="js/maestro/horarios.js"></script>
+    <script src="js/maestro/entregas.js"></script>
 </body>
 </html>
