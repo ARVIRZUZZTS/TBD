@@ -1,0 +1,45 @@
+/* Paletas de Colores */
+
+/* Tema Noche (Dark Mode) */
+body.theme-dark {
+    --nigger: #111110; /* Texto claro */
+    --shiny: #7b4b94; /* Morado */
+    --butt: #5a3470;
+    --back: #2d1b38; /* Fondo oscuro */
+    --shinyHover: #9b6bb4;
+    --usWhite: #1a1025; /* Fondo muy oscuro */
+    --inp: #3d264d;
+}
+
+/* Tema Océano (Blue) */
+body.theme-ocean {
+    --nigger: #002b36;
+    --shiny: #2aa198;
+    --butt: #268bd2;
+    --back: #839496;
+    --shinyHover: #6c71c4;
+    --usWhite: #fdf6e3; /* Solarized lightish */
+    --inp: #eee8d5;
+}
+
+/* Tema Bosque (Green) */
+body.theme-forest {
+    --nigger: #1a2f1a;
+    --shiny: #4caf50;
+    --butt: #388e3c;
+    --back: #c8e6c9;
+    --shinyHover: #81c784;
+    --usWhite: #f1f8e9;
+    --inp: #dcedc8;
+}
+
+/* Tema Dorado (Gold/Luxury) */
+body.theme-gold {
+    --nigger: #3e2723;
+    --shiny: #ffd700;
+    --butt: #ffc107;
+    --back: #ffecb3;
+    --shinyHover: #ffe082;
+    --usWhite: #fff8e1;
+    --inp: #fff9c4;
+}
