@@ -45,13 +45,13 @@ if ($stmt = $conexion->prepare($sql)) {
         $estado = $row['estado'];
         $asistencia_actual = (int)$row['asistencia'];
 
-        if (strcmp($estado, 'En clase') !== 0) {
-            echo json_encode(["exito" => false, "mensaje" => "No se puede actualizar asistencia cuando el estado no es 'En clase'."]);
+        if (strcmp($estado, 'En Clase') !== 0) {
+            echo json_encode(["exito" => false, "mensaje" => "No se puede actualizar asistencia cuando el estado no es 'En Clase'."]);
             exit;
         }
 
         // Intentar actualizar (doble-check en la cláusula WHERE)
-        $upd = "UPDATE curso_estudiante SET asistencia = asistencia + 1 WHERE id_periodo_curso = ? AND id_estudiante = ? AND estado = 'En clase'";
+        $upd = "UPDATE curso_estudiante SET asistencia = asistencia + 1 WHERE id_periodo_curso = ? AND id_estudiante = ? AND estado = 'En Clase'";
         if ($ustmt = $conexion->prepare($upd)) {
             $ustmt->bind_param('ii', $id_periodo_curso, $id_estudiante);
             $ustmt->execute();
