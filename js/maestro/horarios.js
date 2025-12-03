@@ -11,6 +11,7 @@ window.cargarHorariosMaestro = async function() {
             return;
         }
 
+
         container.innerHTML = `<div class="loading-message"><div class="loading-spinner"></div><p>Cargando horarios...</p></div>`;
 
         const res = await fetch(`php/consultarHorarioByMaestro.php?id_maestro=${idMaestro}`);
