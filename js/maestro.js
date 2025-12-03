@@ -1,11 +1,512 @@
-// Bootstrapper: carga la implementación modular del portal de maestro
-(async function(){
-    try {
-        await import('./maestro/main.js');
-    } catch (e) {
-        console.error('Error al inicializar el módulo maestro:', e);
+const params = new URLSearchParams(window.location.search);
+let usuario = params.get("usuario");
+
+function showSection(sectionId) {
+    document.querySelectorAll('.content-area > div').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.style.display = 'block';
+        
+        if (sectionId === 'current-courses') {
+            loadMyCourses();
+        } else if (sectionId === 'horarios') {
+            // cargar horarios del maestro si la función está disponible
+            if (typeof window.cargarHorariosMaestro === 'function') {
+                window.cargarHorariosMaestro();
+            }
+        }
     }
-})();
+}
+
+async function loadMyCourses() {
+    const loadingElement = document.getElementById('courses-loading');
+    const coursesContainer = document.getElementById('courses-container');
+    const errorElement = document.getElementById('courses-error');
+    
+    loadingElement.style.display = 'block';
+    coursesContainer.innerHTML = '';
+    errorElement.style.display = 'none';
+
+    let idMaestro = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+    
+    fetch("php/pcGetByMaestro.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idMaestro })
+    })
+    .then(res => res.json())
+    .then(data => {
+        loadingElement.style.display = 'none';
+        if (data.success) {
+            if(data.cursos.length > 0){
+                displayCourses(data.cursos);
+            } else {
+                coursesContainer.innerHTML = `
+                    <div class="no-courses-message">
+                        <div class="placeholder-icon">📚</div>
+                        <h3>No hay cursos disponibles</h3>
+                        <p>No se le han asignado cursos por el momento.</p>
+                    </div>
+                `;
+            }
+        }
+    })
+    .catch(err => {
+        console.error('Error al cargar cursos:', err);
+        loadingElement.style.display = 'none';
+        errorElement.style.display = 'block';
+    });
+}
+
+function displayCourses(cursos) {
+    const coursesContainer = document.getElementById('courses-container');
+    
+    if (cursos.length === 0) {
+        coursesContainer.innerHTML = `
+            <div class="no-courses-message">
+                <div class="placeholder-icon">📚</div>
+                <h3>No hay cursos disponibles</h3>
+                <p>No se encontraron cursos en la base de datos.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const coursesHTML = cursos.map(curso => {
+        const isPendiente = curso.estado === 'Pendiente';
+       
+        return `
+        <div class="course-card available-course">
+            <h3 class="course-title">${escapeHTML(curso.titulo)}</h3>
+            <div class="course-details">
+                <p class="course-info"><strong>Duración:</strong> ${curso.duracion}</p>
+                <p class="course-info"><strong>Modalidad:</strong> ${escapeHTML(curso.modalidad)}</p>
+                <p class="course-info"><strong>Categoría:</strong> ${escapeHTML(curso.categoria)}</p>
+                <p class="course-info"><strong>Área:</strong> ${escapeHTML(curso.area)}</p>
+                <p class="course-info"><strong>Grado:</strong> ${escapeHTML(curso.grado)}</p>
+                <p class="course-info"><strong>Periodo:</strong> ${escapeHTML(curso.periodo)}</p>
+                ${!isPendiente ? `
+                    <p class="course-info"><strong>Inscritos:</strong> ${escapeHTML(curso.inscritos)}</p>
+                ` : ''
+                }
+                <p class="course-info"><strong>Estado:</strong> ${escapeHTML(curso.estado)}</p>
+            </div>
+            <div class="action-buttons">
+                ${isPendiente ? `
+                    <button class="shiny accept-course" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}">Agregar Curso</button>
+                ` : ''}
+                ${!isPendiente ? `
+                    <button class="shiny view-details" data-course-id="${curso.id_periodo_curso}" data-course-title="${escapeHTML(curso.titulo)}" data-course-inscritos="${escapeHTML(curso.inscritos)}">Ver Detalles</button>
+                ` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+    
+    coursesContainer.innerHTML = coursesHTML;
+    
+    document.querySelectorAll('.view-details').forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            const courseInscritos = this.getAttribute('data-course-inscritos');
+            showCourseDetails(courseId, courseTitle, courseInscritos);
+        });
+    });
+    
+    document.querySelectorAll('.accept-course').forEach(button => {
+        button.addEventListener('click', function() {
+            const courseId = this.getAttribute('data-course-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            acceptCourse(courseId, courseTitle);
+        });
+    });
+}
+
+function acceptCourse(courseId, courseTitle) {
+
+    const confirmModalHTML = `
+        <div id="confirm-accept-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirmar Aceptación</h3>
+                    <button class="modal-close" id="close-confirm-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Desea aceptar el curso "<strong>${escapeHTML(courseTitle)}</strong>"?</p>
+                    <div class="form-actions">
+                        <button type="button" class="back" id="reject-course">No</button>
+                        <button type="button" class="shiny" id="confirm-accept">Sí</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', confirmModalHTML);
+    
+    const confirmModal = document.getElementById('confirm-accept-modal');
+    
+    document.getElementById('close-confirm-modal').addEventListener('click', () => {
+        confirmModal.remove();
+    });
+    
+    document.getElementById('reject-course').addEventListener('click', () => {
+        confirmModal.remove();
+        deleteCourse(courseId, courseTitle);
+    });
+    
+    document.getElementById('confirm-accept').addEventListener('click', () => {
+        confirmModal.remove();
+        showCourseDetailsModal(courseId, courseTitle);
+    });
+    
+    confirmModal.addEventListener('click', function(e) {
+        if (e.target === confirmModal) {
+            confirmModal.remove();
+        }
+    });
+}
+
+function showCourseDetailsModal(courseId, courseTitle) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const detailsModalHTML = `
+        <div id="course-details-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Configurar Curso: ${escapeHTML(courseTitle)}</h3>
+                    <button class="modal-close" id="close-details-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="course-details-form">
+                        <div class="form-group">
+                            <label for="fecha-inicio">Fecha de Inicio:</label>
+                            <input type="date" id="fecha-inicio" name="fecha_inicio" required min="${today}">
+                            <small>La fecha de inicio no puede ser anterior a la fecha actual</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fecha-fin">Fecha de Fin:</label>
+                            <input type="date" id="fecha-fin" name="fecha_fin" required>
+                            <small>La fecha de fin debe ser al menos 2 semanas después de la fecha de inicio</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cupos">Número de Cupos:</label>
+                            <input type="number" id="cupos" name="cupos" required min="1" max="500" placeholder="Máximo 500 cupos">
+                            <small>El número máximo de cupos permitido es 500</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-details">Cancelar</button>
+                            <button type="submit" class="shiny">Aceptar Curso</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', detailsModalHTML);
+    
+    const detailsModal = document.getElementById('course-details-modal');
+    const form = document.getElementById('course-details-form');
+    
+    document.getElementById('close-details-modal').addEventListener('click', () => {
+        detailsModal.remove();
+    });
+    
+    document.getElementById('cancel-details').addEventListener('click', () => {
+        detailsModal.remove();
+    });
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitCourseAcceptance(courseId, courseTitle);
+    });
+    
+    detailsModal.addEventListener('click', function(e) {
+        if (e.target === detailsModal) {
+            detailsModal.remove();
+        }
+    });
+}
+
+function submitCourseAcceptance(courseId, courseTitle) {
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin = document.getElementById('fecha-fin').value;
+    const cupos = parseInt(document.getElementById('cupos').value);
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!fechaInicio || !fechaFin || !cupos) {
+        alert('Por favor, complete todos los campos');
+        return;
+    }
+    
+    if (fechaInicio < today) {
+        alert('La fecha de inicio no puede ser anterior a la fecha actual');
+        return;
+    }
+    
+    if (fechaFin <= fechaInicio) {
+        alert('La fecha de fin debe ser posterior a la fecha de inicio');
+        return;
+    }
+    
+    const inicio = new Date(fechaInicio);
+    const fin = new Date(fechaFin);
+    const diferenciaMs = fin - inicio;
+    const diferenciaDias = diferenciaMs / (1000 * 60 * 60 * 24);
+    const diferenciaSemanas = diferenciaDias / 7;
+    
+    if (diferenciaSemanas < 2) {
+        alert('La fecha de fin debe ser al menos 2 semanas después de la fecha de inicio');
+        return;
+    }
+    
+    if (cupos < 1 || cupos > 500) {
+        alert('El número de cupos debe estar entre 1 y 500');
+        return;
+    }
+    
+    console.log('Aceptando curso:', {
+        courseId,
+        courseTitle,
+        fechaInicio,
+        fechaFin,
+        cupos,
+        diferenciaSemanas: diferenciaSemanas.toFixed(1)
+    });
+        
+    fetch("php/pcAceptarCurso.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id_periodo_curso: courseId,
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin,
+            cupos: cupos
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Curso aceptado exitosamente');
+            document.getElementById('course-details-modal').remove();
+            loadMyCourses();
+        } else {
+            alert('Error al aceptar curso: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al aceptar curso. Por favor, intente nuevamente.');
+    });
+    
+    alert(`Curso "${courseTitle}" aceptado exitosamente con:\n- Fecha inicio: ${fechaInicio}\n- Fecha fin: ${fechaFin}\n- Cupos: ${cupos}\n- Duración: ${diferenciaDias} días (${diferenciaSemanas.toFixed(1)} semanas)`);
+    document.getElementById('course-details-modal').remove();
+    loadMyCourses(); 
+}
+
+function deleteCourse(courseId, courseTitle) {
+    console.log('Rechazando curso:', courseId, courseTitle);
+        
+    fetch("php/pcDelete.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_periodo_curso: courseId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Curso rechazado exitosamente');
+            loadMyCourses();
+        } else {
+            alert('Error al rechazar curso: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error al rechazar curso. Por favor, intente nuevamente.');
+    });
+    
+    loadMyCourses();
+}
+
+function showCourseDetails(courseId, courseTitle, courseInscritos) {
+    const contentArea = document.querySelector('.content-area');
+    
+    // Guardar el ID del curso actual en localStorage
+    localStorage.setItem('current_course_id', courseId);
+    
+    const courseDetailsHTML = `
+        <div id="course-details">
+            <div class="course-header">
+                <div class="course-title-section">
+                    <h2>${courseTitle}</h2>
+                </div>
+                <div class="course-stats">
+                    <div class="inscritos-badge">
+                        <span class="inscritos-count">${courseInscritos}</span>
+                        <span class="inscritos-label">Estudiantes Inscritos</span>
+                    </div>
+                    <button class="shiny config-horario-btn" id="config-horario">
+                        Configurar Horario
+                    </button>
+                </div>
+            </div>
+            
+            <div class="course-actions">
+                <button class="shiny action-btn" data-action="crear-modulo">
+                    <span class="btn-icon">📚</span>
+                    Crear Módulo
+                </button>
+                <button class="shiny action-btn" data-action="crear-tema">
+                    <span class="btn-icon">📖</span>
+                    Crear Tema
+                </button>
+                <button class="shiny action-btn" data-action="crear-evaluacion">
+                    <span class="btn-icon">📊</span>
+                    Crear Evaluación
+                </button>
+                <button class="shiny action-btn" data-action="crear-tarea">
+                    <span class="btn-icon">📝</span>
+                    Crear Tarea
+                </button>
+            </div>
+            
+            <div class="course-content">
+                <div id="modules-container">
+                    <div class="loading-message" id="modules-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando módulos...</p>
+                    </div>
+                    <div id="modules-list" class="modules-grid" style="display: none;"></div>
+                    <div id="modules-empty" class="no-modules-message" style="display: none;">
+                        <div class="placeholder-icon">📚</div>
+                        <h3>No hay módulos creados</h3>
+                        <p>Comienza creando tu primer módulo para este curso.</p>
+                    </div>
+                    <div id="modules-error" class="error-message" style="display: none;">
+                        <p>Error al cargar los módulos. Por favor, intente nuevamente.</p>
+                        <button class="shiny" id="retry-load-modules">Reintentar</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="back-to-courses">
+                <button class="back" id="back-to-courses-list">← Volver a Mis Cursos</button>
+            </div>
+        </div>
+    `;
+    
+    // Ocultar todas las secciones y mostrar los detalles del curso
+    document.querySelectorAll('.content-area > div').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    contentArea.insertAdjacentHTML('beforeend', courseDetailsHTML);
+    
+    // Cargar módulos del curso
+    loadCourseModules(courseId);
+    
+    // Agregar event listeners para los botones de acción
+    document.querySelectorAll('.action-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.getAttribute('data-action');
+            handleCourseAction(action, courseId, courseTitle);
+        });
+    });
+    
+    // Event listener para volver a la lista de cursos
+    document.getElementById('back-to-courses-list').addEventListener('click', function() {
+        document.getElementById('course-details').remove();
+        showSection('current-courses');
+    });
+    
+    // Event listener para reintentar carga de módulos
+    document.getElementById('retry-load-modules').addEventListener('click', function() {
+        loadCourseModules(courseId);
+    });
+
+    document.getElementById('config-horario').addEventListener('click', function() {
+        showConfigHorarioModal(courseId, courseTitle);
+    });
+}
+
+function handleCourseAction(action, courseId, courseTitle) {
+    switch(action) {
+        case 'crear-modulo':
+            showCreateModuleModal(courseId, courseTitle);
+            break;
+        case 'crear-tema':
+            showCreateTemaModal(courseId, courseTitle);
+            break;
+        case 'crear-evaluacion':
+            showCreateEvaluacionModal(courseId, courseTitle);
+            break;
+        case 'crear-tarea':
+            showCreateTareaModal(courseId, courseTitle);
+            break;
+    }
+}
+
+function showCreateModuleModal(courseId, courseTitle) {
+    const modalHTML = `
+        <div id="create-module-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Crear Nuevo Módulo</h3>
+                    <button class="modal-close" id="close-module-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-module-form">
+                        <div class="form-group">
+                            <label for="module-title">Título del Módulo:</label>
+                            <input type="text" id="module-title" name="title" required maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="module-order">Orden del Módulo:</label>
+                            <input type="number" id="module-order" name="order" required min="1">
+                            <small>Define la posición del módulo (1 = primero, 2 = segundo, etc.)</small>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-module">Cancelar</button>
+                            <button type="submit" class="shiny">Crear Módulo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    const modal = document.getElementById('create-module-modal');
+    const form = document.getElementById('create-module-form');
+    
+    // Event listeners para cerrar modal
+    document.getElementById('close-module-modal').addEventListener('click', closeModuleModal);
+    document.getElementById('cancel-module').addEventListener('click', closeModuleModal);
+    
+    // Event listener para enviar formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        createModule(courseId);
+    });
+    
+    // Cerrar modal al hacer click fuera
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModuleModal();
+        }
+    });
+}
 
 function showCreateTemaModal(courseId, courseTitle) {
     // Primero cargar los módulos disponibles
@@ -1361,6 +1862,16 @@ function escapeHTML(str) {
 // Inicialización cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
     showSection('current-courses');
+    // Inicializar botones del sidebar
+    document.querySelectorAll('.menu-button[data-section]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const sec = this.getAttribute('data-section');
+            showSection(sec);
+        });
+    });
+    // Botones regresar en placeholders
+    const backBtn = document.getElementById('back-to-courses');
+    if (backBtn) backBtn.addEventListener('click', () => showSection('current-courses'));
 });
 
 function cerrarSesion() {

@@ -864,3 +864,77 @@ body {
     font-size: 0.85em;
     margin-left: 10px;
 }
+
+/* ===== HORARIOS MAESTRO ===== */
+.horarios-section h2 {
+    margin: 0 0 1.5vh 0;
+    color: var(--nigger);
+}
+
+.filtros-horarios {
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    margin-bottom: 2vh;
+}
+
+.filtros-horarios .filtro-buttons {
+    display: flex;
+    gap: 0.8vh;
+    flex-wrap: wrap;
+}
+
+.filtros-horarios .filtro-btn {
+    padding: 0.8vh 1.2vh;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    color: var(--nigger);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: all 0.18s ease-in-out;
+    font-size: 1.5vh;
+}
+
+.filtros-horarios .filtro-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+.filtros-horarios .filtro-btn.active { background: linear-gradient(90deg,#ff8e1d,#ffc081); color: white; border-color: transparent; }
+
+.horario-card {
+    background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
+    border-radius: 14px;
+    padding: 1.6vh 1.6vh;
+    box-shadow: 0 6px 18px rgba(87,45,13,0.06);
+    border: 1px solid rgba(87,45,13,0.04);
+    margin-bottom: 1.6vh;
+}
+
+.horario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1vh;
+    padding-bottom: 1vh;
+    border-bottom: 1px dashed rgba(87,45,13,0.06);
+}
+
+.horario-curso-title { margin: 0; color: var(--shiny); font-size: 2.1vh; }
+.horario-fechas { margin: 0.2vh 0 0 0; color: #6c757d; font-size: 1.4vh; }
+
+.horario-actions { display: flex; gap: 0.8vh; align-items: center; }
+.horario-actions button { padding: 0.6vh 1.2vh; border-radius: 10px; font-size: 1.4vh; border: none; cursor: pointer; }
+.horario-actions .back { background: #f6a95d; color: white; }
+.horario-actions .shiny { background: linear-gradient(90deg,#ff8e1d,#ffc081); color: white; }
+
+.no-horario { display: flex; gap: 1vh; align-items: center; }
+.no-horario p { margin: 0; font-weight: 600; color: #c0392b; }
+
+.horario-table-container { margin-top: 1vh; overflow-x: auto; }
+.horario-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.horario-table thead th { background: linear-gradient(90deg,#ff8e1d,#ffc081); color: white; padding: 10px; text-align: left; font-size: 1.4vh; }
+.horario-table td { padding: 10px; border-bottom: 1px solid rgba(87,45,13,0.04); font-size: 1.35vh; }
+.horario-table tbody tr:nth-child(odd) { background: rgba(255,200,129,0.02); }
+
+.horario-table .dia-cell { font-weight: 700; color: var(--nigger); width: 18%; }
+.horario-table .hora-cell { width: 24%; font-family: 'Courier New', monospace; }
+.horario-table .aula-cell { width: 28%; }
+.horario-table .capacidad-cell { width: 20%; text-align: center; }
