@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 26-11-2025 a las 21:19:30
+-- Tiempo de generación: 03-12-2025 a las 01:30:59
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -21,8 +21,6 @@ SET time_zone = "+00:00";
 -- Base de datos: `tbd`
 --
 
--- --------------------------------------------------------
-
 --
 -- Estructura de tabla para la tabla `archivos_adjuntos`
 --
@@ -36,88 +34,6 @@ CREATE TABLE `archivos_adjuntos` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `archivos_adjuntos`
---
-
-INSERT INTO `archivos_adjuntos` (`id_archivo`, `titulo`, `tipo`, `ruta_archivo`, `fecha_subida`) VALUES
-(1, 'Captura de pantalla 2025-11-08 022931.png', 'image/png', 'uploads/evaluaciones/6914e23ec513c_1762976318.png', '2025-11-12 15:38:38');
-
---
--- Disparadores `archivos_adjuntos`
---
-DELIMITER $$
-CREATE TRIGGER `tr_archivos_adjuntos_dl` AFTER DELETE ON `archivos_adjuntos` FOR EACH ROW BEGIN
-	INSERT INTO xb_archivos_adjuntos (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_archivo)
-	);
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_archivos_adjuntos_in` AFTER INSERT ON `archivos_adjuntos` FOR EACH ROW BEGIN
-	INSERT INTO xb_archivos_adjuntos (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id: ', NEW.id_archivo)
-	);
-END
-$$
-DELIMITER ;
-
-DELIMITER $$
-CREATE TRIGGER `tr_archivos_adjuntos_up` AFTER UPDATE ON `archivos_adjuntos` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.titulo <> NEW.titulo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'titulo: ', OLD.titulo, ' -> ', NEW.titulo, '\n'
-        );
-    END IF;
-
-    IF OLD.tipo <> NEW.tipo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'tipo: ', OLD.tipo, ' -> ', NEW.tipo, '\n'
-        );
-    END IF;
-
-    IF OLD.ruta_archivo <> NEW.ruta_archivo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ruta_archivo: ', OLD.ruta_archivo, ' -> ', NEW.ruta_archivo, '\n'
-        );
-    END IF;
-
-    IF OLD.fecha_subida <> NEW.fecha_subida THEN
-        SET cambios = CONCAT(
-            cambios,
-            'fecha_subida: ', OLD.fecha_subida, ' -> ', NEW.fecha_subida, '\n'
-        );
-    END IF;
-
-    IF cambios <> '' THEN
-        INSERT INTO xB_archivos_adjuntos (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_archivo, '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `archivos_publicacion`
 --
 
@@ -125,73 +41,6 @@ CREATE TABLE `archivos_publicacion` (
   `id_archivo` int(11) NOT NULL,
   `id_publicacion` varchar(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `archivos_publicacion`
---
-
-INSERT INTO `archivos_publicacion` (`id_archivo`, `id_publicacion`) VALUES
-(1, '2');
-
---
--- Disparadores `archivos_publicacion`
---
-DELIMITER $$
-CREATE TRIGGER `tr_archivos_publicacion_dl` AFTER DELETE ON `archivos_publicacion` FOR EACH ROW BEGIN
-	INSERT INTO xb_archivos_publicacion (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_archivo)
-	);
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_archivos_publicacion_in` AFTER INSERT ON `archivos_publicacion` FOR EACH ROW BEGIN
-	INSERT INTO xb_archivos_publicacion (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_archivo)
-	);
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_archivos_publicacion_up` AFTER UPDATE ON `archivos_publicacion` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_archivo <> NEW.id_archivo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID ARCHIVO: ', OLD.id_archivo, ' -> ', NEW.id_archivo , '\n'
-        );
-    END IF;
-
-    IF OLD.id_publicacion <> NEW.id_publicacion THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID PUBLICACION: ', OLD.id_publicacion, ' -> ', NEW.id_publicacion, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_archivos_publicacion (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_archivo , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
--- --------------------------------------------------------
 
 --
 -- Estructura de tabla para la tabla `area`
@@ -216,59 +65,6 @@ INSERT INTO `area` (`id_area`, `nombre_area`) VALUES
 (7, 'Deportes');
 
 --
--- Disparadores `area`
---
-DELIMITER $$
-CREATE TRIGGER `tr_area_dl` AFTER DELETE ON `area` FOR EACH ROW BEGIN
-    INSERT INTO xb_area (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_area)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_area_in` AFTER INSERT ON `area` FOR EACH ROW BEGIN
-    INSERT INTO xb_area (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_area)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_area_up` AFTER UPDATE ON `area` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.nombre_area <> NEW.nombre_area THEN
-        SET cambios = CONCAT(
-            cambios,
-            'NOMBRE AREA: ', OLD.nombre_area, ' -> ', NEW.nombre_area , '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_area (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_area , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `aula`
 --
 
@@ -276,57 +72,6 @@ CREATE TABLE `aula` (
   `id_aula` int(11) NOT NULL,
   `capacidad` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Disparadores `aula`
---
-DELIMITER $$
-CREATE TRIGGER `tr_aula_dl` AFTER DELETE ON `aula` FOR EACH ROW BEGIN
-    INSERT INTO xb_aula (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_aula)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_aula_in` AFTER INSERT ON `aula` FOR EACH ROW BEGIN
-    INSERT INTO xb_aula (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_aula)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_aula_up` AFTER UPDATE ON `aula` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.capacidad <> NEW.capacidad THEN
-        SET cambios = CONCAT(
-            cambios,
-            'CAPACIDAD: ', OLD.capacidad, ' -> ', NEW.capacidad , '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_aula (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_aula , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -345,111 +90,6 @@ CREATE TABLE `beca` (
   `fecha_fin` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `beca`
---
-
-INSERT INTO `beca` (`id_beca`, `id_estudiante`, `id_admin`, `id_area`, `porcentaje`, `estado_beca`, `fecha_inicio`, `fecha_fin`) VALUES
-(2, 29, 1, 1, 20, 'Pendiente', '2025-10-01', '2025-11-08'),
-(3, 33, 1, 1, 70, 'Pendiente', '2025-11-06', '2025-11-13'),
-(4, 27, 1, 1, 70, 'Aceptada', '2025-11-06', '2026-01-01'),
-(5, 33, 1, 6, 80, 'Pendiente', '2025-10-29', '2025-11-29');
-
---
--- Disparadores `beca`
---
-DELIMITER $$
-CREATE TRIGGER `a_validar_fechas_beca` BEFORE INSERT ON `beca` FOR EACH ROW BEGIN
-    IF NEW.fecha_fin < NEW.fecha_inicio THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'La fecha de fin no puede ser anterior a la fecha de inicio.';
-    END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_beca_dl` AFTER DELETE ON `beca` FOR EACH ROW BEGIN
-    INSERT INTO xb_beca (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_beca)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_beca_in` AFTER INSERT ON `beca` FOR EACH ROW BEGIN
-    INSERT INTO xb_beca (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_beca)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_beca_up` AFTER UPDATE ON `beca` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_estudiante <> NEW.id_estudiante THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID ESTUDIANTE: ', OLD.id_estudiante, ' -> ', NEW.id_estudiante , '\n'
-        );
-    END IF;
-
-    IF OLD.id_area <> NEW.id_area THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID AREA: ', OLD.id_area, ' -> ', NEW.id_area, '\n'
-        );
-    END IF;
-    
-    IF OLD.porcentaje <> NEW.porcentaje THEN
-        SET cambios = CONCAT(
-            cambios,
-            'PORCENTAJE: ', OLD.porcentaje, ' -> ', NEW.porcentaje, '\n'
-        );
-    END IF;
-    
-    IF OLD.estado_beca <> NEW.estado_beca THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ESTADO BECA: ', OLD.estado_beca, ' -> ', NEW.estado_beca, '\n'
-        );
-    END IF;
-    
-    IF OLD.fecha_inicio <> NEW.fecha_inicio THEN
-        SET cambios = CONCAT(
-            cambios,
-            'FECHA INICIO: ', OLD.fecha_inicio, ' -> ', NEW.fecha_inicio, '\n'
-        );
-    END IF;
-    
-    IF OLD.fecha_fin <> NEW.fecha_fin THEN
-        SET cambios = CONCAT(
-            cambios,
-            'FECHA FIN: ', OLD.fecha_fin, ' -> ', NEW.fecha_fin, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_beca (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_beca , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -462,23 +102,6 @@ CREATE TABLE `bitacora_inscripcion_estudiante` (
   `fecha` datetime DEFAULT NULL,
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `bitacora_inscripcion_estudiante`
---
-
-INSERT INTO `bitacora_inscripcion_estudiante` (`id_bitInscripcionEstudiante`, `accion`, `fecha`, `descripcion`) VALUES
-(1, 'INSERT', '2025-11-11 23:15:44', NULL),
-(2, 'INSERT', '2025-11-11 23:16:51', NULL),
-(3, 'INSERT', '2025-11-11 23:17:54', NULL),
-(4, 'INSERT', '2025-11-12 12:12:16', NULL),
-(5, 'INSERT', '2025-11-12 12:20:32', NULL),
-(6, 'INSERT', '2025-11-12 12:24:06', '8 - 3 : Est: 31, Costo: 0.00 $, Descuento: 0.00%, TOTAL: 0.00 $'),
-(7, 'INSERT', '2025-11-12 12:56:57', '9 - 2 : Est: 31, Costo: 0.00 $, Descuento: 0.00%, TOTAL: 0.00 $'),
-(8, 'INSERT', '2025-11-12 13:18:21', 'C: 8 - PC: 3 : Est: 29, Costo: 10.00 $, Descuento: 0.00%, TOTAL: 10.00 $'),
-(9, 'INSERT', '2025-11-12 13:22:46', 'C: 9 - PC: 2 : Est: 29, Costo: 20.00 $, Descuento: 50.00%, TOTAL: 10.00 $'),
-(10, 'INSERT', '2025-11-12 15:51:40', 'C: 9 - PC: 8 : Est: 27, Costo: 0.00 $, Descuento: 0.00%, TOTAL: 0.00 $'),
-(11, 'INSERT', '2025-11-19 16:10:56', 'C: 11 - PC: 9 : Est: 33, Costo: 10.00 $, Descuento: 0.00%, TOTAL: 10.00 $');
 
 -- --------------------------------------------------------
 
@@ -502,57 +125,6 @@ INSERT INTO `categoria` (`id_categoria`, `nombre_categoria`) VALUES
 (4, 'Curso Certificado'),
 (5, 'Foro');
 
---
--- Disparadores `categoria`
---
-DELIMITER $$
-CREATE TRIGGER `tr_categoria_dl` AFTER DELETE ON `categoria` FOR EACH ROW BEGIN
-    INSERT INTO xb_categoria (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_categoria)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_categoria_in` AFTER INSERT ON `categoria` FOR EACH ROW BEGIN
-    INSERT INTO xb_categoria (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_categoria)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_categoria_up` AFTER UPDATE ON `categoria` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.nombre_categoria <> NEW.nombre_categoria THEN
-        SET cambios = CONCAT(
-            cambios,
-            'NOMBRE CATEGORIA: ', OLD.nombre_categoria, ' -> ', NEW.nombre_categoria , '\n'
-        );
-    END IF;
-
-    IF cambios <> '' THEN
-        INSERT INTO xB_categoria (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_categoria , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -561,67 +133,10 @@ DELIMITER ;
 
 CREATE TABLE `comentario` (
   `id_comentario` int(11) NOT NULL,
+  `id_periodo_curso` int(11) NOT NULL,
   `id_publicacion` int(11) DEFAULT NULL,
   `mensaje` varchar(1001) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Disparadores `comentario`
---
-DELIMITER $$
-CREATE TRIGGER `tr_comentario_dl` AFTER DELETE ON `comentario` FOR EACH ROW BEGIN
-    INSERT INTO xb_comentario (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_comentario)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_comentario_in` AFTER INSERT ON `comentario` FOR EACH ROW BEGIN
-    INSERT INTO xb_comentario (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_comentario)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_comentario_up` AFTER UPDATE ON `comentario` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_publicacion <> NEW.id_publicacion THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID PUBLICACION: ', OLD.id_publicacion, ' -> ', NEW.id_publicacion , '\n'
-        );
-    END IF;
-
-    IF OLD.mensaje <> NEW.mensaje THEN
-        SET cambios = CONCAT(
-            cambios,
-            'MENSAJE: ', OLD.mensaje, ' -> ', NEW.mensaje, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xb_comentario (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_comentario , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -653,110 +168,6 @@ CREATE TABLE `curso` (
   `fin_gestion` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `curso`
---
-
-INSERT INTO `curso` (`id_curso`, `id_categoria`, `id_area`, `id_grado`, `duracion`, `titulo`, `modalidad`, `inicio_gestion`, `fin_gestion`) VALUES
-(7, 3, 1, 5, 120, 'Algebra II', 'V', '2025-10-15', '2025-11-09'),
-(8, 4, 1, 6, 140, 'Calculo II', 'V', '2025-10-02', '2025-12-13'),
-(9, 4, 5, 6, 120, 'Curso Python', 'V', '2025-11-15', '2026-02-21'),
-(10, 4, 5, 1, 300, 'Suma', 'V', '2025-11-14', '2026-01-02'),
-(11, 4, 5, 6, 100, 'JAVA avanzado', 'V', '2025-06-04', '2025-08-23');
-
---
--- Disparadores `curso`
---
-DELIMITER $$
-CREATE TRIGGER `tr_curso_dl` AFTER DELETE ON `curso` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_curso)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_in` AFTER INSERT ON `curso` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_curso)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_up` AFTER UPDATE ON `curso` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_categoria <> NEW.id_categoria THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID CATEGORIA: ', OLD.id_categoria, ' -> ', NEW.id_categoria , '\n'
-        );
-    END IF;
-
-    IF OLD.id_area <> NEW.id_area THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID AREA: ', OLD.id_area, ' -> ', NEW.id_area, '\n'
-        );
-    END IF;
-    
-    IF OLD.duracion <> NEW.duracion THEN
-        SET cambios = CONCAT(
-            cambios,
-            'DURACION: ', OLD.duracion, ' -> ', NEW.duracion, '\n'
-        );
-    END IF;
-    
-    IF OLD.titulo <> NEW.titulo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'TITULO: ', OLD.titulo, ' -> ', NEW.titulo, '\n'
-        );
-    END IF;
-    
-    IF OLD.modalidad <> NEW.modalidad THEN
-        SET cambios = CONCAT(
-            cambios,
-            'MODALIDAD: ', OLD.modalidad, ' -> ', NEW.modalidad, '\n'
-        );
-    END IF;
-    
-    IF OLD.inicio_gestion <> NEW.inicio_gestion THEN
-        SET cambios = CONCAT(
-            cambios,
-            'INICIO GESTION: ', OLD.inicio_gestion, ' -> ', NEW.inicio_gestion, '\n'
-        );
-    END IF;
-    
-    IF OLD.fin_gestion <> NEW.fin_gestion THEN
-        SET cambios = CONCAT(
-            cambios,
-            'FIN GESTION: ', OLD.fin_gestion, ' -> ', NEW.fin_gestion, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_curso (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_curso , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -774,162 +185,6 @@ CREATE TABLE `curso_estudiante` (
   `rankingPoints` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `curso_estudiante`
---
-
-INSERT INTO `curso_estudiante` (`id_curso_estudiante`, `id_estudiante`, `id_periodo_curso`, `estado`, `nota`, `asistencia`, `deskPoints`, `rankingPoints`) VALUES
-(1, 33, 3, 'Inscrito', 53, 0, 0, 0),
-(2, 33, 3, 'Inscrito', 99, 0, 0, 0),
-(3, 27, 3, 'Inscrito', 0, 0, 0, 0),
-(4, 27, 2, 'Inscrito', 0, 0, 0, 0),
-(5, 33, 2, 'Inscrito', 0, 0, 0, 0),
-(6, 32, 3, 'Inscrito', 0, 0, 0, 0),
-(7, 32, 2, 'Inscrito', 0, 0, 0, 0),
-(8, 31, 3, 'Inscrito', 0, 0, 0, 0),
-(9, 31, 2, 'Inscrito', 0, 0, 0, 0),
-(10, 29, 3, 'Inscrito', 0, 0, 0, 0),
-(11, 29, 2, 'Inscrito', 0, 0, 0, 0),
-(12, 27, 8, 'Inscrito', 0, 0, 0, 0),
-(13, 33, 9, 'Aprobado', 80, 8, 30, 104);
-
---
--- Disparadores `curso_estudiante`
---
-DELIMITER $$
-CREATE TRIGGER `inscripcion_estudiante` AFTER INSERT ON `curso_estudiante` FOR EACH ROW BEGIN
-    DECLARE costo DECIMAL(10,2) DEFAULT 0;
-    DECLARE descuento DECIMAL(5,2) DEFAULT 0;
-    DECLARE total DECIMAL(10,2) DEFAULT 0;
-    DECLARE idCurso INT DEFAULT 0;
-    DECLARE idDescuento INT DEFAULT 0;
-
-    SELECT IFNULL(pc.costo, 0), IFNULL(pc.id_curso, 0)
-    INTO costo, idCurso
-    FROM PERIODO_CURSO pc
-    WHERE pc.id_periodo_curso = NEW.id_periodo_curso
-    LIMIT 1;
-
-    SELECT d.id_descuento, IFNULL(d.porcentaje_descuento, 0)
-    INTO idDescuento, descuento
-    FROM RECOMPENSA_CANJEADA rc
-    JOIN DESCUENTO d ON rc.recompensa = d.id_descuento
-    WHERE rc.id_estudiante = NEW.id_estudiante
-      AND d.id_periodo_curso = NEW.id_periodo_curso
-    ORDER BY rc.fecha_recompensa DESC, rc.hora_recompensa DESC
-    LIMIT 1;
-
-    IF idDescuento IS NULL THEN 
-        SET idDescuento = 0;
-        SET descuento = 0;
-    END IF;
-
-    INSERT INTO BITACORA_INSCRIPCION_ESTUDIANTE (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT(
-            'C: ', IFNULL(idCurso, 0),
-            ' - PC: ', IFNULL(NEW.id_periodo_curso, 0),
-            ' : Est: ', IFNULL(NEW.id_estudiante, 0),
-            ', Costo: ', FORMAT(IFNULL(costo, 0), 2), ' $',
-            ', Descuento: ', FORMAT(IFNULL(descuento, 0), 2), '%',
-            ', TOTAL: ', FORMAT(IFNULL(costo - (costo * (descuento / 100)), 0), 2), ' $'
-        )
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_estudiante_dl` AFTER DELETE ON `curso_estudiante` FOR EACH ROW BEGIN
-    INSERT INTO xb_ (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_curso_estudiante)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_estudiante_in` AFTER INSERT ON `curso_estudiante` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso_estudiante (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_curso_estudiante)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_estudiante_up` AFTER UPDATE ON `curso_estudiante` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_estudiante <> NEW.id_estudiante THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID ESTUDIANTE: ', OLD.id_estudiante, ' -> ', NEW.id_estudiante , '\n'
-        );
-    END IF;
-
-    IF OLD.id_periodo_curso <> NEW.id_periodo_curso THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID PERIODO CURSO: ', OLD.id_periodo_curso, ' -> ', NEW.id_periodo_curso, '\n'
-        );
-    END IF;
-    
-    IF OLD.estado <> NEW.estado THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ESTADO: ', OLD.estado, ' -> ', NEW.estado, '\n'
-        );
-    END IF;
-    
-    IF OLD.nota <> NEW.nota THEN
-        SET cambios = CONCAT(
-            cambios,
-            'NOTA: ', OLD.nota, ' -> ', NEW.nota, '\n'
-        );
-    END IF;
-    
-    IF OLD.asistencia <> NEW.asistencia THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ASISTENCIA: ', OLD.asistencia, ' -> ', NEW.asistencia, '\n'
-        );
-    END IF;
-    
-    IF OLD.deskPoints <> NEW.deskPoints THEN
-        SET cambios = CONCAT(
-            cambios,
-            'DESKPOINTS: ', OLD.deskPoints, ' -> ', NEW.deskPoints, '\n'
-        );
-    END IF;
-    
-    IF OLD.rankingPoints <> NEW.rankingPoints THEN
-        SET cambios = CONCAT(
-            cambios,
-            'RANKINGPOINTS: ', OLD.rankingPoints, ' -> ', NEW.rankingPoints, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xb_curso_estudiante (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_curso_estudiante , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -943,71 +198,6 @@ CREATE TABLE `curso_maestro` (
   `pago_maestro` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Disparadores `curso_maestro`
---
-DELIMITER $$
-CREATE TRIGGER `tr_curso_maestro_dl` AFTER DELETE ON `curso_maestro` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso_maestro (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_curso_maestro)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_maestro_in` AFTER INSERT ON `curso_maestro` FOR EACH ROW BEGIN
-    INSERT INTO xb_curso_maestro (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_curso_maestro)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_curso_maestro_up` AFTER UPDATE ON `curso_maestro` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_maestro <> NEW.id_maestro THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID MAESTRO: ', OLD.id_maestro, ' -> ', NEW.id_maestro , '\n'
-        );
-    END IF;
-
-    IF OLD.id_periodo_curso <> NEW.id_periodo_curso THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID PERIODO CURSO: ', OLD.id_periodo_curso, ' -> ', NEW.id_periodo_curso, '\n'
-        );
-    END IF;
-    
-    IF OLD.pago_maestro <> NEW.pago_maestro THEN
-        SET cambios = CONCAT(
-            cambios,
-            'PAGO MAESTRO: ', OLD.pago_maestro, ' -> ', NEW.pago_maestro, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_curso_maestro (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_curso_maestro , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -1020,80 +210,6 @@ CREATE TABLE `datos_maestro` (
   `titulo` varchar(51) DEFAULT NULL,
   `sueldo` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `datos_maestro`
---
-
-INSERT INTO `datos_maestro` (`id_dato`, `id_user`, `titulo`, `sueldo`) VALUES
-(1, 24, 'ing informatica', 70),
-(2, 25, 'ING ELECTRONICA', 70),
-(3, 26, 'fasd', 3);
-
---
--- Disparadores `datos_maestro`
---
-DELIMITER $$
-CREATE TRIGGER `tr__dl` AFTER DELETE ON `datos_maestro` FOR EACH ROW BEGIN
-    INSERT INTO xb_datos_maestro (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_dato)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_datos_maestro_in` AFTER INSERT ON `datos_maestro` FOR EACH ROW BEGIN
-    INSERT INTO xb_datos_maestro (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_dato)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_datos_maestro_up` AFTER UPDATE ON `datos_maestro` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_user <> NEW.id_user THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID USER: ', OLD.id_user, ' -> ', NEW.id_user , '\n'
-        );
-    END IF;
-
-    IF OLD.titulo <> NEW.titulo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'TITULO: ', OLD.titulo, ' -> ', NEW.titulo, '\n'
-        );
-    END IF;
-    
-    IF OLD.sueldo <> NEW.sueldo THEN
-        SET cambios = CONCAT(
-            cambios,
-            'SUELDO: ', OLD.sueldo, ' -> ', NEW.sueldo, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_datos_maestro (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_dato , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1109,87 +225,6 @@ CREATE TABLE `descuento` (
   `porcentaje_descuento` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `descuento`
---
-
-INSERT INTO `descuento` (`id_descuento`, `id_periodo_curso`, `costo_canje`, `fecha_fin`, `porcentaje_descuento`) VALUES
-('RD-1', 2, 500, '2025-12-20', 40),
-('RD-2', 3, 5, '2026-01-29', 20),
-('RD-3', 2, 5, '2025-12-20', 50);
-
---
--- Disparadores `descuento`
---
-DELIMITER $$
-CREATE TRIGGER `tr_descuento_dl` AFTER DELETE ON `descuento` FOR EACH ROW BEGIN
-    INSERT INTO xb_descuento (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_descuento)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_descuento_in` AFTER INSERT ON `descuento` FOR EACH ROW BEGIN
-    INSERT INTO xb_descuento (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_descuento)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_descuento_up` AFTER UPDATE ON `descuento` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.id_periodo_curso <> NEW.id_periodo_curso THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID PERIODO CURSO: ', OLD.id_periodo_curso, ' -> ', NEW.id_periodo_curso , '\n'
-        );
-    END IF;
-
-    IF OLD.costo_canje <> NEW.costo_canje THEN
-        SET cambios = CONCAT(
-            cambios,
-            'COSTO CANJE: ', OLD.costo_canje, ' -> ', NEW.costo_canje, '\n'
-        );
-    END IF;
-    
-    IF OLD.fecha_fin <> NEW.fecha_fin THEN
-        SET cambios = CONCAT(
-            cambios,
-            'FECHA FIN: ', OLD.fecha_fin, ' -> ', NEW.fecha_fin, '\n'
-        );
-    END IF;
-    
-    IF OLD.porcentaje_descuento <> NEW.porcentaje_descuento THEN
-        SET cambios = CONCAT(
-            cambios,
-            'PORCENTAJE DESCUENTO: ', OLD.porcentaje_descuento, ' -> ', NEW.porcentaje_descuento, '\n'
-        );
-    END IF;
-    
-    IF cambios <> '' THEN
-        INSERT INTO xB_descuento (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_descuento , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -1203,78 +238,6 @@ CREATE TABLE `dia_horario` (
   `hora_fin` time DEFAULT NULL,
   `id_aula` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Disparadores `dia_horario`
---
-DELIMITER $$
-CREATE TRIGGER `tr_dia_horario_dl` AFTER DELETE ON `dia_horario` FOR EACH ROW BEGIN
-    INSERT INTO xb_dia_horario (accion,fecha,descripcion)
-    VALUES (
-        'DELETE',
-        NOW(),
-        CONCAT('Se elimino id: ', OLD.id_dia_clase)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_dia_horario_in` AFTER INSERT ON `dia_horario` FOR EACH ROW BEGIN
-    INSERT INTO xb_dia_horario (accion, fecha, descripcion)
-    VALUES (
-        'INSERT',
-        NOW(),
-        CONCAT('Se inserto id:', NEW.id_dia_clase)
-    );
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `tr_dia_horario_up` AFTER UPDATE ON `dia_horario` FOR EACH ROW BEGIN
-    DECLARE cambios TEXT DEFAULT '';
-    IF OLD.dia <> NEW.dia THEN
-        SET cambios = CONCAT(
-            cambios,
-            'DIA: ', OLD.dia, ' -> ', NEW.dia , '\n'
-        );
-    END IF;
-
-    IF OLD.hora_inicio <> NEW.hora_inicio THEN
-        SET cambios = CONCAT(
-            cambios,
-            'HORA INICIO: ', OLD.hora_inicio, ' -> ', NEW.hora_inicio, '\n'
-        );
-    END IF;
-    
-    IF OLD.hora_fin <> NEW.hora_fin THEN
-        SET cambios = CONCAT(
-            cambios,
-            'HORA FIN: ', OLD.hora_fin, ' -> ', NEW.hora_fin, '\n'
-        );
-    END IF;    
-    
-    IF OLD.id_aula <> NEW.id_aula THEN
-        SET cambios = CONCAT(
-            cambios,
-            'ID AULA: ', OLD.id_aula, ' -> ', NEW.id_aula, '\n'
-        );
-    END IF;    
-    
-    IF cambios <> '' THEN
-        INSERT INTO xb_dia_horario (accion, fecha, descripcion)
-        VALUES (
-            'UPDATE',
-            NOW(),
-            CONCAT(
-                'Se actualizó id: ', NEW.id_dia_clase , '\n',
-                cambios
-            )
-        );
-    END IF;
-
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1290,32 +253,6 @@ CREATE TABLE `entregas` (
   `hora_entrega` time DEFAULT NULL,
   `fecha_entrega` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `entregas`
---
-
-INSERT INTO `entregas` (`id_entrega`, `id_publicacion`, `id_user`, `nota`, `hora_entrega`, `fecha_entrega`) VALUES
-(1, '1', 27, 80.00, '15:00:00', '2025-12-23'),
-(2, '1', 33, 60.00, '18:00:00', '2025-12-23'),
-(3, '2', 33, 100.00, '18:00:00', '2025-12-23');
-
---
--- Disparadores `entregas`
---
-DELIMITER $$
-CREATE TRIGGER `a_ctualizar_puntos_nota` AFTER UPDATE ON `entregas` FOR EACH ROW BEGIN
-	IF NEW.nota <> OLD.nota THEN
-    	UPDATE puntos
-        SET
-        	saldo_actual = saldo_actual + (NEW.nota * 0.3),
-            puntos_totales = puntos_totales + (NEW.nota *0.3),
-            rankingPoints = rankingPoints + NEW.nota
-		WHERE id_user = NEW.id_user;
-	END IF;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1336,13 +273,6 @@ CREATE TABLE `evaluacion` (
   `fecha_entrega` date DEFAULT NULL,
   `deskPoints` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `evaluacion`
---
-
-INSERT INTO `evaluacion` (`id_evaluacion`, `id_modulo`, `titulo`, `descripcion`, `hora_emision`, `fecha_emision`, `hora_inicio`, `fecha_inicio`, `hora_entrega`, `fecha_entrega`, `deskPoints`) VALUES
-(3, 4, 'pp', 'industria', '19:49:00', '2025-11-25', '19:49:00', '2025-11-28', '00:49:00', '2025-11-30', 100);
 
 -- --------------------------------------------------------
 
@@ -1393,32 +323,6 @@ CREATE TABLE `inscripcion` (
   `id_descuento` varchar(11) DEFAULT NULL,
   `fecha_inscripcion` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `inscripcion`
---
-
-INSERT INTO `inscripcion` (`id_inscripcion`, `id_tipo_pago`, `id_user`, `id_periodo_curso`, `id_descuento`, `fecha_inscripcion`) VALUES
-(1, 1, 32, 3, NULL, '2025-11-12 12:12:16'),
-(2, 1, 32, 2, NULL, '2025-11-12 12:20:32'),
-(3, 1, 31, 3, NULL, '2025-11-12 12:24:06'),
-(4, 1, 31, 2, NULL, '2025-11-12 12:56:57'),
-(5, 1, 29, 3, NULL, '2025-11-12 13:18:21'),
-(6, 1, 29, 2, NULL, '2025-11-12 13:22:46'),
-(7, 1, 27, 8, NULL, '2025-11-12 15:51:40'),
-(8, 1, 33, 9, NULL, '2025-11-19 16:10:56');
-
---
--- Disparadores `inscripcion`
---
-DELIMITER $$
-CREATE TRIGGER `a_update_cupos` AFTER INSERT ON `inscripcion` FOR EACH ROW BEGIN
-    UPDATE periodo_curso
-    SET cupos_ocupados = cupos_ocupados + 1
-    WHERE id_periodo_curso = NEW.id_periodo_curso;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1472,16 +376,6 @@ CREATE TABLE `modulo` (
   `orden` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `modulo`
---
-
-INSERT INTO `modulo` (`id_modulo`, `id_periodo_curso`, `titulo`, `orden`) VALUES
-(1, 1, 'Kushew modi', 1),
-(2, 1, 'shale', 2),
-(3, 1, 'mariamod', 3),
-(4, 2, 'ga', 1);
-
 -- --------------------------------------------------------
 
 --
@@ -1501,21 +395,6 @@ CREATE TABLE `periodo_curso` (
   `recaudado` int(11) DEFAULT NULL,
   `estado_periodo` varchar(21) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `periodo_curso`
---
-
-INSERT INTO `periodo_curso` (`id_periodo_curso`, `id_curso`, `id_maestro`, `fecha_inicio`, `fecha_fin`, `cupos`, `cupos_ocupados`, `solicitudes_totales`, `costo`, `recaudado`, `estado_periodo`) VALUES
-(1, 7, 2, '0000-00-00', '0000-00-00', 0, 0, 0, 0, 0, 'Pendiente'),
-(2, 9, 3, '2025-11-20', '2025-12-20', 50, 9, 3, 20, 60, 'Inscripciones'),
-(3, 8, 25, '2025-11-19', '2026-01-29', 70, 16, 10, 10, 100, 'Inscripciones'),
-(4, 10, 2, '0000-00-00', '0000-00-00', 0, 0, 0, 0, 0, 'Pendiente'),
-(5, 8, 25, '0000-00-00', '0000-00-00', 0, 0, 0, 0, 0, 'Pendiente'),
-(6, 10, 3, '2025-12-13', '2026-02-04', 50, 0, 0, 0, 0, 'Inscripciones'),
-(7, 7, 3, '2025-11-12', '2025-11-27', 30, 0, 0, 0, 0, 'Inscripciones'),
-(8, 9, 3, '2025-11-12', '2025-11-28', 500, 2, 0, 0, 0, 'Inscripciones'),
-(9, 11, 2, '2025-06-05', '2025-10-22', 100, 91, 89, 10, 890, 'Finalizado');
 
 -- --------------------------------------------------------
 
@@ -1549,19 +428,6 @@ CREATE TABLE `puntos` (
   `saldo_actual` decimal(10,2) DEFAULT NULL,
   `rankingPoints` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `puntos`
---
-
-INSERT INTO `puntos` (`id_puntos`, `id_user`, `puntos_totales`, `puntos_gastados`, `saldo_actual`, `rankingPoints`) VALUES
-(1, 27, 24.00, 10.00, 14.00, 100),
-(2, 28, 0.00, 0.00, 0.00, 2584),
-(3, 29, 0.00, 5.00, -5.00, 8192),
-(4, 30, 30.00, 5.00, 25.00, 0),
-(5, 31, 0.00, 0.00, 0.00, 0),
-(6, 32, 0.00, 0.00, 0.00, 0),
-(7, 33, 48.00, 0.00, 48.00, 160);
 
 -- --------------------------------------------------------
 
@@ -1627,42 +493,6 @@ CREATE TABLE `recompensa_canjeada` (
   `hora_recompensa` time DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `recompensa_canjeada`
---
-
-INSERT INTO `recompensa_canjeada` (`id_recompensa_canjeada`, `recompensa`, `id_estudiante`, `fecha_recompensa`, `hora_recompensa`) VALUES
-(2, 'RD-2', 30, '2025-11-11', '17:09:00'),
-(3, 'RD-3', 29, '2025-11-12', '12:22:00'),
-(4, 'RD-2', 27, '2025-11-12', '15:45:15'),
-(5, 'RD-3', 27, '2025-11-12', '15:46:18');
-
---
--- Disparadores `recompensa_canjeada`
---
-DELIMITER $$
-CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
-	DECLARE costo DECIMAL(10,2);
-    IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
-    	SELECT costo_canje INTO costo
-        FROM cosmetico
-        WHERE id_cosmetico = NEW.recompensa;
-	ELSEIF LEFT(NEW.recompensa, 3) = 'RD-' THEN
-    	SELECT costo_canje INTO costo
-        FROM descuento
-        WHERE id_descuento = NEW.recompensa;
-	END IF;
-    IF costo IS NOT NULL THEN
-    	UPDATE puntos
-        SET
-        	saldo_actual = saldo_actual - costo,
-            puntos_gastados = puntos_gastados + costo
-		WHERE id_user = NEW.id_estudiante;
-     END IF;
-END
-$$
-DELIMITER ;
-
 -- --------------------------------------------------------
 
 --
@@ -1681,12 +511,7 @@ CREATE TABLE `rol` (
 INSERT INTO `rol` (`id_rol`, `nombre_rol`) VALUES
 (1, 'Administrador'),
 (2, 'Maestro'),
-(3, 'Estudiante'),
-(11, 'Contador'),
-(12, 'Estadista'),
-(13, 'Conserje'),
-(18, 'Becario');
-
+(3, 'Estudiante');
 -- --------------------------------------------------------
 
 --
@@ -1714,19 +539,7 @@ CREATE TABLE `rol_usuario` (
 --
 
 INSERT INTO `rol_usuario` (`id_user`, `id_rol`) VALUES
-(1, 1),
-(2, 2),
-(3, 2),
-(24, 2),
-(25, 2),
-(27, 3),
-(28, 3),
-(29, 3),
-(30, 3),
-(31, 3),
-(32, 3),
-(33, 3);
-
+(1, 1);
 -- --------------------------------------------------------
 
 --
@@ -1744,13 +557,6 @@ CREATE TABLE `tarea` (
   `fecha_entrega` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Volcado de datos para la tabla `tarea`
---
-
-INSERT INTO `tarea` (`id_tarea`, `id_modulo`, `titulo`, `descripcion`, `hora_emision`, `fecha_emision`, `hora_entrega`, `fecha_entrega`) VALUES
-(1, 1, 'tar_mod _oficioanl', 'kljklba8hgiohnwkr3', '16:02:00', '2025-10-31', '18:01:00', '2025-11-06');
-
 -- --------------------------------------------------------
 
 --
@@ -1762,16 +568,6 @@ CREATE TABLE `temas` (
   `id_modulo` int(11) DEFAULT NULL,
   `titulo` varchar(51) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `temas`
---
-
-INSERT INTO `temas` (`id_tema`, `id_modulo`, `titulo`) VALUES
-(1, 1, 'Cumbia'),
-(2, 1, 'aa'),
-(3, 1, 'tar_mod'),
-(4, 3, 'algebra');
 
 -- --------------------------------------------------------
 
@@ -1833,20 +629,7 @@ CREATE TABLE `usuario` (
 --
 
 INSERT INTO `usuario` (`id_user`, `nombre`, `apellido`, `username`, `contrasenna`, `ci`, `telefono`, `correo`, `edad`, `estado`, `grado`) VALUES
-(1, 'David Eduardo', 'Chavez Totora', 'Arvi', '231222', '9513465', '67231718', 'virzuzz12345@gmail.com', '21', 'Activo', ''),
-(2, 'Maria', 'Santos', 'Maria', '231222', '9518434', '67789790', 'mariasantos@gmail.com', '20', 'Activo', ''),
-(3, 'Cesar', 'Ochoa', 'Cesi', '231222', '111111', '1234', 'cesal@gmail.com', '23', 'Activo', ''),
-(24, 'sergio', 'maldonado', 'sergi', '231222', '8231838', '8237813', 'sergi@gmaril.com', '21', 'Activo', ''),
-(25, 'JUAN', 'MORALES', 'JUAN', '231222', '3237283', '87663636', 'JUAN@GMAIL.COM', '23', 'Activo', ''),
-(26, 'a', 'a', 'a', '23', '23', 'fas', 'fas@gmail.com', '21', 'Activo', ''),
-(27, 'est', 'est', 'est', '231222', '1234567', '1234567', 'est@gmail.com', '21', 'Activo', '6'),
-(28, 'juan', 'juan', 'juan', '231222', '12938481', '38473838', 'juan@gmail.com', '23', 'Activo', ''),
-(29, 'david eduardo', 'chavez totora', 'arvirzuzzts', '231222', '9613293', '8342718', 'david@gmail.com', '34', 'Activo', '6'),
-(30, 'andres', 'mendoza', 'dalala', '231222', '9238848', '367781822', 'a@g.com', '22', 'Activo', '4'),
-(31, 'prueba1', 'pruebaApellido', 'prueba1', '231222', '85382900', '38218389', 'g@3.com', '53', 'Activo', '6'),
-(32, 'abdul', 'fjdaklj', 'abduli', '231222', '2231533125', '25463635', '8@2f.com', '42', 'Activo', '6'),
-(33, 'ema', 'mejia', 'ema', 'ema123', '78945363', '74673975', 'emamejia@gamil.com', '19', 'Activo', '6');
-
+(1, 'David Eduardo', 'Chavez Totora', 'Arvi', '231222', '9513465', '67231718', 'virzuzz12345@gmail.com', '21', 'Activo', '');
 -- --------------------------------------------------------
 
 --
@@ -2028,6 +811,7 @@ CREATE TABLE `xb_dia_horario` (
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 
 -- --------------------------------------------------------
 
@@ -2869,7 +1653,7 @@ ALTER TABLE `datos_maestro`
 -- AUTO_INCREMENT de la tabla `dia_horario`
 --
 ALTER TABLE `dia_horario`
-  MODIFY `id_dia_clase` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_dia_clase` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de la tabla `entregas`
@@ -2941,7 +1725,7 @@ ALTER TABLE `puntos`
 -- AUTO_INCREMENT de la tabla `recompensa_canjeada`
 --
 ALTER TABLE `recompensa_canjeada`
-  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `rol`
@@ -3037,7 +1821,7 @@ ALTER TABLE `xb_curso`
 -- AUTO_INCREMENT de la tabla `xb_curso_estudiante`
 --
 ALTER TABLE `xb_curso_estudiante`
-  MODIFY `idBit_curso_estudiante` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_curso_estudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_curso_maestro`
@@ -3061,7 +1845,7 @@ ALTER TABLE `xb_descuento`
 -- AUTO_INCREMENT de la tabla `xb_dia_horario`
 --
 ALTER TABLE `xb_dia_horario`
-  MODIFY `idBit_dia_horario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_dia_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_entregas`
@@ -3253,12 +2037,6 @@ ALTER TABLE `descuento`
   ADD CONSTRAINT `descuento_ibfk_1` FOREIGN KEY (`id_periodo_curso`) REFERENCES `periodo_curso` (`id_periodo_curso`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `dia_horario`
---
-ALTER TABLE `dia_horario`
-  ADD CONSTRAINT `dia_horario_ibfk_1` FOREIGN KEY (`id_aula`) REFERENCES `aula` (`id_aula`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
 -- Filtros para la tabla `entregas`
 --
 ALTER TABLE `entregas`
@@ -3348,8 +2126,3 @@ ALTER TABLE `tarea`
 --
 ALTER TABLE `temas`
   ADD CONSTRAINT `temas_ibfk_1` FOREIGN KEY (`id_modulo`) REFERENCES `modulo` (`id_modulo`) ON DELETE CASCADE ON UPDATE CASCADE;
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
