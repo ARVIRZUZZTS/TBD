@@ -14,6 +14,14 @@ export async function cargarDetalleCurso(idPeriodoCurso) {
                     <button class="filtro-btn" data-filtro="evaluaciones">Evaluaciones</button>
                 </div>
             </div>
+            <!-- Contenedor para el botón de asistencia -->
+            <div class="asistencia-section" id="asistencia-section">
+                <button class="asistencia-btn" onclick="marcarAsistencia(${idPeriodoCurso})">
+                    <span class="icon">✓</span>
+                    Marcar Asistencia
+                </button>
+                <p class="asistencia-info">Marca tu asistencia diaria para este curso</p>
+            </div>
             <div class="contenido-curso">
                 <div class="lista-actividades" id="lista-actividades">
                     <div class="loading">Cargando actividades...</div>
@@ -340,6 +348,73 @@ async function verificarEstadosEntregas() {
         console.error('Error al verificar entregas:', error);
     }
 }
+async function marcarAsistencia(idPeriodoCurso) {
+    try {
+        const idEstudiante = localStorage.getItem('id_user');
+        if (!idEstudiante) {
+            alert('Debes iniciar sesión para marcar asistencia');
+            return;
+        }
+        if(!idPeriodoCurso){
+            alert('ID de periodo curso no válido');
+            return;
+        }
+        // intentar identificar el botón que llamó a la función para prevenir dobles clicks
+        const posibleBtn = document.activeElement;
+        let originalDisabled = false;
+        if (posibleBtn && posibleBtn.tagName === 'BUTTON') {
+            originalDisabled = posibleBtn.disabled;
+            posibleBtn.disabled = true;
+        }
+
+        const form = new FormData();
+        form.append('id_estudiante', idEstudiante);
+        form.append('id_periodo_curso', idPeriodoCurso);
+
+        const response = await fetch('php/marcarAsistencia.php', {
+            method: 'POST',
+            body: form,
+            credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+
+        // restaurar botón (pequeña protección local: se deja deshabilitado unos segundos)
+        if (posibleBtn && posibleBtn.tagName === 'BUTTON') {
+            // Si la marca fue exitosa, dejarlo deshabilitado; si no, reactivar en 2s
+            if (data.exito) {
+                // mantener deshabilitado para evitar doble envío accidental
+                // (la protección definitiva está en el servidor por 2 horas)
+                posibleBtn.textContent = 'Asistencia registrada';
+                posibleBtn.style.cursor = 'not-allowed';
+            } else {
+                setTimeout(() => { posibleBtn.disabled = originalDisabled; }, 2000);
+            }
+        }
+
+        if (data.exito) {
+            alert(data.mensaje || 'Asistencia registrada');
+            // Si el backend devuelve la nueva cantidad, mostrarla en algún lugar si existe
+            if (data.asistencia !== undefined) {
+                console.log('Nueva asistencia:', data.asistencia);
+            }
+        } else {
+            // Mostrar mensaje de error y tiempo restante si viene
+            let msg = data.mensaje || 'No se pudo registrar la asistencia';
+            if (data.segundos_restantes) {
+                const hrs = Math.floor(data.segundos_restantes / 3600);
+                const mins = Math.floor((data.segundos_restantes % 3600) / 60);
+                const secs = data.segundos_restantes % 60;
+                msg += `\nTiempo restante: ${hrs}h ${mins}m ${secs}s`;
+            }
+            alert(msg);
+        }
+
+    }catch(error) { 
+        console.error('Error marcarAsistencia:', error);
+        alert('Error de conexión al marcar asistencia');
+    }
+}
 
 // Exportar para uso global desde HTML
 window.volverACursos = () => {
@@ -352,3 +427,6 @@ window.volverACursos = () => {
     document.getElementById('cursos').classList.add('active');
     window.dispatchEvent(new CustomEvent('recargarCursos'));
 };
+window.marcarAsistencia = marcarAsistencia;
+window.volverACursos = volverACursos;
+window.entregarActividad = entregarActividad;
