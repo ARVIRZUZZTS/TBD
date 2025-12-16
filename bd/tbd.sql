@@ -705,8 +705,23 @@ DELIMITER ;
 CREATE TABLE `cosmetico` (
   `id_cosmetico` int(11) NOT NULL,
   `id_tipo_cosmetico` int(11) DEFAULT NULL,
-  `costo_canje` int(11) DEFAULT NULL
+  `costo_canje` int(11) DEFAULT NULL,
+  `nombre` varchar(50) DEFAULT NULL,
+  `valor` varchar(50) DEFAULT NULL,
+  `imagen` varchar(100) DEFAULT NULL,
+  `descripcion` varchar(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `cosmetico`
+--
+
+INSERT INTO `cosmetico` (`id_cosmetico`, `id_tipo_cosmetico`, `costo_canje`, `nombre`, `valor`, `imagen`, `descripcion`) VALUES
+(2, 1, 100, 'Noche', 'theme-dark', 'moon.png', 'Tema oscuro para reducir fatiga visual'),
+(3, 1, 150, 'Océano', 'theme-ocean', 'water.png', 'Tonos azules inspirados en el mar'),
+(4, 1, 200, 'Bosque', 'theme-forest', 'leaf.png', 'Colores verdes naturales'),
+(5, 1, 500, 'Dorado', 'theme-gold', 'gold.png', 'Tema premium dorado');
+
 
 -- --------------------------------------------------------
 
@@ -1806,11 +1821,18 @@ INSERT INTO `recompensa_canjeada` (`id_recompensa_canjeada`, `recompensa`, `id_e
 DELIMITER $$
 CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
 	DECLARE costo DECIMAL(10,2);
+    DECLARE id_item INT;
+    
+    -- Extraer el ID numérico del string (ej: 'RC-2' -> 2)
+    SET id_item = CAST(SUBSTRING(NEW.recompensa, 4) AS UNSIGNED);
+    
     IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
+        -- Buscar costo del cosmético usando el ID numérico
     	SELECT costo_canje INTO costo
         FROM cosmetico
-        WHERE id_cosmetico = NEW.recompensa;
+        WHERE id_cosmetico = id_item;
 	ELSEIF LEFT(NEW.recompensa, 3) = 'RD-' THEN
+        -- Para descuentos, el id_descuento es VARCHAR así que se puede comparar directamente
     	SELECT costo_canje INTO costo
         FROM descuento
         WHERE id_descuento = NEW.recompensa;
@@ -1825,6 +1847,7 @@ CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjead
 END
 $$
 DELIMITER ;
+
 
 -- --------------------------------------------------------
 
@@ -1949,6 +1972,13 @@ CREATE TABLE `tipo_cosmetico` (
   `imagen` varchar(99) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `tipo_cosmetico`
+--
+
+INSERT INTO `tipo_cosmetico` (`id_tipo_cosmetico`, `titulo`, `descripcion`, `imagen`) VALUES
+(1, 'Paleta de Colores', 'Cambia los colores de la interfaz', 'palette.png');
+
 -- --------------------------------------------------------
 
 --
@@ -1988,7 +2018,8 @@ CREATE TABLE `usuario` (
   `correo` varchar(101) DEFAULT NULL,
   `edad` varchar(4) DEFAULT NULL,
   `estado` varchar(11) NOT NULL DEFAULT 'Activo',
-  `grado` varchar(31) NOT NULL
+  `grado` varchar(31) NOT NULL,
+  `id_paleta_activa` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
