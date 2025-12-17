@@ -16,10 +16,9 @@ function ingresar() {
     .then(data => {
         if (data.exito) {
             localStorage.setItem("id_actual", data.id_user);
-            localStorage.setItem("id_user", data.id_user);
             localStorage.setItem("usuario", data.usuario);
-
-            window.location = "administrador.html";
+            localStorage.setItem("rol", data.rol);
+            window.location = "menu.html";
         } else {
             alert(data.mensaje);
         }

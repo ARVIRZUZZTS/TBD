@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/generic.css">
+    <link rel="stylesheet" href="css/paletas.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+</head>
+<body>
+    <header>
+        <img src="img/logo.png" alt="">
+        <nav></nav>
+    </header>
+    <main>
+        <div id="top"></div>
+        <div id="dinamic"></div>
+    </main>
+    <div id="msgModal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="msgText"></h3>
+            <button onclick="cerrarModal()">Cerrar</button>
+        </div>
+    </div>
+    <script src="js/menu.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script src="gestorPermisos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div id="printy"></div>
+</body>
+</html>

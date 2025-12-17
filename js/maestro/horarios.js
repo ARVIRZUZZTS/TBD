@@ -1,6 +1,6 @@
 // horarios para maestro - carga, muestra, filtra y elimina horarios
 
-window.cargarHorariosMaestro = async function() {
+window.cargarHorariosMaestro = async function() { // 51 Mae: Reporte de Horarios 0
     try {
         const idMaestro = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
         const container = document.getElementById('horarios-maestro-container');
