@@ -62,28 +62,14 @@
                     <div class="profile-actions">
                         <button id="btn-editar-perfil" class="shiny">Editar Perfil</button>
                         <button id="btn-cambiar-password" class="shiny">Cambiar Contraseña</button>
-                        <button id="btn-insignias" class="shiny">Insignias 🏆</button>
+                        <button id="btn-insignias" class="shiny">Insignias </button>
+                        <button id="btn-reporte-gastos" class="shiny">Gastos </button>
                     </div>
                 </div>
 
 
                 <div class="content-grid">
-                    <div class="content-card">
-                        <h3> Próximas Actividades</h3>
-                        <ul>
-                            <li>Tarea de Matemáticas - 15 de Octubre</li>
-                            <li>Examen de Ciencias - 20 de Octubre</li>
-                            <li>Proyecto Final - 30 de Octubre</li>
-                        </ul>
-                    </div>
-                    <div class="content-card">
-                        <h3> Anuncios Recientes</h3>
-                        <ul>
-                            <li>Nuevo material disponible</li>
-                            <li>Reunión de padres el viernes</li>
-                            <li>Actualización del calendario</li>
-                        </ul>
-                    </div>
+
                     <div class="content-card">
                         <h3> Tus Puntos</h3>
                         <div class="puntos-info">
@@ -271,6 +257,43 @@
             <div class="modal-body">
                 <div id="insignias-grid" class="insignias-grid">
                     <!-- Las insignias se cargarán aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reporte Gastos -->
+    <div id="modal-reporte-gastos" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reporte de Gastos </h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="gastos-table">
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Fecha</th>
+                                <th>Costo Original</th>
+                                <th>Descuento</th>
+                                <th>Total Pagado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-gastos">
+                            <!-- JS fill -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align: right; font-weight: bold;">TOTAL GASTADO:</td>
+                                <td id="total-gastos" style="font-weight: bold;">0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
             <div class="modal-footer">
