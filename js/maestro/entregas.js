@@ -89,7 +89,7 @@ function renderEntregasMaestro(entregas) {
             <tr>
                 <th>Curso</th>
                 <th>Estudiante</th>
-                <th>ID Publicación</th>
+                <th>Título de Evaluación</th>
                 <th>Fecha Entrega</th>
                 <th>Nota Actual</th>
                 <th>Acciones</th>
@@ -104,11 +104,14 @@ function renderEntregasMaestro(entregas) {
         fila.dataset.curso = entrega.nombre_curso;
 
         const notaDisplay = entrega.nota ? `${parseFloat(entrega.nota).toFixed(2)}` : 'Sin calificar';
-        
+
+        // Mostrar título de la evaluación/tarea si viene del backend
+        const tituloPub = entrega.titulo_publicacion ? entrega.titulo_publicacion : '';
+
         fila.innerHTML = `
             <td>${entrega.nombre_curso}</td>
             <td>${entrega.nombre} ${entrega.apellido}</td>
-            <td>${entrega.id_publicacion}</td>
+            <td>${escapeHTML(tituloPub)}</td>
             <td>${entrega.fecha_entrega} ${entrega.hora_entrega || ''}</td>
             <td><strong>${notaDisplay}</strong></td>
             <td>

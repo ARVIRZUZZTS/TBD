@@ -14,6 +14,10 @@ if (empty($id_estudiante) || empty($id_periodo_curso)) {
 // Iniciar transacción
 $conexion->begin_transaction();
 
+// Log: record intent to inscribir (append-only)
+$logLine = sprintf("%s | START inscripcion: estudiante=%s periodo=%s via=%s\n", date('Y-m-d H:i:s'), $id_estudiante, $id_periodo_curso, $_SERVER['REMOTE_ADDR'] ?? 'cli');
+@file_put_contents(__DIR__ . '/../logs/inscribir.log', $logLine, FILE_APPEND);
+
 try {
     // 1. Verificar que el estudiante existe (mantener igual)
     $sql_verificar_estudiante = "SELECT id_user FROM usuario WHERE id_user = ?";
@@ -146,8 +150,24 @@ try {
     $stmt_cupos->bind_param("i", $id_periodo_curso);
     
     if (!$stmt_cupos->execute()) {
+        // Log failure
+        @file_put_contents(__DIR__ . '/../logs/inscribir.log', date('Y-m-d H:i:s') . " | ERROR updating cupos for periodo {$id_periodo_curso}: " . $stmt_cupos->error . "\n", FILE_APPEND);
         throw new Exception('Error al actualizar cupos: ' . $stmt_cupos->error);
     }
+
+// Log success and new cupo value (try to read current value)
+try {
+    $s = $conexion->prepare('SELECT cupos_ocupados FROM periodo_curso WHERE id_periodo_curso = ?');
+    $s->bind_param('i', $id_periodo_curso);
+    $s->execute();
+    $r = $s->get_result();
+    $row = $r->fetch_assoc();
+    $current = $row['cupos_ocupados'] ?? 'unknown';
+    @file_put_contents(__DIR__ . '/../logs/inscribir.log', date('Y-m-d H:i:s') . " | OK inscripcion: estudiante={$id_estudiante} periodo={$id_periodo_curso} cupos_ocupados={$current}\n", FILE_APPEND);
+    $s->close();
+} catch (Exception $ex) {
+    @file_put_contents(__DIR__ . '/../logs/inscribir.log', date('Y-m-d H:i:s') . " | OK inscripcion but failed read cupos: " . $ex->getMessage() . "\n", FILE_APPEND);
+}
 
     // Confirmar transacción
     $conexion->commit();
