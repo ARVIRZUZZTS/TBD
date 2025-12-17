@@ -17,6 +17,31 @@ try {
                 u.nombre,
                 u.apellido,
                 e.id_publicacion,
+                -- nuevo: tipo y titulo de la publicacion (tarea/evaluacion)
+                CASE 
+                    WHEN SUBSTRING(e.id_publicacion,1,3) = 'TA-' THEN 'TA'
+                    WHEN SUBSTRING(e.id_publicacion,1,3) = 'EV-' THEN 'EV'
+                    ELSE NULL
+                END AS tipo_publicacion,
+                CASE
+                    WHEN SUBSTRING(e.id_publicacion,1,3) = 'TA-' THEN (
+                        SELECT t.titulo FROM tarea t WHERE t.id_tarea = CAST(SUBSTRING(e.id_publicacion,4) AS UNSIGNED) LIMIT 1
+                    )
+                    WHEN SUBSTRING(e.id_publicacion,1,3) = 'EV-' THEN (
+                        SELECT ev.titulo FROM evaluacion ev WHERE ev.id_evaluacion = CAST(SUBSTRING(e.id_publicacion,4) AS UNSIGNED) LIMIT 1
+                    )
+                    ELSE NULL
+                END AS titulo_publicacion,
+                -- nuevo: fecha de emisión de la publicación (tarea/evaluación) para ordenar por fecha de emisión
+                CASE
+                    WHEN SUBSTRING(e.id_publicacion,1,3) = 'TA-' THEN (
+                        SELECT t.fecha_emision FROM tarea t WHERE t.id_tarea = CAST(SUBSTRING(e.id_publicacion,4) AS UNSIGNED) LIMIT 1
+                    )
+                    WHEN SUBSTRING(e.id_publicacion,1,3) = 'EV-' THEN (
+                        SELECT ev.fecha_emision FROM evaluacion ev WHERE ev.id_evaluacion = CAST(SUBSTRING(e.id_publicacion,4) AS UNSIGNED) LIMIT 1
+                    )
+                    ELSE NULL
+                END AS fecha_publicacion,
                 e.nota,
                 e.fecha_entrega,
                 e.hora_entrega,
@@ -42,7 +67,10 @@ try {
                 )
             INNER JOIN curso c ON pc.id_curso = c.id_curso
             WHERE pc.id_maestro = ?
-            ORDER BY pc.id_periodo_curso DESC, e.fecha_entrega DESC";
+            -- nuevo: ordenar por fecha de emisión de la publicación (las evaluaciones más viejas primero)
+            ORDER BY pc.id_periodo_curso DESC,
+                     fecha_publicacion ASC,
+                     e.fecha_entrega DESC";
     
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_maestro);
