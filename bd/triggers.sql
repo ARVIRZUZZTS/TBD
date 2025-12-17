@@ -1048,11 +1048,18 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
 	DECLARE costo DECIMAL(10,2);
+    DECLARE id_item INT;
+    
+    -- Extraer el ID numérico del string (ej: 'RC-2' -> 2)
+    SET id_item = CAST(SUBSTRING(NEW.recompensa, 4) AS UNSIGNED);
+    
     IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
+        -- Buscar costo del cosmético usando el ID numérico
     	SELECT costo_canje INTO costo
         FROM cosmetico
-        WHERE id_cosmetico = NEW.recompensa;
+        WHERE id_cosmetico = id_item;
 	ELSEIF LEFT(NEW.recompensa, 3) = 'RD-' THEN
+        -- Para descuentos, el id_descuento es VARCHAR así que se puede comparar directamente
     	SELECT costo_canje INTO costo
         FROM descuento
         WHERE id_descuento = NEW.recompensa;

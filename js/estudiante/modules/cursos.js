@@ -69,7 +69,7 @@ export function mostrarCursos(cursos) {
                 </div>
                 <div class="info-group">
                     <span class="info-label">Asistencia:</span>
-                    <span class="info-value">${curso.asistencia || 0}%</span>
+                    <span class="info-value">${curso.asistencia || 0}</span>
                 </div>
                 <div class="info-group">
                     <span class="info-label">Nota:</span>

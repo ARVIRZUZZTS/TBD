@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 03-12-2025 a las 01:30:59
+-- Tiempo de generación: 17-12-2025 a las 03:28:52
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -113,7 +113,8 @@ CREATE TABLE `archivos_adjuntos` (
 --
 
 INSERT INTO `archivos_adjuntos` (`id_archivo`, `titulo`, `tipo`, `ruta_archivo`, `fecha_subida`) VALUES
-(1, 'Captura de pantalla 2025-11-08 022931.png', 'image/png', 'uploads/evaluaciones/6914e23ec513c_1762976318.png', '2025-11-12 15:38:38');
+(1, 'Captura de pantalla 2025-11-08 022931.png', 'image/png', 'uploads/evaluaciones/6914e23ec513c_1762976318.png', '2025-11-12 15:38:38'),
+(2, 'TBD HITO 3 FINAL.pdf', 'application/pdf', 'uploads/temas/69409525ad19d_1765840165.pdf', '2025-12-15 19:09:25');
 
 --
 -- Disparadores `archivos_adjuntos`
@@ -203,7 +204,8 @@ CREATE TABLE `archivos_publicacion` (
 --
 
 INSERT INTO `archivos_publicacion` (`id_archivo`, `id_publicacion`) VALUES
-(1, '2');
+(1, '2'),
+(2, 'TE-5');
 
 --
 -- Disparadores `archivos_publicacion`
@@ -348,6 +350,13 @@ CREATE TABLE `aula` (
   `id_aula` int(11) NOT NULL,
   `capacidad` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `aula`
+--
+
+INSERT INTO `aula` (`id_aula`, `capacidad`) VALUES
+(1, 30);
 
 --
 -- Disparadores `aula`
@@ -708,20 +717,18 @@ CREATE TABLE `cosmetico` (
   `costo_canje` int(11) DEFAULT NULL,
   `nombre` varchar(50) DEFAULT NULL,
   `valor` varchar(50) DEFAULT NULL,
-  `imagen` varchar(100) DEFAULT NULL,
-  `descripcion` varchar(500) DEFAULT NULL
+  `imagen` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `cosmetico`
 --
 
-INSERT INTO `cosmetico` (`id_cosmetico`, `id_tipo_cosmetico`, `costo_canje`, `nombre`, `valor`, `imagen`, `descripcion`) VALUES
-(2, 1, 100, 'Noche', 'theme-dark', 'moon.png', 'Tema oscuro para reducir fatiga visual'),
-(3, 1, 150, 'Océano', 'theme-ocean', 'water.png', 'Tonos azules inspirados en el mar'),
-(4, 1, 200, 'Bosque', 'theme-forest', 'leaf.png', 'Colores verdes naturales'),
-(5, 1, 500, 'Dorado', 'theme-gold', 'gold.png', 'Tema premium dorado');
-
+INSERT INTO `cosmetico` (`id_cosmetico`, `id_tipo_cosmetico`, `costo_canje`, `nombre`, `valor`, `imagen`) VALUES
+(2, 1, 100, 'Noche', 'theme-dark', 'moon.png'),
+(3, 1, 150, 'Océano', 'theme-ocean', 'water.png'),
+(4, 1, 200, 'Bosque', 'theme-forest', 'leaf.png'),
+(5, 1, 500, 'Dorado', 'theme-gold', 'gold.png');
 
 -- --------------------------------------------------------
 
@@ -746,11 +753,12 @@ CREATE TABLE `curso` (
 --
 
 INSERT INTO `curso` (`id_curso`, `id_categoria`, `id_area`, `id_grado`, `duracion`, `titulo`, `modalidad`, `inicio_gestion`, `fin_gestion`) VALUES
-(7, 3, 1, 5, 120, 'Algebra II', 'V', '2025-10-15', '2025-11-09'),
+(7, 3, 1, 5, 120, 'Algebra II', 'P', '2025-10-15', '2025-11-09'),
 (8, 4, 1, 6, 140, 'Calculo II', 'V', '2025-10-02', '2025-12-13'),
 (9, 4, 5, 6, 120, 'Curso Python', 'V', '2025-11-15', '2026-02-21'),
 (10, 4, 5, 1, 300, 'Suma', 'V', '2025-11-14', '2026-01-02'),
-(11, 4, 5, 6, 100, 'JAVA avanzado', 'V', '2025-06-04', '2025-08-23');
+(11, 4, 5, 6, 100, 'JAVA avanzado', 'V', '2025-06-04', '2025-08-23'),
+(12, 4, 5, 6, 120, 'Intro a la Progra', 'V', '2025-12-26', '2026-04-26');
 
 --
 -- Disparadores `curso`
@@ -1116,7 +1124,8 @@ CREATE TABLE `datos_maestro` (
 INSERT INTO `datos_maestro` (`id_dato`, `id_user`, `titulo`, `sueldo`) VALUES
 (1, 24, 'ing informatica', 70),
 (2, 25, 'ING ELECTRONICA', 70),
-(3, 26, 'fasd', 3);
+(3, 26, 'fasd', 3),
+(4, 34, 'Lic. Contaduria', 40);
 
 --
 -- Disparadores `datos_maestro`
@@ -1204,7 +1213,8 @@ CREATE TABLE `descuento` (
 INSERT INTO `descuento` (`id_descuento`, `id_periodo_curso`, `costo_canje`, `fecha_fin`, `porcentaje_descuento`) VALUES
 ('RD-1', 2, 500, '2025-12-20', 40),
 ('RD-2', 3, 5, '2026-01-29', 20),
-('RD-3', 2, 5, '2025-12-20', 50);
+('RD-3', 2, 5, '2025-12-20', 50),
+('RD-4', 10, 5, '2026-03-15', 20);
 
 --
 -- Disparadores `descuento`
@@ -1297,7 +1307,11 @@ CREATE TABLE `dia_horario` (
 --
 
 INSERT INTO `dia_horario` (`id_dia_clase`, `dia`, `hora_inicio`, `hora_fin`, `id_aula`) VALUES
-(3, 'Martes', '19:15:00', '19:20:00', 0);
+(3, 'Martes', '19:15:00', '19:20:00', 0),
+(4, 'Lunes', '08:00:00', '08:00:00', 1),
+(5, 'Martes', '11:00:00', '12:00:00', 1),
+(6, 'Sábado', '08:00:00', '09:00:00', 1),
+(7, 'Lunes', '08:00:00', '10:00:00', NULL);
 
 --
 -- Disparadores `dia_horario`
@@ -1554,7 +1568,11 @@ CREATE TABLE `horario` (
 --
 
 INSERT INTO `horario` (`id_periodo_clase`, `id_dia_clase`) VALUES
-(3, 3);
+(3, 3),
+(7, 4),
+(7, 5),
+(7, 6),
+(10, 7);
 
 -- --------------------------------------------------------
 
@@ -1657,7 +1675,8 @@ INSERT INTO `modulo` (`id_modulo`, `id_periodo_curso`, `titulo`, `orden`) VALUES
 (1, 1, 'Kushew modi', 1),
 (2, 1, 'shale', 2),
 (3, 1, 'mariamod', 3),
-(4, 2, 'ga', 1);
+(4, 2, 'ga', 1),
+(5, 10, 'Introduccion', 1);
 
 -- --------------------------------------------------------
 
@@ -1692,7 +1711,8 @@ INSERT INTO `periodo_curso` (`id_periodo_curso`, `id_curso`, `id_maestro`, `fech
 (6, 10, 3, '2025-12-13', '2026-02-04', 50, 0, 0, 0, 0, 'En Curso'),
 (7, 7, 3, '2025-11-12', '2025-11-27', 30, 0, 0, 0, 0, 'Inscripciones'),
 (8, 9, 3, '2025-11-12', '2025-11-28', 500, 2, 0, 0, 0, 'Inscripciones'),
-(9, 11, 2, '2025-06-05', '2025-10-22', 100, 91, 89, 10, 890, 'Finalizado');
+(9, 11, 2, '2025-06-05', '2025-10-22', 100, 91, 89, 10, 890, 'Finalizado'),
+(10, 12, 3, '2025-12-27', '2026-03-15', 200, 0, 0, 200, 0, 'Inscripciones');
 
 -- --------------------------------------------------------
 
@@ -1702,15 +1722,79 @@ INSERT INTO `periodo_curso` (`id_periodo_curso`, `id_curso`, `id_maestro`, `fech
 
 CREATE TABLE `permiso` (
   `id_permiso` int(11) NOT NULL,
-  `nombre_permiso` varchar(71) DEFAULT NULL
+  `nombre_permiso` varchar(71) DEFAULT NULL,
+  `subPermiso` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Volcado de datos para la tabla `permiso`
 --
 
-INSERT INTO `permiso` (`id_permiso`, `nombre_permiso`) VALUES
-(1, 'DarBecas');
+INSERT INTO `permiso` (`id_permiso`, `nombre_permiso`, `subPermiso`) VALUES
+(1, 'Adm: TRABAJADORES reporte', 0),
+(2, 'Adm: Reporte de Roles', 1),
+(3, 'Adm: Editar Roles', 1),
+(4, 'Adm: Eliminar Roles', 1),
+(5, 'Adm: Nuevo Rol', 1),
+(6, 'Adm: Nuevo Trabajador', 1),
+(7, 'Adm-Mae: Editar Trabajador', 1),
+(8, 'Adm-Mae: Dar de baja a Trabajador', 1),
+(9, 'Adm: ESTUDIANTES Reporte', 0),
+(10, 'Adm-Est: Informacion de un Estudiante', 9),
+(11, 'Est: Editar Estudiante', 9),
+(12, 'Adm-Est: Dar de baja a Estudiante', 9),
+(13, 'Adm: Becar a Estudiante', 9),
+(14, 'Adm-Est: Reporte de Inscripciones de UN Estudiante', 9),
+(15, 'Adm-Est: Reporte de Recompensas de UN Estudiante', 9),
+(16, 'Adm: Reporte de Becas', 9),
+(17, 'Adm: Editar Beca', 9),
+(18, 'Adm: Eliminar Beca', 9),
+(19, 'Adm: Reporte de Ranking', 9),
+(20, 'Adm-Est: Informacion de Ranking', 9),
+(21, 'Adm: Reporte Grafico Por Estado', 9),
+(22, 'Adm: Reporte Grafico Por Ranking', 9),
+(23, 'Adm: Reporte Grafico Por Categoria', 9),
+(24, 'Adm: Reporte Grafico Por Promedio', 9),
+(25, 'Adm: CURSOS Reporte', 0),
+(26, 'Adm: Nuevo Curso', 25),
+(27, 'Adm: Editar Curso', 25),
+(28, 'Adm: Eliminar Curso', 25),
+(29, 'Adm: Asignar Maestro a Curso', 25),
+(30, 'Adm: Reporte de Periodo Curso', 25),
+(31, 'Adm: Ver Certificado Periodo Curso Certificado', 25),
+(32, 'Adm: Dar de Baja Periodo Curso', 25),
+(33, 'Adm: Reporte de Areas', 25),
+(34, 'Adm: Nueva Area', 25),
+(35, 'Adm: Editar Area', 25),
+(36, 'Adm: Elimar Area', 25),
+(37, 'Adm: Reporte de Descuentos', 25),
+(38, 'Adm: Nuevo Descuento', 25),
+(39, 'Adm: Editar Descuento', 25),
+(40, 'Adm: Eliminar Descuento', 25),
+(41, 'Adm: Reporte de Permisos', 1),
+(42, 'Adm: Asignar Permisos', 1),
+(43, 'Mae: Mis Cursos de Maestro', 0),
+(44, 'Mae: Ver Curso', 43),
+(45, 'Mae: Ver Detalles de un Curso', 43),
+(46, 'Mae: Configurar Horario', 43),
+(47, 'Mae: Crear Modulo', 43),
+(48, 'Mae: Crear Temas', 43),
+(49, 'Mae: Crear Tarea', 43),
+(50, 'Mae: Crear Evaluacion', 43),
+(51, 'Mae: Reporte de Horarios', 0),
+(52, 'Est: Mi perfil Estudiante', 0),
+(53, 'Est: Editar Perfil Estudiante', 52),
+(54, 'Est: Editar Contrasenna Estudiante', 52),
+(55, 'Est: Configuracion Estudiante', 52),
+(56, 'Est: Ver mis Cursos Estudiante', 52),
+(57, 'Est: Ver Inscripciones Estudiante', 52),
+(58, 'Est: Inscribirme Estudiante', 52),
+(59, 'Est: Comprar Descuento', 52),
+(60, 'Est: Comprar Temas', 52),
+(61, 'Est: Aceptar Becas', 52),
+(62, 'Est: Ver Horarios', 52),
+(63, 'Mae: Editar Horario', 51),
+(64, 'Mae: Eliminar Horario', 51);
 
 -- --------------------------------------------------------
 
@@ -1732,7 +1816,7 @@ CREATE TABLE `puntos` (
 --
 
 INSERT INTO `puntos` (`id_puntos`, `id_user`, `puntos_totales`, `puntos_gastados`, `saldo_actual`, `rankingPoints`) VALUES
-(1, 27, 24.00, 10.00, 14.00, 100),
+(1, 27, 24.00, 15.00, 9995.00, 100),
 (2, 28, 0.00, 0.00, 0.00, 2584),
 (3, 29, 0.00, 5.00, -5.00, 8192),
 (4, 30, 30.00, 5.00, 25.00, 0),
@@ -1813,7 +1897,12 @@ INSERT INTO `recompensa_canjeada` (`id_recompensa_canjeada`, `recompensa`, `id_e
 (3, 'RD-3', 29, '2025-11-12', '12:22:00'),
 (4, 'RD-2', 27, '2025-11-12', '15:45:15'),
 (5, 'RD-3', 27, '2025-11-12', '15:46:18'),
-(6, 'RD-3', 33, '2025-11-26', '16:36:32');
+(6, 'RD-3', 33, '2025-11-26', '16:36:32'),
+(7, 'RC-2', 27, '2025-12-16', '00:27:34'),
+(8, 'RC-3', 27, '2025-12-16', '00:27:56'),
+(9, 'RC-4', 27, '2025-12-16', '00:28:01'),
+(10, 'RC-5', 27, '2025-12-16', '00:28:04'),
+(11, 'RD-4', 27, '2025-12-15', '19:33:02');
 
 --
 -- Disparadores `recompensa_canjeada`
@@ -1821,18 +1910,11 @@ INSERT INTO `recompensa_canjeada` (`id_recompensa_canjeada`, `recompensa`, `id_e
 DELIMITER $$
 CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
 	DECLARE costo DECIMAL(10,2);
-    DECLARE id_item INT;
-    
-    -- Extraer el ID numérico del string (ej: 'RC-2' -> 2)
-    SET id_item = CAST(SUBSTRING(NEW.recompensa, 4) AS UNSIGNED);
-    
     IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
-        -- Buscar costo del cosmético usando el ID numérico
     	SELECT costo_canje INTO costo
         FROM cosmetico
-        WHERE id_cosmetico = id_item;
+        WHERE id_cosmetico = NEW.recompensa;
 	ELSEIF LEFT(NEW.recompensa, 3) = 'RD-' THEN
-        -- Para descuentos, el id_descuento es VARCHAR así que se puede comparar directamente
     	SELECT costo_canje INTO costo
         FROM descuento
         WHERE id_descuento = NEW.recompensa;
@@ -1847,7 +1929,6 @@ CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjead
 END
 $$
 DELIMITER ;
-
 
 -- --------------------------------------------------------
 
@@ -1911,7 +1992,8 @@ INSERT INTO `rol_usuario` (`id_user`, `id_rol`) VALUES
 (30, 3),
 (31, 3),
 (32, 3),
-(33, 3);
+(33, 3),
+(34, 11);
 
 -- --------------------------------------------------------
 
@@ -1957,7 +2039,8 @@ INSERT INTO `temas` (`id_tema`, `id_modulo`, `titulo`) VALUES
 (1, 1, 'Cumbia'),
 (2, 1, 'aa'),
 (3, 1, 'tar_mod'),
-(4, 3, 'algebra');
+(4, 3, 'algebra'),
+(5, 5, 'Introduccion pdf');
 
 -- --------------------------------------------------------
 
@@ -2026,20 +2109,21 @@ CREATE TABLE `usuario` (
 -- Volcado de datos para la tabla `usuario`
 --
 
-INSERT INTO `usuario` (`id_user`, `nombre`, `apellido`, `username`, `contrasenna`, `ci`, `telefono`, `correo`, `edad`, `estado`, `grado`) VALUES
-(1, 'David Eduardo', 'Chavez Totora', 'Arvi', '231222', '9513465', '67231718', 'virzuzz12345@gmail.com', '21', 'Activo', ''),
-(2, 'Maria', 'Santos', 'Maria', '231222', '9518434', '67789790', 'mariasantos@gmail.com', '20', 'Activo', ''),
-(3, 'Cesar', 'Ochoa', 'Cesi', '231222', '111111', '1234', 'cesal@gmail.com', '23', 'Activo', ''),
-(24, 'sergio', 'maldonado', 'sergi', '231222', '8231838', '8237813', 'sergi@gmaril.com', '21', 'Activo', ''),
-(25, 'JUAN', 'MORALES', 'JUAN', '231222', '3237283', '87663636', 'JUAN@GMAIL.COM', '23', 'Activo', ''),
-(26, 'a', 'a', 'a', '23', '23', 'fas', 'fas@gmail.com', '21', 'Activo', ''),
-(27, 'est', 'est', 'est', '231222', '1234567', '1234567', 'est@gmail.com', '21', 'Activo', '6'),
-(28, 'juan', 'juan', 'juan', '231222', '12938481', '38473838', 'juan@gmail.com', '23', 'Activo', ''),
-(29, 'david eduardo', 'chavez totora', 'arvirzuzzts', '231222', '9613293', '8342718', 'david@gmail.com', '34', 'Activo', '6'),
-(30, 'andres', 'mendoza', 'dalala', '231222', '9238848', '367781822', 'a@g.com', '22', 'Activo', '4'),
-(31, 'prueba1', 'pruebaApellido', 'prueba1', '231222', '85382900', '38218389', 'g@3.com', '53', 'Activo', '6'),
-(32, 'abdul', 'fjdaklj', 'abduli', '231222', '2231533125', '25463635', '8@2f.com', '42', 'Activo', '6'),
-(33, 'ema', 'mejia', 'ema', 'ema123', '78945363', '74673975', 'emamejia@gamil.com', '19', 'Activo', '6');
+INSERT INTO `usuario` (`id_user`, `nombre`, `apellido`, `username`, `contrasenna`, `ci`, `telefono`, `correo`, `edad`, `estado`, `grado`, `id_paleta_activa`) VALUES
+(1, 'David Eduardo', 'Chavez Totora', 'Arvi', '231222', '9513465', '67231718', 'virzuzz12345@gmail.com', '21', 'Activo', '', NULL),
+(2, 'Maria', 'Santos', 'Maria', '231222', '9518434', '67789790', 'mariasantos@gmail.com', '20', 'Activo', '', NULL),
+(3, 'Cesar', 'Ochoa', 'Cesi', '231222', '111111', '1234', 'cesal@gmail.com', '23', 'Activo', '', NULL),
+(24, 'sergio', 'maldonado', 'sergi', '231222', '8231838', '8237813', 'sergi@gmaril.com', '21', 'Activo', '', NULL),
+(25, 'JUAN', 'MORALES', 'JUAN', '231222', '3237283', '87663636', 'JUAN@GMAIL.COM', '23', 'Activo', '', NULL),
+(26, 'a', 'a', 'a', '23', '23', 'fas', 'fas@gmail.com', '21', 'Activo', '', NULL),
+(27, 'est', 'est', 'est', '231222', '1234567', '1234567', 'est@gmail.com', '21', 'Activo', '6', NULL),
+(28, 'juan', 'juan', 'juan', '231222', '12938481', '38473838', 'juan@gmail.com', '23', 'Activo', '', NULL),
+(29, 'david eduardo', 'chavez totora', 'arvirzuzzts', '231222', '9613293', '8342718', 'david@gmail.com', '34', 'Activo', '6', NULL),
+(30, 'andres', 'mendoza', 'dalala', '231222', '9238848', '367781822', 'a@g.com', '22', 'Activo', '4', NULL),
+(31, 'prueba1', 'pruebaApellido', 'prueba1', '231222', '85382900', '38218389', 'g@3.com', '53', 'Activo', '6', NULL),
+(32, 'abdul', 'fjdaklj', 'abduli', '231222', '2231533125', '25463635', '8@2f.com', '42', 'Activo', '6', NULL),
+(33, 'ema', 'mejia', 'ema', 'ema123', '78945363', '74673975', 'emamejia@gamil.com', '19', 'Activo', '6', NULL),
+(34, 'Juan', 'Joao', 'joao', '231222', '89748199', '478918178', 'joao@gmail.com', '48', 'Activo', '', NULL);
 
 -- --------------------------------------------------------
 
@@ -2054,6 +2138,13 @@ CREATE TABLE `xb_archivos_adjuntos` (
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `xb_archivos_adjuntos`
+--
+
+INSERT INTO `xb_archivos_adjuntos` (`idBit_archivos_adjuntos`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'INSERT', '2025-12-15 19:09:25', 'Se inserto id: 2');
+
 -- --------------------------------------------------------
 
 --
@@ -2066,6 +2157,13 @@ CREATE TABLE `xb_archivos_publicacion` (
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `xb_archivos_publicacion`
+--
+
+INSERT INTO `xb_archivos_publicacion` (`idBit_archivos_publicacion`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'INSERT', '2025-12-15 19:09:25', 'Se inserto id:2');
 
 -- --------------------------------------------------------
 
@@ -2092,6 +2190,13 @@ CREATE TABLE `xb_aula` (
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `xb_aula`
+--
+
+INSERT INTO `xb_aula` (`idBit_aula`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'INSERT', '2025-12-15 17:59:42', 'Se inserto id:1');
 
 -- --------------------------------------------------------
 
@@ -2158,6 +2263,14 @@ CREATE TABLE `xb_curso` (
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `xb_curso`
+--
+
+INSERT INTO `xb_curso` (`idBit_curso`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'UPDATE', '2025-12-15 17:59:42', 'Se actualizó id: 7\nMODALIDAD: V -> P\n'),
+(2, 'INSERT', '2025-12-15 19:07:22', 'Se inserto id:12');
+
 -- --------------------------------------------------------
 
 --
@@ -2213,6 +2326,13 @@ CREATE TABLE `xb_datos_maestro` (
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `xb_datos_maestro`
+--
+
+INSERT INTO `xb_datos_maestro` (`idBit_datos_maestro`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'INSERT', '2025-12-16 18:46:55', 'Se inserto id:4');
+
 -- --------------------------------------------------------
 
 --
@@ -2225,6 +2345,13 @@ CREATE TABLE `xb_descuento` (
   `fecha` datetime NOT NULL DEFAULT current_timestamp(),
   `descripcion` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `xb_descuento`
+--
+
+INSERT INTO `xb_descuento` (`idBit_descuento`, `accion`, `fecha`, `descripcion`) VALUES
+(1, 'INSERT', '2025-12-15 19:11:52', 'Se inserto id:RD-4');
 
 -- --------------------------------------------------------
 
@@ -2250,7 +2377,11 @@ INSERT INTO `xb_dia_horario` (`idBit_dia_horario`, `accion`, `fecha`, `descripci
 (4, 'UPDATE', '2025-12-02 18:24:11', 'Se actualizó id: 3\nHORA INICIO: 18:20:00 -> 18:28:00\n'),
 (5, 'UPDATE', '2025-12-02 18:24:25', 'Se actualizó id: 3\nHORA FIN: 18:25:00 -> 18:30:00\n'),
 (6, 'UPDATE', '2025-12-02 19:10:19', 'Se actualizó id: 3\nHORA INICIO: 18:28:00 -> 19:15:00\n'),
-(7, 'UPDATE', '2025-12-02 19:10:32', 'Se actualizó id: 3\nHORA FIN: 18:30:00 -> 19:20:00\n');
+(7, 'UPDATE', '2025-12-02 19:10:32', 'Se actualizó id: 3\nHORA FIN: 18:30:00 -> 19:20:00\n'),
+(8, 'INSERT', '2025-12-15 17:59:42', 'Se inserto id:4'),
+(9, 'INSERT', '2025-12-15 17:59:42', 'Se inserto id:5'),
+(10, 'INSERT', '2025-12-15 17:59:42', 'Se inserto id:6'),
+(11, 'INSERT', '2025-12-15 19:43:09', 'Se inserto id:7');
 
 -- --------------------------------------------------------
 
@@ -3020,7 +3151,7 @@ ALTER TABLE `xb_usuario`
 -- AUTO_INCREMENT de la tabla `archivos_adjuntos`
 --
 ALTER TABLE `archivos_adjuntos`
-  MODIFY `id_archivo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_archivo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `area`
@@ -3032,7 +3163,7 @@ ALTER TABLE `area`
 -- AUTO_INCREMENT de la tabla `aula`
 --
 ALTER TABLE `aula`
-  MODIFY `id_aula` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_aula` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `beca`
@@ -3062,13 +3193,13 @@ ALTER TABLE `comentario`
 -- AUTO_INCREMENT de la tabla `cosmetico`
 --
 ALTER TABLE `cosmetico`
-  MODIFY `id_cosmetico` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_cosmetico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `curso`
 --
 ALTER TABLE `curso`
-  MODIFY `id_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de la tabla `curso_estudiante`
@@ -3086,13 +3217,13 @@ ALTER TABLE `curso_maestro`
 -- AUTO_INCREMENT de la tabla `datos_maestro`
 --
 ALTER TABLE `datos_maestro`
-  MODIFY `id_dato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_dato` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `dia_horario`
 --
 ALTER TABLE `dia_horario`
-  MODIFY `id_dia_clase` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_dia_clase` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de la tabla `entregas`
@@ -3140,19 +3271,19 @@ ALTER TABLE `material`
 -- AUTO_INCREMENT de la tabla `modulo`
 --
 ALTER TABLE `modulo`
-  MODIFY `id_modulo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_modulo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `periodo_curso`
 --
 ALTER TABLE `periodo_curso`
-  MODIFY `id_periodo_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id_periodo_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `permiso`
 --
 ALTER TABLE `permiso`
-  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT de la tabla `puntos`
@@ -3164,7 +3295,7 @@ ALTER TABLE `puntos`
 -- AUTO_INCREMENT de la tabla `recompensa_canjeada`
 --
 ALTER TABLE `recompensa_canjeada`
-  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_recompensa_canjeada` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `rol`
@@ -3182,13 +3313,13 @@ ALTER TABLE `tarea`
 -- AUTO_INCREMENT de la tabla `temas`
 --
 ALTER TABLE `temas`
-  MODIFY `id_tema` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_tema` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `tipo_cosmetico`
 --
 ALTER TABLE `tipo_cosmetico`
-  MODIFY `id_tipo_cosmetico` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_tipo_cosmetico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `tipo_pago`
@@ -3200,19 +3331,19 @@ ALTER TABLE `tipo_pago`
 -- AUTO_INCREMENT de la tabla `usuario`
 --
 ALTER TABLE `usuario`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_archivos_adjuntos`
 --
 ALTER TABLE `xb_archivos_adjuntos`
-  MODIFY `idBit_archivos_adjuntos` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_archivos_adjuntos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_archivos_publicacion`
 --
 ALTER TABLE `xb_archivos_publicacion`
-  MODIFY `idBit_archivos_publicacion` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_archivos_publicacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_area`
@@ -3224,7 +3355,7 @@ ALTER TABLE `xb_area`
 -- AUTO_INCREMENT de la tabla `xb_aula`
 --
 ALTER TABLE `xb_aula`
-  MODIFY `idBit_aula` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_aula` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_beca`
@@ -3254,7 +3385,7 @@ ALTER TABLE `xb_cosmetico`
 -- AUTO_INCREMENT de la tabla `xb_curso`
 --
 ALTER TABLE `xb_curso`
-  MODIFY `idBit_curso` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_curso_estudiante`
@@ -3272,19 +3403,19 @@ ALTER TABLE `xb_curso_maestro`
 -- AUTO_INCREMENT de la tabla `xb_datos_maestro`
 --
 ALTER TABLE `xb_datos_maestro`
-  MODIFY `idBit_datos_maestro` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_datos_maestro` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_descuento`
 --
 ALTER TABLE `xb_descuento`
-  MODIFY `idBit_descuento` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `idBit_descuento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_dia_horario`
 --
 ALTER TABLE `xb_dia_horario`
-  MODIFY `idBit_dia_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `idBit_dia_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT de la tabla `xb_entregas`
@@ -3474,6 +3605,12 @@ ALTER TABLE `datos_maestro`
 --
 ALTER TABLE `descuento`
   ADD CONSTRAINT `descuento_ibfk_1` FOREIGN KEY (`id_periodo_curso`) REFERENCES `periodo_curso` (`id_periodo_curso`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Filtros para la tabla `dia_horario`
+--
+ALTER TABLE `dia_horario`
+  ADD CONSTRAINT `dia_horario_ibfk_1` FOREIGN KEY (`id_aula`) REFERENCES `aula` (`id_aula`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Filtros para la tabla `entregas`
