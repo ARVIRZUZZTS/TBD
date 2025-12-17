@@ -1,6 +1,7 @@
 <?php
 header("Content-Type: application/json");
 include 'conexion.php';
+include 'badge_helper.php';
 
 // Debug: Log de entrada
 error_log("DEBUG entregarActividad.php - POST: " . print_r($_POST, true));
@@ -41,6 +42,25 @@ try {
     
     if ($stmt_entrega->execute()) {
         error_log("DEBUG - Entrega insertada exitosamente");
+
+        // --- LOGICA INSIGNIA TAREA MAESTRA (ID 3) ---
+        if ($tipo_actividad === 'tarea') {
+            $sqlCountTareas = "SELECT COUNT(*) as total FROM entregas e
+                               WHERE id_user = ? AND id_publicacion LIKE 'TA-%'";
+            $stmtCountT = $conexion->prepare($sqlCountTareas);
+            $stmtCountT->bind_param("i", $id_estudiante);
+            $stmtCountT->execute();
+            $resCountT = $stmtCountT->get_result();
+            $rowCountT = $resCountT->fetch_assoc();
+            
+            if ($rowCountT['total'] == 1) {
+                otorgarInsignia($conexion, $id_estudiante, 3);
+                 error_log("DEBUG - Insignia Tarea Maestra otorgada a student $id_estudiante");
+            }
+            $stmtCountT->close();
+        }
+        // --------------------------------------------
+
         $mensaje = $tipo_actividad === 'tarea' 
             ? 'Tarea entregada correctamente' 
             : 'Evaluación entregada correctamente';

@@ -1,6 +1,7 @@
 <?php
 header("Content-Type: application/json");
 include 'conexion.php';
+include 'badge_helper.php';
 
 $id_entrega = $_POST['id_entrega'] ?? '';
 $nota = $_POST['nota'] ?? '';
@@ -56,6 +57,25 @@ try {
     $stmt_update->bind_param("di", $nota, $id_entrega);
     
     if ($stmt_update->execute()) {
+        
+        // --- LOGICA INSIGNIA PERFECCIONISTA (ID 2) ---
+        if ($nota == 100) {
+            // Necesitamos el id_user del estudiante
+            $sqlOwner = "SELECT id_user FROM entregas WHERE id_entrega = ?";
+            $stmtOwner = $conexion->prepare($sqlOwner);
+            $stmtOwner->bind_param("i", $id_entrega);
+            $stmtOwner->execute();
+            $ownerRes = $stmtOwner->get_result();
+            if ($ownerRes->num_rows > 0) {
+                $ownerRow = $ownerRes->fetch_assoc();
+                $idEstudiante = $ownerRow['id_user'];
+                
+                otorgarInsignia($conexion, $idEstudiante, 2);
+            }
+            $stmtOwner->close();
+        }
+        // ---------------------------------------------
+
         echo json_encode([
             'exito' => true,
             'mensaje' => 'Nota asignada correctamente',

@@ -10,8 +10,8 @@ if (empty($id_estudiante)) {
 }
 
 try {
-    // Obtener solo los id_publicacion que empiezan con TA- o EV-
-    $sql = "SELECT id_publicacion FROM entregas WHERE id_user = ? AND (id_publicacion LIKE 'TA-%' OR id_publicacion LIKE 'EV-%')";
+    // Obtener id_publicacion y nota
+    $sql = "SELECT id_publicacion, nota FROM entregas WHERE id_user = ? AND (id_publicacion LIKE 'TA-%' OR id_publicacion LIKE 'EV-%')";
     $stmt = $conexion->prepare($sql);
     $stmt->bind_param("i", $id_estudiante);
     $stmt->execute();
@@ -19,7 +19,10 @@ try {
 
     $entregas = [];
     while ($row = $result->fetch_assoc()) {
-        $entregas[] = $row['id_publicacion'];
+        $entregas[] = [
+            'id_publicacion' => $row['id_publicacion'],
+            'nota' => $row['nota']
+        ];
     }
 
     echo json_encode([
