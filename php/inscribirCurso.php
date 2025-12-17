@@ -1,6 +1,7 @@
 <?php
 header("Content-Type: application/json");
 include 'conexion.php';
+include 'badge_helper.php';
 
 $id_estudiante = $_POST['id_estudiante'] ?? '';
 $id_periodo_curso = $_POST['id_periodo_curso'] ?? '';
@@ -154,6 +155,29 @@ try {
         @file_put_contents(__DIR__ . '/../logs/inscribir.log', date('Y-m-d H:i:s') . " | ERROR updating cupos for periodo {$id_periodo_curso}: " . $stmt_cupos->error . "\n", FILE_APPEND);
         throw new Exception('Error al actualizar cupos: ' . $stmt_cupos->error);
     }
+
+    // --- LÓGICA DE INSIGNIAS ---
+    // Verificar si es el primer curso del estudiante
+    $sqlCountInscripciones = "SELECT COUNT(*) as total FROM inscripcion WHERE id_user = ?";
+    $stmtCount = $conexion->prepare($sqlCountInscripciones);
+    $stmtCount->bind_param("i", $id_estudiante);
+    $stmtCount->execute();
+    $resCount = $stmtCount->get_result();
+    $rowCount = $resCount->fetch_assoc();
+    $totalInscripciones = $rowCount['total'];
+    $stmtCount->close();
+
+    // Si es la primera inscripción (o la acabamos de hacer y es 1)
+    // Nota: Acabamos de insertar, así que si era la primera, ahora COUNT es 1.
+    if ($totalInscripciones == 1) {
+        // Otorgar insignia ID 1: "Primer Curso"
+        $resultadoInsignia = otorgarInsignia($conexion, $id_estudiante, 1);
+        
+        if ($resultadoInsignia['exito']) {
+             @file_put_contents(__DIR__ . '/../logs/inscribir.log', date('Y-m-d H:i:s') . " | BADGE AWARDED: estudiante={$id_estudiante} badge=1\n", FILE_APPEND);
+        }
+    }
+    // ---------------------------
 
 // Log success and new cupo value (try to read current value)
 try {

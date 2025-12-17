@@ -994,3 +994,450 @@ nav {
   background-color: var(--shiny);
   border-color: var(--nigger);
 }
+
+/* --- Estilos para Modal de Insignias --- */
+.modal-content-insignias {
+  max-width: 800px;
+  width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.insignias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.insignia-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.insignia-card.owned {
+  background: linear-gradient(145deg, var(--card-bg), rgba(255, 215, 0, 0.1));
+  border-color: var(--gold);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+  transform: scale(1.02);
+}
+
+.insignia-card.locked {
+  filter: grayscale(1);
+  /* Desactivado visualmente */
+  opacity: 0.7;
+  border: 1px dashed var(--text-secondary);
+}
+
+.insignia-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.insignia-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--text-primary);
+}
+
+.insignia-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.insignia-points {
+  font-size: 0.85rem;
+  color: var(--shiny);
+  font-weight: bold;
+  margin-top: auto;
+}
+
+.insignia-status {
+  font-size: 0.8rem;
+  margin-top: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.insignia-card.owned .insignia-status {
+  color: #2e7d32;
+  background: #e8f5e9;
+}
+
+.insignia-card.locked .insignia-status {
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.no-badges {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 50px;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+/* --- Estilos Mejorados para el Boucher (Comprobante) --- */
+.boucher-content {
+  max-width: 500px;
+  background: #fff;
+  border-radius: 0;
+  /* Estilo ticket */
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  position: relative;
+  font-family: 'Courier New', Courier, monospace;
+  /* Fuente monoespaciada tipo ticket */
+  border-top: 5px solid var(--shiny);
+  margin: 3vh auto;
+  /* Margen vertical reducido para que entre en pantalla */
+  max-height: 90vh;
+  /* Altura máxima */
+  overflow-y: auto;
+  /* Scroll si es necesario */
+}
+
+.boucher-header {
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  padding: 30px 20px 20px;
+  text-align: center;
+  border-bottom: 2px dashed #ddd;
+  position: relative;
+}
+
+/* Efecto de "dientes" de ticket en el borde inferior del header */
+.boucher-header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: radial-gradient(circle, transparent 50%, #ffffff 50%) top;
+  background-size: 20px 20px;
+  z-index: 10;
+}
+
+.boucher-logo h2 {
+  color: var(--nigger);
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.boucher-logo .subtitulo {
+  color: var(--shiny);
+  font-size: 1rem;
+  margin: 5px 0 15px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.boucher-metadata {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.transaccion-numero {
+  font-weight: bold;
+  color: var(--nigger);
+}
+
+.estado-confirmado {
+  color: #27ae60;
+  font-weight: bold;
+  border: 1px solid #27ae60;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.boucher-body {
+  padding: 30px;
+  background: #fff;
+}
+
+.seccion-info {
+  margin-bottom: 25px;
+}
+
+.seccion-titulo {
+  font-size: 0.9rem;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+/* Scoped classes to avoid conflict with course cards */
+.boucher-content .info-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.boucher-content .info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.boucher-content .info-label {
+  color: #555;
+  font-weight: bold;
+}
+
+.boucher-content .info-value {
+  color: #000;
+  text-align: right;
+}
+
+.resumen-pago {
+  background: #f9f9f9;
+  padding: 15px;
+  border: 1px solid #eee;
+  margin-top: 10px;
+}
+
+.linea-pago {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.linea-pago.total {
+  border-top: 2px solid #ddd;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 1.1rem;
+  color: var(--shiny);
+}
+
+.notas-boucher {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 30px;
+  border-top: 1px dotted #ccc;
+  padding-top: 15px;
+}
+
+.notas-boucher ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+.firma-digital {
+  text-align: center;
+  margin-top: 40px;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.boucher-footer {
+  background: #f1f1f1;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 4rem;
+  color: rgba(39, 174, 96, 0.05);
+  /* Verde muy transparente */
+  font-weight: bold;
+  border: 5px solid rgba(39, 174, 96, 0.05);
+  padding: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.boucher-header {
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  padding: 30px 20px 20px;
+  text-align: center;
+  border-bottom: 2px dashed #ddd;
+  position: relative;
+}
+
+/* Efecto de "dientes" de ticket en el borde inferior del header */
+.boucher-header::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: radial-gradient(circle, transparent 50%, #ffffff 50%) top;
+  background-size: 20px 20px;
+  z-index: 10;
+}
+
+.boucher-logo h2 {
+  color: var(--nigger);
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.boucher-logo .subtitulo {
+  color: var(--shiny);
+  font-size: 1rem;
+  margin: 5px 0 15px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.boucher-metadata {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 15px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.transaccion-numero {
+  font-weight: bold;
+  color: var(--nigger);
+}
+
+.estado-confirmado {
+  color: #27ae60;
+  font-weight: bold;
+  border: 1px solid #27ae60;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.boucher-body {
+  padding: 30px;
+  background: #fff;
+}
+
+.seccion-info {
+  margin-bottom: 25px;
+}
+
+.seccion-titulo {
+  font-size: 0.9rem;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.info-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.info-label {
+  color: #555;
+  font-weight: bold;
+}
+
+.info-value {
+  color: #000;
+  text-align: right;
+}
+
+.resumen-pago {
+  background: #f9f9f9;
+  padding: 15px;
+  border: 1px solid #eee;
+  margin-top: 10px;
+}
+
+.linea-pago {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.linea-pago.total {
+  border-top: 2px solid #ddd;
+  padding-top: 8px;
+  margin-top: 8px;
+  font-size: 1.1rem;
+  color: var(--shiny);
+}
+
+.notas-boucher {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 30px;
+  border-top: 1px dotted #ccc;
+  padding-top: 15px;
+}
+
+.notas-boucher ul {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+.firma-digital {
+  text-align: center;
+  margin-top: 40px;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.boucher-footer {
+  background: #f1f1f1;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  font-size: 4rem;
+  color: rgba(39, 174, 96, 0.05);
+  /* Verde muy transparente */
+  font-weight: bold;
+  border: 5px solid rgba(39, 174, 96, 0.05);
+  padding: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+}
