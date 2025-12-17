@@ -38,7 +38,7 @@ export async function cargarDetalleCurso(idPeriodoCurso) {
         try {
             const tareasResponse = await fetch(`php/tareasGetByCurso.php?id_periodo_curso=${idPeriodoCurso}`);
             const responseText = await tareasResponse.text();
-            
+
             if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
                 tareasData = JSON.parse(responseText);
             } else {
@@ -64,7 +64,7 @@ export async function cargarDetalleCurso(idPeriodoCurso) {
 
 function mostrarActividadesCurso(tareas, evaluaciones) {
     const listaActividades = document.getElementById('lista-actividades');
-    
+
     const todasActividades = [
         ...tareas.map(t => ({ ...t, tipo: 'tarea' })),
         ...evaluaciones.map(e => ({ ...e, tipo: 'evaluacion' }))
@@ -91,7 +91,7 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
             return crearCardEvaluacion(actividad);
         }
     }).join('');
-    
+
     configurarDescargas();
     setTimeout(() => {
         configurarEntregas();
@@ -102,7 +102,7 @@ function mostrarActividadesCurso(tareas, evaluaciones) {
 function crearCardTarea(tarea) {
     const fechaEntrega = formatearFecha(tarea.fecha_entrega, tarea.hora_entrega);
     const tieneArchivo = tarea.archivo_url && tarea.archivo_url !== '';
-    
+
     return `
         <div class="actividad-card tarea" data-tipo="tarea" data-id="${tarea.id_tarea}">
             <div class="actividad-header">
@@ -152,7 +152,7 @@ function crearCardEvaluacion(evaluacion) {
     const fechaInicio = formatearFecha(evaluacion.fecha_inicio, evaluacion.hora_inicio);
     const fechaEntrega = formatearFecha(evaluacion.fecha_entrega, evaluacion.hora_entrega);
     const tieneArchivo = evaluacion.archivo_url && evaluacion.archivo_url !== '';
-    
+
     return `
         <div class="actividad-card evaluacion" data-tipo="evaluacion" data-id="${evaluacion.id_evaluacion}">
             <div class="actividad-header">
@@ -200,12 +200,12 @@ function crearCardEvaluacion(evaluacion) {
 
 function configurarFiltros() {
     const filtroBtns = document.querySelectorAll('.filtro-btn');
-    
+
     filtroBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             filtroBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
+
             const filtro = this.getAttribute('data-filtro');
             filtrarActividades(filtro);
         });
@@ -214,7 +214,7 @@ function configurarFiltros() {
 
 function filtrarActividades(filtro) {
     const actividades = document.querySelectorAll('.actividad-card');
-    
+
     actividades.forEach(actividad => {
         switch (filtro) {
             case 'todos':
@@ -232,7 +232,7 @@ function filtrarActividades(filtro) {
 
 function configurarDescargas() {
     document.querySelectorAll('.descargar-archivo').forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const archivoUrl = this.getAttribute('data-archivo');
             const nombreArchivo = this.getAttribute('data-nombre');
             manejarDescargaArchivo(archivoUrl, nombreArchivo);
@@ -242,15 +242,15 @@ function configurarDescargas() {
 
 function configurarEntregas() {
 
-    
+
     const botones = document.querySelectorAll('.entregar-actividad-btn');
 
-    
+
     botones.forEach((button, index) => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function () {
             const idActividad = this.getAttribute('data-id');
             const tipoActividad = this.getAttribute('data-tipo');
-            
+
             entregarActividad(idActividad, tipoActividad);
         });
     });
@@ -260,21 +260,21 @@ async function entregarActividad(idActividad, tipoActividad) {
     try {
 
         const idEstudiante = localStorage.getItem('id_user');
-        
+
         if (!idEstudiante) {
             alert('Debes iniciar sesión para entregar actividades');
             return;
         }
 
         // Formatear id_publicacion según el tipo
-        const idPublicacion = tipoActividad === 'tarea' 
-            ? `TA-${idActividad}` 
+        const idPublicacion = tipoActividad === 'tarea'
+            ? `TA-${idActividad}`
             : `EV-${idActividad}`;
-        
-        const mensaje = tipoActividad === 'tarea' 
-            ? '¿Entregar esta tarea?' 
+
+        const mensaje = tipoActividad === 'tarea'
+            ? '¿Entregar esta tarea?'
             : '¿Comenzar esta evaluación?';
-            
+
         if (!confirm(mensaje)) return;
 
         const formData = new FormData();
@@ -290,10 +290,10 @@ async function entregarActividad(idActividad, tipoActividad) {
         const data = await response.json();
 
         if (data.exito) {
-            alert( data.mensaje);
+            alert(data.mensaje);
             actualizarUIEntrega(idActividad, tipoActividad);
         } else {
-            alert( data.mensaje);
+            alert(data.mensaje);
         }
 
     } catch (error) {
@@ -302,19 +302,33 @@ async function entregarActividad(idActividad, tipoActividad) {
     }
 }
 
-function actualizarUIEntrega(idActividad, tipoActividad) {
+function actualizarUIEntrega(idActividad, tipoActividad, nota = null) {
     const estadoElement = document.getElementById(`estado-${tipoActividad}-${idActividad}`);
     if (estadoElement) {
-        estadoElement.textContent = 'Entregado';
-        estadoElement.className = 'estado-actividad estado-entregado';
+        if (nota && parseFloat(nota) > 0) {
+            estadoElement.innerHTML = `Calificado: <span style="color: var(--shiny); font-weight: bold;">${parseFloat(nota).toFixed(2)}</span>`;
+            estadoElement.className = 'estado-actividad estado-calificado';
+            estadoElement.style.backgroundColor = '#e8f5e9'; // Fondo verde claro
+            estadoElement.style.color = '#2e7d32'; // Texto verde oscuro
+        } else {
+            estadoElement.textContent = 'Entregado';
+            estadoElement.className = 'estado-actividad estado-entregado';
+        }
     }
 
     // Deshabilitar botón
     const boton = document.querySelector(`[data-id="${idActividad}"][data-tipo="${tipoActividad}"]`);
     if (boton) {
         boton.disabled = true;
-        boton.textContent = tipoActividad === 'tarea' ? '✓ Tarea Entregada' : '✓ Evaluación Entregada';
-        boton.style.background = 'var(--butt)';
+
+        if (nota && parseFloat(nota) > 0) {
+            boton.textContent = `✓ Nota: ${parseFloat(nota).toFixed(2)}`;
+            boton.style.background = 'var(--gold)'; // Color dorado o diferente para indicar calificado
+        } else {
+            boton.textContent = tipoActividad === 'tarea' ? '✓ Tarea Entregada' : '✓ Evaluación Entregada';
+            boton.style.background = 'var(--butt)';
+        }
+
         boton.style.cursor = 'not-allowed';
     }
 }
@@ -322,25 +336,27 @@ function actualizarUIEntrega(idActividad, tipoActividad) {
 async function verificarEstadosEntregas() {
     try {
         const idEstudiante = localStorage.getItem('id_user');
-        
+
         if (!idEstudiante) return;
 
         const response = await fetch(`php/obtenerEntregas.php?id_estudiante=${idEstudiante}`);
         const data = await response.json();
 
         if (data.exito && data.entregas) {
-            
+
             // Marcar como entregadas todas las actividades que están en la lista
-            data.entregas.forEach(idPublicacion => {
-                
+            data.entregas.forEach(entrega => {
+                const idPublicacion = entrega.id_publicacion;
+                const nota = entrega.nota; // Obtener la nota
+
                 // Extraer tipo e ID del formato TA-123 o EV-456
                 const [prefijo, idActividad] = idPublicacion.split('-');
                 const tipoActividad = prefijo === 'TA' ? 'tarea' : 'evaluacion';
-                
+
                 // Buscar si existe una actividad con este ID en el DOM
                 const actividadElement = document.querySelector(`[data-id="${idActividad}"]`);
                 if (actividadElement) {
-                    actualizarUIEntrega(idActividad, tipoActividad);
+                    actualizarUIEntrega(idActividad, tipoActividad, nota);
                 }
             });
         }
@@ -355,7 +371,7 @@ async function marcarAsistencia(idPeriodoCurso) {
             alert('Debes iniciar sesión para marcar asistencia');
             return;
         }
-        if(!idPeriodoCurso){
+        if (!idPeriodoCurso) {
             alert('ID de periodo curso no válido');
             return;
         }
@@ -410,7 +426,7 @@ async function marcarAsistencia(idPeriodoCurso) {
             alert(msg);
         }
 
-    }catch(error) { 
+    } catch (error) {
         console.error('Error marcarAsistencia:', error);
         alert('Error de conexión al marcar asistencia');
     }
@@ -421,9 +437,9 @@ window.volverACursos = () => {
     const detalleView = document.getElementById('curso-detalle');
     if (detalleView) {
         detalleView.classList.remove('active');
-        detalleView.innerHTML = ''; 
+        detalleView.innerHTML = '';
     }
-    
+
     document.getElementById('cursos').classList.add('active');
     window.dispatchEvent(new CustomEvent('recargarCursos'));
 };

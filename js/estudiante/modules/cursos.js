@@ -79,7 +79,7 @@ export function mostrarCursos(cursos) {
                 </div>
                 <div class="info-group">
                     <span class="info-label">Nota:</span>
-                    <span class="info-value">${curso.nota || 'N/A'}</span>
+                    <span class="info-value">${parseFloat(curso.promedio_real).toFixed(2)} / 100</span>
                 </div>
                 <div class="info-group">
                     <span class="info-label">Estado:</span>

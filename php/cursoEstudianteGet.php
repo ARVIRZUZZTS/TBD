@@ -27,7 +27,23 @@ $sql = "
          WHERE m.id_periodo_curso = pc.id_periodo_curso) as total_tareas,
         (SELECT COUNT(*) FROM modulo m 
          INNER JOIN evaluacion e ON m.id_modulo = e.id_modulo 
-         WHERE m.id_periodo_curso = pc.id_periodo_curso) as total_evaluaciones
+         WHERE m.id_periodo_curso = pc.id_periodo_curso) as total_evaluaciones,
+        (SELECT COALESCE(AVG(e.nota), 0)
+         FROM entregas e
+         WHERE e.id_user = ce.id_estudiante AND (
+            e.id_publicacion IN (
+                SELECT CONCAT('TA-', t.id_tarea) FROM tarea t 
+                INNER JOIN modulo m ON t.id_modulo = m.id_modulo 
+                WHERE m.id_periodo_curso = pc.id_periodo_curso
+            )
+            OR
+            e.id_publicacion IN (
+                SELECT CONCAT('EV-', e.id_evaluacion) FROM evaluacion e 
+                INNER JOIN modulo m ON e.id_modulo = m.id_modulo 
+                WHERE m.id_periodo_curso = pc.id_periodo_curso
+            )
+         )
+        ) as promedio_real
     FROM curso_estudiante ce
     INNER JOIN periodo_curso pc ON ce.id_periodo_curso = pc.id_periodo_curso
     INNER JOIN curso c ON pc.id_curso = c.id_curso
