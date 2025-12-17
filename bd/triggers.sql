@@ -1067,3 +1067,30 @@ CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjead
 END
 $$
 DELIMITER ;
+
+DELIMITER $$
+
+CREATE TRIGGER tr_usuario_registro
+AFTER INSERT ON usuario
+FOR EACH ROW
+BEGIN
+    DECLARE v_descripcion TEXT;
+
+    SELECT CONCAT(
+        NEW.id_user, ': ',
+        NEW.nombre, ' ',
+        NEW.apellido, ' - ',
+        NEW.username, ' - Rol: ',
+        IFNULL(GROUP_CONCAT(r.nombre_rol SEPARATOR ', '), 'Sin rol')
+    )
+    INTO v_descripcion
+    FROM rol_usuario ru
+    LEFT JOIN rol r ON ru.id_rol = r.id_rol
+    WHERE ru.id_user = NEW.id_user;
+
+    INSERT INTO xb_inicio_cierre_usuario (accion, descripcion, Fecha_Hora)
+    VALUES ('REGISTRO', v_descripcion, NOW());
+
+END$$
+
+DELIMITER ;

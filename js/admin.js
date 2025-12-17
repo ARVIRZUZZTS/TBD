@@ -15,8 +15,8 @@ function ingresar() {
     .then(res => res.json())
     .then(data => {
         if (data.exito) {
-            sessionStorage.setItem("id_actual", data.id_user);
-            sessionStorage.setItem("usuario", data.usuario);
+            localStorage.setItem("id_user", data.id_user);
+            localStorage.setItem("usuario", data.usuario);
 
             window.location = "administrador.html";
         } else {

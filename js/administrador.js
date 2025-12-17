@@ -1,8 +1,8 @@
 let botonesOriginal = "";
 let contenidoOriginal = "";
 
-const id_actual = sessionStorage.getItem("id_actual");
-const usuario = sessionStorage.getItem("usuario");
+const id_actual = localStorage.getItem("id_user");
+const usuario = localStorage.getItem("usuario");
 
 if (!id_actual || !usuario) {
     alert("Sesión no iniciada");
@@ -14,8 +14,41 @@ document.addEventListener("DOMContentLoaded", function(){
     const dinamic = document.getElementById("dinamic");
     botonesOriginal = botones.innerHTML;
     contenidoOriginal = dinamic.innerHTML;
+    
+    // Registrar inicio de sesión si no se ha registrado aún
+    registrarInicioSesion();
     setUs();
 });
+
+// Función para registrar el inicio de sesión en bitácora
+function registrarInicioSesion() {
+    if (!sessionStorage.getItem('bitacora_inicio_registrada')) {
+        const data = {
+            accion: "INICIO",
+            id_user: parseInt(id_actual)
+        };
+
+        fetch("php/bitUsuario.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.exito) {
+                console.log("Inicio de sesión registrado en bitácora");
+                sessionStorage.setItem('bitacora_inicio_registrada', 'true');
+            } else {
+                console.error("Error al registrar inicio:", result.mensaje);
+            }
+        })
+        .catch(error => {
+            console.error("Error en la conexión:", error);
+        });
+    }
+}
 
 function setUs() {
     const usInp = document.getElementById("user");
@@ -111,6 +144,7 @@ function curso() {
         dinamic.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
 }
+
 function cursosActivos() {
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = "";
@@ -202,6 +236,7 @@ function renderTablaPeriodos(periodos) {
         tbody.appendChild(tr);
     });
 }
+
 function masOpcionesPCurso(element, idPeriodoCurso, tituloCurso) {
     const menuExistente = document.getElementById('opcionesMenu');
     if (menuExistente) menuExistente.remove();
@@ -307,7 +342,6 @@ function masOpcionesPCurso(element, idPeriodoCurso, tituloCurso) {
             alert('No se pudo verificar el estado del periodo. Intenta de nuevo.');
         });
 }
-
 
 // ==================== FUNCIONES DE ÁREAS ====================
 function area() {
@@ -1377,6 +1411,7 @@ function guardarBeca(id_user) {
         alert("Error al guardar la beca");
     });
 }
+
 function graficos() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
@@ -1701,6 +1736,7 @@ function mostrarEstadisticas(data) {
     
     statsContainer.innerHTML = html;
 }
+
 function descuentos() {
     const botones = document.getElementById("botones");
     botones.innerHTML = `
@@ -1888,7 +1924,6 @@ function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) {
         });
 }
 
-
 function registrarDescuento() {
     const idPeriodo = document.getElementById("idPeriodo").value.trim();
     const costoCanje = document.getElementById("costoCanje").value.trim();
@@ -1928,7 +1963,6 @@ function registrarDescuento() {
         alert("Error en la conexión con el servidor.");
     });
 }
-
 
 function inscripciones(id_user) {
     fetch(`php/reporteAcademicoGet.php?id_user=${id_user}`)
@@ -2067,11 +2101,9 @@ function showCertificado(element, id_estudiante, id_periodo_curso) {
 }
 
 function certificado(id_estudiante, id_periodo_curso, accion) {
-
     fetch(`php/getCertificadoData.php?id_estudiante=${id_estudiante}&id_periodo_curso=${id_periodo_curso}`)
     .then(r => r.json())
     .then(data => {
-
         if (!data.success) {
             alert("No se pudo generar el certificado");
             return;
@@ -2128,10 +2160,10 @@ function certificado(id_estudiante, id_periodo_curso, accion) {
             };
             loader.src = img.src;
         });
-
     })
     .catch(e => console.error(e));
 }
+
 function descargarPDFCert(html) {
     const w = window.open("", "_blank");
     w.document.write(`
@@ -2144,20 +2176,79 @@ function descargarPDFCert(html) {
     w.print();
 }
 
-
 function recompensas(id_user) {
-
+    // Implementar función de recompensas si es necesario
 }
 
 function darBaja(id_user) {
-    
+    // Implementar función de dar de baja si es necesario
 }
+
+// ==================== FUNCIÓN PARA CERRAR SESIÓN ====================
 
 function cerrarSesion() {
-    window.location = "inicio.html";
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        // Obtener el ID del estudiante
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (idEstudiante) {
+            // ✅ Registrar CIERRE - ESPERAR a que se complete
+            fetch("php/bitUsuario.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    accion: "CIERRE",
+                    id_user: idEstudiante
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log("Cierre registrado:", result);
+            })
+            .catch(error => {
+                console.error("Error en bitácora:", error);
+            })
+            .finally(() => {
+                // ✅ Esto se ejecuta DESPUÉS de intentar registrar bitácora
+                localStorage.removeItem('id_user');
+                sessionStorage.removeItem('id_user');
+                window.location.href = "inicio.html";
+            });
+        } else {
+            // Si no hay ID, simplemente redirigir
+            localStorage.removeItem('id_user');
+            sessionStorage.removeItem('id_user');
+            window.location.href = "inicio.html";
+        }
+    }
 }
+// Esta función ya existe y está bien
+function inicioCierre(accion, id_user) {
+    const data = {
+        accion: accion.toUpperCase(),
+        id_user: id_user
+    };
 
-//---------------------------------------------------------------------------------------
+    fetch("php/bitUsuario.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.exito) {
+            console.log("Bitácora registrada:", result.mensaje);
+        } else {
+            console.error("Error al registrar bitácora:", result.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error("Error en la conexión con el servidor:", error);
+    });
+}
+// ==================== FUNCIONES DEL MENÚ DE OPCIONES ====================
 function masOpciones(element, idCurso, tituloCurso) {
     const menuExistente = document.getElementById('opcionesMenu');
     
@@ -2299,7 +2390,6 @@ function asignarMaestro(idCurso, tituloCurso) {
                 fila.innerHTML = `
                     <td>
                         <input type="radio" name="maestroSeleccionado" value="${maestro.id_user}" class="radio-maestro">
-
                     </td>
                     <td>${maestro.nombre || '-'}</td>
                     <td>${maestro.apellido || '-'}</td>
@@ -2351,4 +2441,26 @@ function guardarMaestroCurso(idCurso) {
         console.error("Error al asignar maestro:", err);
         alert("Error al asignar el maestro al curso");
     });
+}
+
+// Función para ejecutar acciones en cursos de periodo
+function ejecutarAccionPCurso(accion, idPeriodoCurso, tituloCurso) {
+    console.log('Ejecutando:', accion, 'para:', tituloCurso);
+    
+    switch(accion) {
+        case 'darDeBaja':
+            if (confirm(`¿Dar de baja el curso "${tituloCurso}"?`)) {
+                // Implementar lógica para dar de baja
+                alert(`Curso "${tituloCurso}" dado de baja`);
+            }
+            break;
+        case 'verCertificados':
+            alert(`Mostrando certificados para: ${tituloCurso}`);
+            break;
+        default:
+            break;
+    }
+    
+    const menu = document.getElementById('opcionesMenu');
+    if (menu) menu.classList.remove('mostrar');
 }

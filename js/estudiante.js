@@ -101,10 +101,37 @@ async function cargarDatosEstudiante() {
 
 function cerrarSesion() {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        const id_user = localStorage.getItem('id_user');
+        inicioCierre("CIERRE", id_user);
         localStorage.removeItem('id_user');
         sessionStorage.removeItem('id_user');
         window.location.href = "inicio.html";
     }
+}
+function inicioCierre(accion, id_user) {
+    const data = {
+        accion: accion.toUpperCase(),
+        id_user: id_user
+    };
+
+    fetch("php/bitUsuario.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.exito) {
+            console.log("Bitácora registrada:", result.mensaje);
+        } else {
+            console.error("Error al registrar bitácora:", result.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error("Error en la conexión con el servidor:", error);
+    });
 }
 
 async function cargarCursosEstudiante() {
