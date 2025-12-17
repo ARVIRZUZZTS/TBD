@@ -9,3 +9,5 @@ borrar el doble   `id_publicacion` varchar(20) NOT NULL,
 26/1172025
 XB_CURSO_ESTUDIANTE revisar
 entregas valor 0 como default
+
+borrar de dia horario id_aula constraint key
