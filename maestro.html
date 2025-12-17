@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Portal Maestros</title>
+    <title>Maestros</title>
     <link rel="stylesheet" href="css/global.css">
     <link rel="stylesheet" href="css/generic.css">
     <link rel="stylesheet" href="css/maestro.css">
@@ -24,6 +24,7 @@
                 <button class="menu-button shiny" data-section="current-courses">Cursos Actuales</button>
                 <button class="menu-button shiny" data-section="horarios">Horarios</button>
                 <button class="menu-button shiny" data-section="entregas">Entregas/Calificaciones</button>
+                <button class="menu-button shiny" data-section="reportes">Reportes</button>
             </div>
             
             <div class="menu-section">
@@ -34,7 +35,10 @@
         
         <div class="main-content">
             <div class="header">
-                <h2>Portal de Maestros</h2>
+                <h2>Maestros</h2>
+                <div class="header-actions">
+                    <button id="btn-configurar-perfil" class="shiny">Configurar Perfil</button>
+                </div>
                 <div class="user-info">
                     <h4>Prof. Juan Pérez</h4>
                     <div class="user-avatar">JP</div>
@@ -74,6 +78,15 @@
                     </div>
                 </div>
 
+                <div id="reportes" style="display: none;" class="reportes-section">
+                    <h2>Reportes</h2>
+                    <div id="reportes-maestro-section">
+                        <div id="reportes-maestro-container" class="content-grid">
+                            <!-- Reportes se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Placeholder para otras secciones -->
                 <div id="other-sections" style="display: none;">
                     <div class="placeholder-content">
@@ -90,5 +103,6 @@
     <script src="js/maestro.js"></script>
     <script src="js/maestro/horarios.js"></script>
     <script src="js/maestro/entregas.js"></script>
+    <script src="js/maestro/reportes.js"></script>
 </body>
 </html>

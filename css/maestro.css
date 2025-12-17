@@ -5,6 +5,11 @@ body {
     overflow: hidden;
 }
 
+/* Aumentar un poco el tamaño de letra general en la página de maestro */
+body, .main-content, .sidebar, .content-area, .header, .menu-section {
+    font-size: 16px;
+}
+
 .container {
     display: flex;
     width: 100%;
@@ -621,7 +626,7 @@ body {
 /* Estilos para select en modal */
 .form-group select {
     width: 100%;
-    padding: 10px;
+    padding: 2px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 16px;
@@ -1231,4 +1236,53 @@ body {
     .entregas-tabla thead th,
     .entregas-tabla tbody td { padding: 8px 10px; }
     .btn-calificar { padding: 0.5vh 1vh; font-size: 1.1vh; }
+}
+
+/* ===== REPORTES ===== */
+.reportes-progreso-container { display: flex; flex-direction: column; gap: 1vh; margin-top: 1vh; }
+.progress-row { display: flex; flex-direction: column; gap: 0.5vh; }
+.prog-label { font-weight: 600; color: var(--nigger); }
+.prog-bar { width: 100%; height: 14px; background: #f1f1f1; border-radius: 8px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg,#ff8e1d,#ffc081); border-radius: 8px; }
+.reportes-mejores-list ol { padding-left: 1.2em; }
+
+/* Estilos para selects bonitos en Reportes (nuevo) */
+.reportes-ui { background: linear-gradient(180deg, #fffaf0, #ffffff); padding: 1.4rem; border-radius: 12px; box-shadow: 0 6px 18px rgba(87,45,13,0.06); }
+.reportes-controls, .reportes-general-controls, .reportes-individual-select { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; }
+.reportes-controls label, .reportes-individual-select label, .reportes-general-controls label { font-weight: 700; color: var(--nigger); }
+
+
+.styled-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23ff8e1d" viewBox="0 0 16 16"><path d="M3.204 5.66a.5.5 0 0 1 .63-.057L8 8.292l4.166-2.69a.5.5 0 1 1 .53.844l-4.5 2.91a.5.5 0 0 1-.53 0l-4.5-2.91a.5.5 0 0 1-.062-.63z"/></svg>') no-repeat right 0.75rem center/12px 12px;
+    border: 1px solid #e9e2d8;
+    padding: 2px;
+    padding-right: 2.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    font-size: 1rem;
+    color: var(--nigger);
+    min-width: 0; /* allow flex to control width */
+}
+
+.styled-select:focus {
+    outline: none;
+    border-color: #ff8e1d;
+    box-shadow: 0 4px 12px rgba(255,142,29,0.12);
+}
+
+/* Ajustes responsivos */
+@media (max-width: 700px) {
+    .styled-select { min-width: 100%; }
+    .reportes-controls, .reportes-individual-select { flex-direction: column; align-items: stretch; }
+}
+
+/* Make selects expand to available space in reportes controls */
+.reportes-controls .styled-select,
+.reportes-general-controls .styled-select,
+.reportes-individual-select .styled-select {
+    flex: 1 1 300px;
+    min-width: 180px; /* reasonable minimum */
 }
