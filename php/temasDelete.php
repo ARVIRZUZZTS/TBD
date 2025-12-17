@@ -1,0 +1,69 @@
+<?php
+//nuevo
+header('Content-Type: application/json');
+include 'conexion.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+    exit;
+}
+
+$data = json_decode(file_get_contents('php://input'), true);
+$id_tema = isset($data['id_tema']) ? (int)$data['id_tema'] : 0;
+
+if (!$id_tema) {
+    echo json_encode(['success' => false, 'message' => 'ID de tema no proporcionado']);
+    exit;
+}
+
+try {
+    $conexion->begin_transaction();
+
+    $id_publicacion = 'TE-' . $id_tema;
+
+    // Obtener archivos relacionados y borrarlos
+    $sqlArch = "SELECT aa.id_archivo, aa.ruta_archivo FROM archivos_publicacion ap JOIN archivos_adjuntos aa ON ap.id_archivo = aa.id_archivo WHERE ap.id_publicacion = ?";
+    $stmtArch = $conexion->prepare($sqlArch);
+    $stmtArch->bind_param('s', $id_publicacion);
+    $stmtArch->execute();
+    $resArch = $stmtArch->get_result();
+    $archivoIds = [];
+    while ($a = $resArch->fetch_assoc()) {
+        $archivoIds[] = $a['id_archivo'];
+        $ruta = __DIR__ . '/../' . $a['ruta_archivo'];
+        if (file_exists($ruta)) @unlink($ruta);
+    }
+    $stmtArch->close();
+
+    if (count($archivoIds) > 0) {
+        $stmtDelRel = $conexion->prepare("DELETE FROM archivos_publicacion WHERE id_publicacion = ?");
+        $stmtDelRel->bind_param('s', $id_publicacion);
+        $stmtDelRel->execute();
+        $stmtDelRel->close();
+
+        $idsList = implode(',', array_map('intval', $archivoIds));
+        $sqlDelFiles = "DELETE FROM archivos_adjuntos WHERE id_archivo IN ($idsList)";
+        $conexion->query($sqlDelFiles);
+    }
+
+    $stmtDel = $conexion->prepare("DELETE FROM temas WHERE id_tema = ?");
+    $stmtDel->bind_param('i', $id_tema);
+    $stmtDel->execute();
+    $affected = $stmtDel->affected_rows;
+    $stmtDel->close();
+
+    $conexion->commit();
+
+    if ($affected > 0) {
+        echo json_encode(['success' => true, 'message' => 'Tema eliminado correctamente']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'No se encontró el tema especificado']);
+    }
+} catch (Exception $e) {
+    $conexion->rollback();
+    echo json_encode(['success' => false, 'message' => 'Error al eliminar tema: ' . $e->getMessage()]);
+}
+
+$conexion->close();
+
+?>
