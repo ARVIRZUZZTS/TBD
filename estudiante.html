@@ -62,7 +62,7 @@
                     <div class="profile-actions">
                         <button id="btn-editar-perfil" class="shiny">Editar Perfil</button>
                         <button id="btn-cambiar-password" class="shiny">Cambiar Contraseña</button>
-                        <button class="shiny">Configuración</button>
+                        <button id="btn-insignias" class="shiny">Insignias 🏆</button>
                     </div>
                 </div>
 
@@ -256,6 +256,24 @@
             </div>
             <div class="modal-footer">
                 <button class="shiny" onclick="window.print()">Imprimir</button>
+                <button class="shiny close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Insignias -->
+    <div id="modal-insignias" class="modal">
+        <div class="modal-content modal-content-insignias">
+            <div class="modal-header">
+                <h2>Mis Insignias 🏆</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="insignias-grid" class="insignias-grid">
+                    <!-- Las insignias se cargarán aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
                 <button class="shiny close-modal">Cerrar</button>
             </div>
         </div>

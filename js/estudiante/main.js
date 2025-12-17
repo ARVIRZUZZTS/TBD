@@ -4,6 +4,7 @@ import { cargarDatosEstudiante } from './modules/auth.js';
 import { inicializarEventosGlobales } from './modules/tienda.js';
 import { inicializarTema } from './modules/theme.js';
 import { inicializarPerfil } from './modules/profile.js';
+import { inicializarInsignias } from './modules/insignias.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM completamente cargado");
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     inicializarEventosGlobales();
     inicializarTema();
     inicializarPerfil();
+    inicializarInsignias();
 });
 
 // Exportar funciones globales para HTML
