@@ -33,7 +33,7 @@ function actualizarUIEstudiante(estudiante) {
     document.getElementById('nombre-estudiante').textContent = 
         `${estudiante.nombre} ${estudiante.apellido}`;
     
-    document.getElementById('nombre-perfil').textContent = `${estudiante.nombre} ${estudiante.apellido}`;
+    document.getElementById('nombre-perfil').textContent = `${estudiante.id_user}: ${estudiante.nombre} ${estudiante.apellido}`;
     document.getElementById('correo-perfil').textContent = estudiante.correo || 'No disponible';
     document.getElementById('rango-perfil').textContent = `Rango: ${estudiante.rango_actual}`;
     

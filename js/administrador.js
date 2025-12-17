@@ -1,8 +1,8 @@
 let botonesOriginal = "";
 let contenidoOriginal = "";
 
-const id_actual = sessionStorage.getItem("id_actual");
-const usuario = sessionStorage.getItem("usuario");
+const id_actual = localStorage.getItem("id_actual");
+const usuario = localStorage.getItem("usuario");
 
 if (!id_actual || !usuario) {
     alert("Sesión no iniciada");
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function(){
     setUs();
 });
 
-function setUs() {
+function setUs() { //esta funcion hacerla pero de manera general segun el rol que esta en el localstorage "rol"
     const usInp = document.getElementById("user");
     usInp.textContent = usuario;
     const dina = document.getElementById("dinamic");
@@ -25,7 +25,7 @@ function setUs() {
 }
 
 // ==================== FUNCIONES DE CURSOS ====================
-function curso() {
+function curso() { // 25 Adm: CURSOS Reporte 0
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="curso()">Cursos</button>
@@ -111,7 +111,7 @@ function curso() {
         dinamic.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
     });
 }
-function cursosActivos() {
+function cursosActivos() { // 30 Adm: Reporte de Periodo Curso 25
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = "";
     dinamic.style.justifyContent = "flex-start";
@@ -328,7 +328,7 @@ function area() {
     `;
 }
 
-function nuevaArea() {
+function nuevaArea() { // 34 Adm: Nueva Area 25
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = `
         <div id="titleM">
@@ -370,7 +370,7 @@ function guardarArea() {
     });
 }
 
-function verAreas() {
+function verAreas() { // 33 Adm: Reporte de Areas 25
     fetch("php/areaGetAll.php", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
@@ -426,7 +426,7 @@ function verAreas() {
     });
 }
 
-function nuevoCurso() {
+function nuevoCurso() { // 26 Adm: Nuevo Curso 25
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = `
         <div id="titleM">
@@ -504,7 +504,7 @@ function cargarComboboxGrados() {
                 data.grados.forEach(grado => {
                     const option = document.createElement("option");
                     option.value = grado.id_grado;
-                    option.textContent = grado.nombre_grado;
+                    option.textContent = grado.id_grado + ": " + grado.nombre_grado;
                     selectGrado.appendChild(option);
                 });
             } else {
@@ -593,7 +593,7 @@ function eliminarCurso(idCurso, titulo) {
 }
 
 // ==================== FUNCIONES DE TRABAJADORES ========================================================================
-function trabajador() {
+function trabajador() { // esta funcion es // 1 Adm: TRABAJADORES reporte 0
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="roles()">Roles</button>
@@ -661,7 +661,7 @@ function trabajador() {
     });
 }
 
-function roles() {
+function roles() { // id = 2, nombre_permiso = Adm: Reporte de Roles subpermiso = 1
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = `
         <div id="titleM">
@@ -686,7 +686,7 @@ function roles() {
                 data.roles.forEach(r => {
                     const divRol = document.createElement("div");
                     divRol.classList.add("rolItem");
-                    divRol.setAttribute("id", `rol-${r.id_rol}`); //img en editar y eliminar
+                    divRol.setAttribute("id", `rol-${r.id_rol}`);
                     divRol.innerHTML = `
                         <h4>${r.nombre_rol}</h4>
                         <button onclick="editarRol(${r.id_rol}, '${r.nombre_rol}')">
@@ -705,7 +705,7 @@ function roles() {
         .catch(err => console.error("Error al obtener roles:", err));
 }
 
-function nuevoRol() {
+function nuevoRol() { // 5 Adm: Nuevo Rol 1
     const nombre = document.getElementById("rolNuevo").value.trim();
     if (nombre === "") {
         alert("Por favor, ingrese un nombre para el nuevo rol");
@@ -729,8 +729,7 @@ function nuevoRol() {
     .catch(err => console.error("Error al guardar rol:", err));
 }
 
-// img guardar y cancelar
-function editarRol(idRol, nombreActual) {
+function editarRol(idRol, nombreActual) { // 3 Adm: Editar Roles 1
     const divRol = document.getElementById(`rol-${idRol}`);
     if (!divRol) return;
 
@@ -764,7 +763,7 @@ function guardarEdicion(idRol) {
     .catch(err => console.error("Error al editar rol:", err));
 }
 
-function eliminarRol(idRol, nombreRol) {
+function eliminarRol(idRol, nombreRol) { // 4 Adm: Eliminar Roles 1
     if (!confirm(`¿Está seguro que quiere eliminar el rol "${nombreRol}"?`)) return;
 
     fetch("php/rolEliminar.php", {
@@ -779,7 +778,7 @@ function eliminarRol(idRol, nombreRol) {
     .catch(err => console.error("Error al eliminar rol:", err));
 }
 
-function nuevoTra() {
+function nuevoTra() { // 6 Adm: Nuevo Trabajador 1
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = `
         <div id="titleM">
@@ -868,7 +867,7 @@ function back() {
     dinamic.style.justifyContent = "center";
 }
 
-function estudiante() {
+function estudiante() { // 9 Adm: ESTUDIANTES Reporte 0
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="estudiante()">Estudiante</button>
@@ -978,7 +977,7 @@ function cargarTablaEstudiantes(estudiantes) {
     });
 }
 
-function ranking() {
+function ranking() { // 19 Adm: Reporte de Ranking 9
     fetch("php/rankingGetAll.php", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
@@ -1053,7 +1052,7 @@ function ranking() {
 }
 
 
-function verEstudiantesRanking(ranking) {
+function verEstudiantesRanking(ranking) { // 20 Adm-Est: Informacion de Ranking 9
     fetch(`php/estudianteRanking.php?ranking=${encodeURIComponent(ranking)}`)
         .then(res => res.json())
         .then(data => {
@@ -1129,7 +1128,7 @@ function verEstudiantesRanking(ranking) {
         });
 }
 
-function becas() {
+function becas() { // 16 Adm: Reporte de Becas 9
     fetch("php/becasGetAll.php", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
@@ -1194,7 +1193,7 @@ function becas() {
     });
 }
 
-function infoEst(id_user) {
+function infoEst(id_user) { // 10 Adm-Est: Informacion de un Estudiante 9
     fetch(`php/estudianteGet.php?id_user=${id_user}`)
         .then(res => res.json())
         .then(data => {
@@ -1281,7 +1280,7 @@ function infoEst(id_user) {
         });
 }
 
-function becaEstudiante(id_user, nombre, apellido) {
+function becaEstudiante(id_user, nombre, apellido) { // 13 Adm: Becar a Estudiante 9
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = `
         <div>
@@ -1377,7 +1376,7 @@ function guardarBeca(id_user) {
         alert("Error al guardar la beca");
     });
 }
-function graficos() {
+function graficos() { // 21 Adm: Reporte Grafico Por Estado 9
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="estudiante()">Estudiante</button>
@@ -1493,17 +1492,16 @@ function crearGraficoTarta(data) {
             break;
         case 'ranking':
             titulo = 'Distribución de Estudiantes por Ranking';
-            // Opciones especiales para ranking
             opcionesPersonalizadas = {
                 plugins: {
                     legend: {
                         position: 'right',
                         labels: {
                             font: {
-                                size: 10  // Tamaño más pequeño para ranking
+                                size: 10
                             },
                             padding: 10,
-                            boxWidth: 12,  // Caja más pequeña
+                            boxWidth: 12,
                             boxHeight: 12,
                             generateLabels: function(chart) {
                                 const data = chart.data;
@@ -1545,10 +1543,9 @@ function crearGraficoTarta(data) {
             break;
     }
     
-    // Configuración base
     const opcionesBase = {
         responsive: true,
-        maintainAspectRatio: false,  // Cambiado a false para mejor control
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'right',
@@ -1585,17 +1582,14 @@ function crearGraficoTarta(data) {
                 }
             }
         },
-        // Agregar interactividad
         onClick: function(evt, elements) {
             if (elements.length > 0) {
                 const index = elements[0].index;
                 console.log('Clic en:', data.labels[index]);
-                // Aquí puedes agregar funcionalidad adicional si quieres
             }
         }
     };
     
-    // Fusionar opciones base con personalizadas
     const opcionesFinales = deepMerge(opcionesBase, opcionesPersonalizadas);
     
     graficoActual = new Chart(ctx, {
@@ -1608,23 +1602,21 @@ function crearGraficoTarta(data) {
                 borderColor: 'white',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
-                hoverOffset: 10  // Efecto hover
+                hoverOffset: 10 
             }]
         },
         options: opcionesFinales
     });
     
-    // Ajustar altura del contenedor basado en el tipo
     const chartContainer = document.getElementById('chart-container');
     if (data.tipo === 'ranking' && data.labels.length > 15) {
-        chartContainer.style.height = '70vh';  // Más alto para ranking
+        chartContainer.style.height = '70vh'; 
         chartContainer.style.overflowY = 'scroll';
     } else {
         chartContainer.style.height = '50vh';
     }
 }
 
-// Función auxiliar para fusionar objetos profundamente
 function deepMerge(target, source) {
     const output = Object.assign({}, target);
     if (isObject(target) && isObject(source)) {
@@ -1654,7 +1646,6 @@ function generarColores(cantidad, tipo = '') {
         '#FF97B7', '#9B5DE5', '#FEE440', '#00F5D4'
     ];
     
-    // Paleta especial para ranking (colores por nivel)
     if (tipo === 'ranking') {
         const rankingPalette = {
             'Hierro': ['#A19D94', '#8B8680', '#76726D', '#615D59'],
@@ -1701,7 +1692,7 @@ function mostrarEstadisticas(data) {
     
     statsContainer.innerHTML = html;
 }
-function descuentos() {
+function descuentos() { // 37 Adm: Reporte de Descuentos 25
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="curso()">Cursos</button>
@@ -1796,7 +1787,7 @@ function cargarDescuentos() {
     });
 }
 
-function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) {
+function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) { // 38 Adm: Nuevo Descuento 25
     const dinamic = document.getElementById("dinamic");
     dinamic.innerHTML = "";
     dinamic.style.justifyContent = "flex-start";
@@ -1846,7 +1837,6 @@ function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) {
                     select.appendChild(option);
                 });
 
-                // 🔹 Si se pasó un curso para preseleccionar
                 if (preSeleccionId) {
                     const opcion = Array.from(select.options).find(o => o.value == preSeleccionId);
                     if (opcion) {
@@ -1857,7 +1847,6 @@ function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) {
                     }
                 }
 
-                // 🔹 Evento cuando el usuario cambia el select
                 select.addEventListener("change", () => {
                     const fechaFinInput = document.getElementById("fechaFin");
                     const optionSel = select.options[select.selectedIndex];
@@ -1930,7 +1919,7 @@ function registrarDescuento() {
 }
 
 
-function inscripciones(id_user) {
+function inscripciones(id_user) { // 14 Adm-Est: Reporte de Inscripciones de UN Estudiante 9
     fetch(`php/reporteAcademicoGet.php?id_user=${id_user}`)
         .then(res => res.json())
         .then(data => {
@@ -2145,7 +2134,7 @@ function descargarPDFCert(html) {
 }
 
 
-function recompensas(id_user) {
+function recompensas(id_user) { // 15 Adm-Est: Reporte de Recompensas de UN Estudiante 9
 
 }
 
@@ -2242,7 +2231,7 @@ function ejecutarAccion(accion, idCurso, tituloCurso) {
     if (menu) menu.classList.remove('mostrar');
 }
 
-function asignarMaestro(idCurso, tituloCurso) {
+function asignarMaestro(idCurso, tituloCurso) { // 29 Adm: Asignar Maestro a Curso 25
     const botones = document.getElementById("botones");
     botones.innerHTML = `
         <button class="shiny" onclick="guardarMaestroCurso(${idCurso})">Guardar Maestro</button>

@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // El formulario ya está predefinido para login de maestro
+
 });
 
 function ingresarMaestro() {

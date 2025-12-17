@@ -705,8 +705,21 @@ DELIMITER ;
 CREATE TABLE `cosmetico` (
   `id_cosmetico` int(11) NOT NULL,
   `id_tipo_cosmetico` int(11) DEFAULT NULL,
-  `costo_canje` int(11) DEFAULT NULL
+  `costo_canje` int(11) DEFAULT NULL,
+  `nombre` varchar(50) DEFAULT NULL,
+  `valor` varchar(50) DEFAULT NULL,
+  `imagen` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `cosmetico`
+--
+
+INSERT INTO `cosmetico` (`id_cosmetico`, `id_tipo_cosmetico`, `costo_canje`, `nombre`, `valor`, `imagen`) VALUES
+(2, 1, 100, 'Noche', 'theme-dark', 'moon.png'),
+(3, 1, 150, 'Océano', 'theme-ocean', 'water.png'),
+(4, 1, 200, 'Bosque', 'theme-forest', 'leaf.png'),
+(5, 1, 500, 'Dorado', 'theme-gold', 'gold.png');
 
 -- --------------------------------------------------------
 

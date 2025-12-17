@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal Maestros</title>
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/generic.css">
+    <link rel="stylesheet" href="css/maestro.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+</head>
+<body>
+    <div class="container">
+
+        <div class="sidebar">
+            <div class="logo-container">
+                <img src="img/logo.png" alt="Logo Coder MIMIENDO" class="logo-img">
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title">Opciones</h3>
+                <button class="menu-button shiny" data-section="current-courses">Cursos Actuales</button>
+                <button class="menu-button shiny" data-section="horarios">Horarios</button>
+            </div>
+            
+            <div class="menu-section">
+                <h3 class="menu-title">Configuración</h3>
+                <button class="menu-button back" onclick="cerrarSesion()">Cerrar Sesion</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h2>Portal de Maestros</h2>
+                <div class="user-info">
+                    <h4>Prof. Juan Pérez</h4>
+                    <div class="user-avatar">JP</div>
+                </div>
+            </div>
+            
+            <div class="content-area">
+                <div id="current-courses">
+                    <h2>Mis Cursos Actuales</h2>
+                    <div id="courses-loading" class="loading-message">
+                        <div class="loading-spinner"></div>
+                        <p>Cargando cursos...</p>
+                    </div>
+                    <div id="courses-container" class="courses-grid"></div>
+                    <div id="courses-error" class="error-message" style="display: none;">
+                        <p>Error al cargar los cursos. Por favor, intente nuevamente.</p>
+                        <button class="shiny" id="retry-load-courses">Reintentar</button>
+                    </div>
+                    
+                </div>
+
+                <div id="horarios" style="display: none;" class="horarios-section">
+                    <h2>Horarios</h2>
+                    <div id="horarios-maestro-section">
+                        <div id="horarios-maestro-container" class="content-grid">
+                            <!-- Horarios se cargarán aquí -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Placeholder para otras secciones -->
+                <div id="other-sections" style="display: none;">
+                    <div class="placeholder-content">
+                        <div class="placeholder-icon">📚</div>
+                        <h2 class="placeholder-text">Contenido no disponible en este momento</h2>
+                        <p>Esta funcionalidad estará disponible próximamente.</p>
+                        <button class="shiny" id="back-to-courses">Volver a Mis Cursos</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/maestro.js"></script>
+    <script src="js/maestro/horarios.js"></script>
+</body>
+</html>

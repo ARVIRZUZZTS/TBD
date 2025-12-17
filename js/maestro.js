@@ -29,7 +29,7 @@ function showSection(sectionId) {
     }
 }
 
-async function loadMyCourses() {
+async function loadMyCourses() { // 43 Mae: Mis Cursos de Maestro 0
     const loadingElement = document.getElementById('courses-loading');
     const coursesContainer = document.getElementById('courses-container');
     const errorElement = document.getElementById('courses-error');
@@ -346,7 +346,7 @@ function deleteCourse(courseId, courseTitle) {
     loadMyCourses();
 }
 
-function showCourseDetails(courseId, courseTitle, courseInscritos) {
+function showCourseDetails(courseId, courseTitle, courseInscritos) { // 44 Mae: Ver Detalles de un Curso 43
     const contentArea = document.querySelector('.content-area');
     
     // Guardar el ID del curso actual en localStorage
@@ -463,8 +463,7 @@ function handleCourseAction(action, courseId, courseTitle) {
             break;
     }
 }
-
-function showCreateModuleModal(courseId, courseTitle) {
+function showCreateModuleModal(courseId, courseTitle) {  // 47 Mae: Crear Modulo 43
     const modalHTML = `
         <div id="create-module-modal" class="modal-overlay">
             <div class="modal-content">
@@ -516,7 +515,7 @@ function showCreateModuleModal(courseId, courseTitle) {
     });
 }
 
-function showCreateTemaModal(courseId, courseTitle) {
+function showCreateTemaModal(courseId, courseTitle) { // 48 Mae: Crear Temas 43
     // Primero cargar los módulos disponibles
     fetch("php/moduloGetByPC.php", {
         method: "POST",
@@ -582,7 +581,7 @@ function showCreateTemaModal(courseId, courseTitle) {
     });
 }
 
-function showCreateTareaModal(courseId, courseTitle) {
+function showCreateTareaModal(courseId, courseTitle) { // 49 Mae: Crear Tarea 43
     // Primero cargar los módulos disponibles
     fetch("php/moduloGetByPC.php", {
         method: "POST",
@@ -668,7 +667,7 @@ function showCreateTareaModal(courseId, courseTitle) {
     });
 }
 
-function showCreateEvaluacionModal(courseId, courseTitle) {
+function showCreateEvaluacionModal(courseId, courseTitle) {  // 50 Mae: Crear Evaluacion 43
     // Primero cargar los módulos disponibles
     fetch("php/moduloGetByPC.php", {
         method: "POST",
@@ -1443,7 +1442,7 @@ function displayModulesWithContent(modules) {
     modulesList.innerHTML = modulesHTML;
 }
 
-function showConfigHorarioModal(courseId, courseTitle) {
+function showConfigHorarioModal(courseId, courseTitle) { // 46 Mae: Configurar Horario 43
     const modalHTML = `
         <div id="config-horario-modal" class="modal-overlay">
             <div class="modal-content" style="max-width: 750px;">

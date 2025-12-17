@@ -1,0 +1,170 @@
+
+
+<body>
+    <header>
+        <button id="logo" class="noBackgr">
+            <img src="img/logo.png" alt="Logo xd">
+        </button>
+        <nav>
+            <button class="nav-btn active" data-tab="inicio">
+                <span> Inicio</span>
+            </button>
+            <button class="nav-btn" data-tab="cursos">
+                <span> Mis Cursos</span>
+            </button>
+            <button class="nav-btn" data-tab="calificaciones">
+                <span> Calificaciones</span>
+            </button>
+           <button class="nav-btn" data-tab="inscripcion">
+                <span>Inscripciones</span>
+            </button>
+            <button class="nav-btn" data-tab="horarios">
+                <span>Horarios</span>
+            </button>
+            <button class="nav-btn" data-tab="tienda">
+                <span>Tienda</span>
+            </button>
+           <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
+                <span>Cerrar Sesión</span>
+           </button>
+        </nav>
+    </header>
+
+    <main>
+        <div id="top">
+            <h3 id="nombre-bienvenida">Bienvenido, <span id="nombre-estudiante">Cargando...</span></h3>
+            <img src="img/logo.png" alt="Logo pequeño">
+        </div>
+
+        <div id="dinamic">
+            <div id="inicio" class="tab-content active">
+                <h1>Bienvenido</h1>
+                <div class="profile-content">
+                    <div class="profile-info">
+                        <div class="avatar" id="avatar-iniciales">--</div>
+                        <div class="profile-details">
+                            <h2 id="nombre-perfil">Cargando...</h2>
+                            <p id="grado-perfil">Estudiante</p>
+                            <p id="correo-perfil">Cargando...</p>
+                            <p id="rango-perfil">Rango: --</p>
+                        </div>
+
+
+                    </div>
+                    <div class="profile-actions">
+                        <button class="shiny">Editar Perfil</button>
+                        <button class="shiny">Cambiar Contraseña</button>
+                        <button class="shiny">Configuración</button>
+                    </div>
+                </div>
+
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <h3> Próximas Actividades</h3>
+                        <ul>
+                            <li>Tarea de Matemáticas - 15 de Octubre</li>
+                            <li>Examen de Ciencias - 20 de Octubre</li>
+                            <li>Proyecto Final - 30 de Octubre</li>
+                        </ul>
+                    </div>
+                    <div class="content-card">
+                        <h3> Anuncios Recientes</h3>
+                        <ul>
+                            <li>Nuevo material disponible</li>
+                            <li>Reunión de padres el viernes</li>
+                            <li>Actualización del calendario</li>
+                        </ul>
+                    </div>
+                    <div class="content-card">
+                        <h3> Tus Puntos</h3>
+                        <div class="puntos-info">
+                            <div class="punto-item">
+                                <span class="punto-valor" id="saldo-actual">0</span>
+                                <span class="punto-label">Saldo Actual</span>
+                            </div>
+                            <div class="punto-item">
+                                <span class="punto-valor" id="puntos-totales">0</span>
+                                <span class="punto-label">Puntos Totales</span>
+                            </div>
+                            <div class="punto-item">
+                                <span class="punto-valor" id="puntos-gastados">0</span>
+                                <span class="punto-label">Puntos Gastados</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cursos" class="tab-content">
+                <h1>Mis Cursos</h1>
+                <div class="content-grid">
+                </div>
+            </div>
+
+            <div id="calificaciones" class="tab-content">
+                <h1>Calificaciones</h1>
+                <div class="grades-container">
+                    <table class="grades-table">
+                        <thead>
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Parcial 1</th>
+                                <th>Parcial 2</th>
+                                <th>Parcial 3</th>
+                                <th>Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Matemáticas</td>
+                                <td>9.0</td>
+                                <td>8.5</td>
+                                <td>9.2</td>
+                                <td>8.9</td>
+                            </tr>
+                            <tr>
+                                <td>Ciencias</td>
+                                <td>8.0</td>
+                                <td>8.8</td>
+                                <td>9.0</td>
+                                <td>8.6</td>
+                            </tr>
+                            <tr>
+                                <td>Historia</td>
+                                <td>9.5</td>
+                                <td>9.0</td>
+                                <td>9.3</td>
+                                <td>9.3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="inscripcion" class="tab-content">
+                <h1>Inscripciones a Cursos</h1>
+                <div class="content-grid">
+                    <!-- Los cursos se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+            <div id="horarios" class="tab-content">
+                <h1>Mi Horario de Clases</h1>
+                <div class="content-grid">
+                    <!-- Los horarios se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+            <div id="tienda" class="tab-content">
+                <h1>Tienda</h1>
+                <div class="content-grid">
+                    <!-- Se cargará dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Cambiar la línea del script -->
+    <script type="module" src="js/estudiante/main.js"></script>
+</body>
+
+</html>
