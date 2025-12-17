@@ -3,6 +3,7 @@ import { inicializarNavegacion } from './ui/navigation.js';
 import { cargarDatosEstudiante } from './modules/auth.js';
 import { inicializarEventosGlobales } from './modules/tienda.js';
 import { inicializarTema } from './modules/theme.js';
+import { inicializarPerfil } from './modules/profile.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM completamente cargado");
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
     cargarDatosEstudiante();
     inicializarEventosGlobales();
     inicializarTema();
+    inicializarPerfil();
 });
 
 // Exportar funciones globales para HTML

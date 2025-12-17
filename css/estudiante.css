@@ -709,3 +709,30 @@ size: 20%; }
   color: var(--nigger);
   width: 20%;
 }
+
+/* ===== FORMULARIOS MODAL ===== */
+.form-group {
+    margin-bottom: 2vh;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 1vh;
+    color: var(--nigger);
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 1.5vh;
+    border: 2px solid var(--back);
+    border-radius: 8px;
+    font-size: 1.6vh;
+    transition: var(--transition);
+}
+
+.form-group input:focus {
+    border-color: var(--shiny);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(87, 45, 13, 0.1);
+}

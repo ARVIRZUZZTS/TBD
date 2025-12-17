@@ -23,7 +23,7 @@
             <button class="nav-btn" data-tab="cursos">
                 <span> Mis Cursos</span>
             </button>
-           <button class="nav-btn" data-tab="inscripcion">
+            <button class="nav-btn" data-tab="inscripcion">
                 <span>Inscripciones</span>
             </button>
             <button class="nav-btn" data-tab="horarios">
@@ -32,9 +32,9 @@
             <button class="nav-btn" data-tab="tienda">
                 <span>Tienda</span>
             </button>
-           <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
+            <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
                 <span>Cerrar Sesión</span>
-           </button>
+            </button>
         </nav>
     </header>
 
@@ -60,8 +60,8 @@
 
                     </div>
                     <div class="profile-actions">
-                        <button class="shiny">Editar Perfil</button>
-                        <button class="shiny">Cambiar Contraseña</button>
+                        <button id="btn-editar-perfil" class="shiny">Editar Perfil</button>
+                        <button id="btn-cambiar-password" class="shiny">Cambiar Contraseña</button>
                         <button class="shiny">Configuración</button>
                     </div>
                 </div>
@@ -170,6 +170,59 @@
             </div>
         </div>
     </main>
+
+    <!-- Modales -->
+    <div id="modal-editar-perfil" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Perfil</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-editar-perfil">
+                    <div class="form-group">
+                        <label for="edit-nombre">Nombre:</label>
+                        <input type="text" id="edit-nombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-apellido">Apellido:</label>
+                        <input type="text" id="edit-apellido" name="apellido" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny" type="submit" form="form-editar-perfil">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cambiar-password" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cambiar Contraseña</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-cambiar-password">
+                    <div class="form-group">
+                        <label for="current-password">Contraseña Actual:</label>
+                        <input type="password" id="current-password" name="old_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">Nueva Contraseña:</label>
+                        <input type="password" id="new-password" name="new_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirmar Contraseña:</label>
+                        <input type="password" id="confirm-password" name="confirm_password" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny" type="submit" form="form-cambiar-password">Cambiar Contraseña</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Cambiar la línea del script -->
     <script type="module" src="js/estudiante/main.js"></script>
