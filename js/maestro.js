@@ -25,6 +25,11 @@ function showSection(sectionId) {
             if (typeof window.cargarEntregasMaestro === 'function') {
                 window.cargarEntregasMaestro();
             }
+        } else if (sectionId === 'reportes') {
+            // cargar reportes del maestro si la función está disponible // nuevo
+            if (typeof window.cargarReportesMaestro === 'function') {
+                window.cargarReportesMaestro();
+            }
         }
     }
 }
@@ -352,6 +357,12 @@ function showCourseDetails(courseId, courseTitle, courseInscritos) { // 44 Mae: 
     // Guardar el ID del curso actual en localStorage
     localStorage.setItem('current_course_id', courseId);
     
+    // Si ya existe un panel de detalles abierto, eliminarlo antes de crear uno nuevo
+    const existingCourseDetails = document.getElementById('course-details');
+    if (existingCourseDetails) {
+        existingCourseDetails.remove();
+    }
+    
     const courseDetailsHTML = `
         <div id="course-details">
             <div class="course-header">
@@ -420,8 +431,27 @@ function showCourseDetails(courseId, courseTitle, courseInscritos) { // 44 Mae: 
     
     contentArea.insertAdjacentHTML('beforeend', courseDetailsHTML);
     
+    // Inicializar el badge de inscritos con valor recibido, luego solicitar conteo real al servidor
+    const inscritosBadge = document.querySelector('#course-details .inscritos-count');
+    if (inscritosBadge) inscritosBadge.textContent = courseInscritos || '0';
+
     // Cargar módulos del curso
     loadCourseModules(courseId);
+
+    // Solicitar conteo preciso de inscritos y actualizar badge (corrige valores inconsistentes)
+    fetch('php/cursoInscritosCount.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_periodo_curso: courseId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data && data.success) {
+            if (inscritosBadge) inscritosBadge.textContent = data.inscritos;
+        }
+    }).catch(err => {
+        console.error('Error al obtener conteo de inscritos:', err);
+    });
     
     // Agregar event listeners para los botones de acción
     document.querySelectorAll('.action-btn').forEach(button => {
@@ -1121,6 +1151,16 @@ function createTarea() {
         alert('Por favor, completa todas las fechas y horas');
         return;
     }
+
+    // Validación: la fecha/hora de entrega debe ser mayor que la de emisión
+    if (fecha_emision && hora_emision && fecha_entrega && hora_entrega) {
+        const emission = new Date(fecha_emision + 'T' + hora_emision);
+        const entrega = new Date(fecha_entrega + 'T' + hora_entrega);
+        if (entrega <= emission) {
+            alert('La fecha/hora de entrega debe ser mayor que la fecha/hora de emisión');
+            return;
+        }
+    }
     
     const formData = new FormData();
     formData.append('id_modulo', id_modulo);
@@ -1188,6 +1228,16 @@ function createEvaluacion() {
     if (!deskpoints || deskpoints <= 0) {
         alert('Por favor, ingresa un valor válido para los puntos');
         return;
+    }
+
+    // Validación: la fecha/hora de fin debe ser mayor a la de inicio
+    if (fecha_inicio && hora_inicio && fecha_entrega && hora_entrega) {
+        const start = new Date(fecha_inicio + 'T' + hora_inicio);
+        const end = new Date(fecha_entrega + 'T' + hora_entrega);
+        if (end <= start) {
+            alert('La fecha/hora de fin debe ser mayor a la de inicio');
+            return;
+        }
     }
     
     const formData = new FormData();
@@ -1342,8 +1392,8 @@ function displayModulesWithContent(modules) {
                     <span class="module-order">Orden: ${modulo.orden}</span>
                 </div>
                 <div class="module-actions">
-                    <button class="shiny small">Editar</button>
-                    <button class="back small">Eliminar</button>
+                    <button class="shiny small edit-module-btn" data-module-id="${modulo.id_modulo}" data-module-title="${escapeHTML(modulo.titulo)}" data-module-orden="${modulo.orden}">Editar</button>
+                    <button class="back small delete-module-btn" data-module-id="${modulo.id_modulo}">Eliminar</button>
                 </div>
             </div>
             
@@ -1364,8 +1414,8 @@ function displayModulesWithContent(modules) {
                                     ` : ''}
                                 </div>
                                 <div class="tema-actions">
-                                    <button class="shiny small">Editar</button>
-                                    <button class="back small">Eliminar</button>
+                                    <button class="shiny small edit-tema-btn" data-tema-id="${tema.id_tema}" data-tema-title="${escapeHTML(tema.titulo)}">Editar</button>
+                                    <button class="back small delete-tema-btn" data-tema-id="${tema.id_tema}">Eliminar</button>
                                 </div>
                             </div>
                         </div>
@@ -1392,8 +1442,8 @@ function displayModulesWithContent(modules) {
                                     <small>Entrega: ${formatDate(tarea.fecha_entrega)} ${tarea.hora_entrega}</small>
                                 </div>
                                 <div class="tema-actions">
-                                    <button class="shiny small">Editar</button>
-                                    <button class="back small">Eliminar</button>
+                                    <button class="shiny small edit-tarea-btn" data-tarea-id="${tarea.id_tarea}" data-tarea-title="${escapeHTML(tarea.titulo)}" data-tarea-descripcion="${escapeHTML(tarea.descripcion||'')}" data-tarea-fecha-entrega="${tarea.fecha_entrega}" data-tarea-hora-entrega="${tarea.hora_entrega}" data-tarea-fecha-emision="${tarea.fecha_emision}" data-tarea-hora-emision="${tarea.hora_emision}">Editar</button>
+                                    <button class="back small delete-tarea-btn" data-tarea-id="${tarea.id_tarea}">Eliminar</button>
                                 </div>
                             </div>
                         </div>
@@ -1422,8 +1472,8 @@ function displayModulesWithContent(modules) {
                                     <small>Puntos: ${evaluacion.deskpoints}</small>
                                 </div>
                                 <div class="tema-actions">
-                                    <button class="shiny small">Editar</button>
-                                    <button class="back small">Eliminar</button>
+                                    <button class="shiny small edit-eval-btn" data-eval-id="${evaluacion.id_evaluacion}" data-eval-title="${escapeHTML(evaluacion.titulo)}" data-eval-descripcion="${escapeHTML(evaluacion.descripcion||'')}" data-eval-fecha-inicio="${evaluacion.fecha_inicio}" data-eval-hora-inicio="${evaluacion.hora_inicio}" data-eval-fecha-entrega="${evaluacion.fecha_entrega}" data-eval-hora-entrega="${evaluacion.hora_entrega}">Editar</button>
+                                    <button class="back small delete-eval-btn" data-eval-id="${evaluacion.id_evaluacion}">Eliminar</button>
                                 </div>
                             </div>
                         </div>
@@ -1440,6 +1490,131 @@ function displayModulesWithContent(modules) {
     `).join('');
     
     modulesList.innerHTML = modulesHTML;
+
+    // Attach edit listeners for modules, temas, tareas and evaluaciones
+    // Módulos
+    modulesList.querySelectorAll('.edit-module-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-module-id');
+            const titulo = this.getAttribute('data-module-title');
+            const orden = this.getAttribute('data-module-orden');
+            showEditModuleModal(id, titulo, orden);
+        });
+    });
+
+    // Temas
+    modulesList.querySelectorAll('.edit-tema-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-tema-id');
+            const titulo = this.getAttribute('data-tema-title');
+            showEditTemaModal(id, titulo);
+        });
+    });
+
+    // Tareas
+    modulesList.querySelectorAll('.edit-tarea-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-tarea-id');
+            const titulo = this.getAttribute('data-tarea-title');
+            const descripcion = this.getAttribute('data-tarea-descripcion');
+            const fecha_entrega = this.getAttribute('data-tarea-fecha-entrega');
+            const hora_entrega = this.getAttribute('data-tarea-hora-entrega');
+            const fecha_emision = this.getAttribute('data-tarea-fecha-emision');
+            const hora_emision = this.getAttribute('data-tarea-hora-emision');
+            showEditTareaModal(id, titulo, descripcion, fecha_entrega, hora_entrega, fecha_emision, hora_emision);
+        });
+    });
+
+    // Evaluaciones
+    modulesList.querySelectorAll('.edit-eval-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-eval-id');
+            const titulo = this.getAttribute('data-eval-title');
+            const descripcion = this.getAttribute('data-eval-descripcion');
+            const fecha_inicio = this.getAttribute('data-eval-fecha-inicio');
+            const hora_inicio = this.getAttribute('data-eval-hora-inicio');
+            const fecha_entrega = this.getAttribute('data-eval-fecha-entrega');
+            const hora_entrega = this.getAttribute('data-eval-hora-entrega');
+            showEditEvaluacionModal(id, titulo, descripcion, fecha_inicio, hora_inicio, fecha_entrega, hora_entrega);
+        });
+    });
+
+    // Delete handlers for módulo, tema, tarea, evaluación
+    modulesList.querySelectorAll('.delete-module-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-module-id');
+            if (!confirm('¿Desea eliminar este módulo y todo su contenido? Esta acción no se puede deshacer.')) return;
+            fetch('php/moduloDelete.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_modulo: id })
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    alert('Módulo eliminado');
+                    loadCourseModules(localStorage.getItem('current_course_id'));
+                } else {
+                    alert('Error: ' + (data.message || data.mensaje || ''));
+                }
+            }).catch(err => { console.error(err); alert('Error al eliminar módulo'); });
+        });
+    });
+
+    modulesList.querySelectorAll('.delete-tema-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-tema-id');
+            if (!confirm('¿Desea eliminar este tema?')) return;
+            fetch('php/temasDelete.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_tema: id })
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    alert('Tema eliminado');
+                    loadCourseModules(localStorage.getItem('current_course_id'));
+                } else {
+                    alert('Error: ' + (data.message || data.mensaje || ''));
+                }
+            }).catch(err => { console.error(err); alert('Error al eliminar tema'); });
+        });
+    });
+
+    modulesList.querySelectorAll('.delete-tarea-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-tarea-id');
+            if (!confirm('¿Desea eliminar esta tarea?')) return;
+            fetch('php/tareaDelete.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_tarea: id })
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    alert('Tarea eliminada');
+                    loadCourseModules(localStorage.getItem('current_course_id'));
+                } else {
+                    alert('Error: ' + (data.message || data.mensaje || ''));
+                }
+            }).catch(err => { console.error(err); alert('Error al eliminar tarea'); });
+        });
+    });
+
+    modulesList.querySelectorAll('.delete-eval-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            const id = this.getAttribute('data-eval-id');
+            if (!confirm('¿Desea eliminar esta evaluación?')) return;
+            fetch('php/evaluacionDelete.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_evaluacion: id })
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    alert('Evaluación eliminada');
+                    loadCourseModules(localStorage.getItem('current_course_id'));
+                } else {
+                    alert('Error: ' + (data.message || data.mensaje || ''));
+                }
+            }).catch(err => { console.error(err); alert('Error al eliminar evaluación'); });
+        });
+    });
 }
 
 function showConfigHorarioModal(courseId, courseTitle) { // 46 Mae: Configurar Horario 43
@@ -1879,12 +2054,432 @@ document.addEventListener('DOMContentLoaded', function() {
     // Botones regresar en placeholders
     const backBtn = document.getElementById('back-to-courses');
     if (backBtn) backBtn.addEventListener('click', () => showSection('current-courses'));
+
+    // Botón Configurar Perfil
+    const perfilBtn = document.getElementById('btn-configurar-perfil');
+    if (perfilBtn) perfilBtn.addEventListener('click', () => {
+        showConfigurarPerfilModal();
+    });
 });
+
+/* Perfil: modal para editar nombre, título y correo */
+function showConfigurarPerfilModal() {
+    const modalHTML = `
+        <div id="config-perfil-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Configurar Perfil</h3>
+                    <button class="modal-close" id="close-perfil-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="config-perfil-form">
+                        <div class="form-group">
+                            <label for="perfil-nombre">Nombre:</label>
+                            <input type="text" id="perfil-nombre" name="nombre" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfil-titulo">Título:</label>
+                            <input type="text" id="perfil-titulo" name="titulo" maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="perfil-correo">Correo:</label>
+                            <input type="email" id="perfil-correo" name="correo" required maxlength="150">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-perfil">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    document.getElementById('close-perfil-modal').addEventListener('click', closePerfilModal);
+    document.getElementById('cancel-perfil').addEventListener('click', closePerfilModal);
+
+    // Cargar datos actuales
+    const id_user = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+    if (id_user) {
+        fetch('php/perfilGet.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_user })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('perfil-nombre').value = data.usuario.nombre || '';
+                document.getElementById('perfil-correo').value = data.usuario.email || data.usuario.correo || '';
+                document.getElementById('perfil-titulo').value = (data.datos_maestro && data.datos_maestro.titulo) ? data.datos_maestro.titulo : '';
+            }
+        }).catch(err => console.error('Error cargando perfil:', err));
+    }
+
+    document.getElementById('config-perfil-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        submitPerfilForm();
+    });
+
+    const modal = document.getElementById('config-perfil-modal');
+    modal.addEventListener('click', function(e){ if (e.target === modal) closePerfilModal(); });
+}
+
+function closePerfilModal() {
+    const modal = document.getElementById('config-perfil-modal');
+    if (modal) modal.remove();
+}
+
+function submitPerfilForm() {
+    const id_user = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+    const nombre = document.getElementById('perfil-nombre').value.trim();
+    const titulo = document.getElementById('perfil-titulo').value.trim();
+    const correo = document.getElementById('perfil-correo').value.trim();
+
+    if (!nombre || !correo) return alert('Nombre y correo son requeridos');
+
+    fetch('php/perfilUpdate.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_user, nombre, titulo, correo })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Perfil actualizado');
+            closePerfilModal();
+        } else {
+            alert('Error actualizando perfil: ' + (data.message || data.mensaje || ''));
+        }
+    }).catch(err => {
+        console.error(err);
+        alert('Error actualizando perfil');
+    });
+}
 
 function cerrarSesion() {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        inicioCierre("CIERRE", id_maestro);
         localStorage.clear();
         sessionStorage.clear();
         window.location.href = "inicio.html";
     }
+}
+function inicioCierre(accion, id_user) {
+    const data = {
+        accion: accion.toUpperCase(),
+        id_user: id_user
+    };
+
+    fetch("php/bitUsuario.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.exito) {
+            console.log("Bitácora registrada:", result.mensaje);
+        } else {
+            console.error("Error al registrar bitácora:", result.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error("Error en la conexión con el servidor:", error);
+    });
+}
+// ---------- Edit modals and submitters ----------
+function showEditModuleModal(id_modulo, titulo, orden) {
+    const modalHTML = `
+        <div id="edit-module-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Módulo</h3>
+                    <button class="modal-close" id="close-edit-module">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-module-form">
+                        <div class="form-group">
+                            <label for="edit-module-title">Título:</label>
+                            <input type="text" id="edit-module-title" value="${escapeHTML(titulo)}" required maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-module-order">Orden:</label>
+                            <input type="number" id="edit-module-order" value="${orden}" required min="1">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-edit-module">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('close-edit-module').addEventListener('click', () => document.getElementById('edit-module-modal').remove());
+    document.getElementById('cancel-edit-module').addEventListener('click', () => document.getElementById('edit-module-modal').remove());
+    document.getElementById('edit-module-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        submitEditModule(id_modulo);
+    });
+}
+
+function submitEditModule(id_modulo) {
+    const titulo = document.getElementById('edit-module-title').value.trim();
+    const orden = parseInt(document.getElementById('edit-module-order').value);
+    const courseId = localStorage.getItem('current_course_id');
+    if (!titulo) return alert('Título requerido');
+    if (!orden || orden <= 0) return alert('Orden debe ser mayor que 0');
+
+    fetch('php/moduloEdit.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_modulo, titulo, orden, id_periodo_curso: courseId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Módulo actualizado');
+            document.getElementById('edit-module-modal').remove();
+            loadCourseModules(localStorage.getItem('current_course_id'));
+        } else {
+            alert('Error: ' + (data.message || data.mensaje || '')); 
+        }
+    }).catch(err => { console.error(err); alert('Error editando módulo'); });
+}
+
+function showEditTemaModal(id_tema, titulo) {
+    // Note: temas table only stores title in current schema. Editing description not supported unless DB changed.
+    const modalHTML = `
+        <div id="edit-tema-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Tema</h3>
+                    <button class="modal-close" id="close-edit-tema">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-tema-form">
+                        <div class="form-group">
+                            <label for="edit-tema-title">Título:</label>
+                            <input type="text" id="edit-tema-title" value="${escapeHTML(titulo)}" required maxlength="150">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-edit-tema">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('close-edit-tema').addEventListener('click', () => document.getElementById('edit-tema-modal').remove());
+    document.getElementById('cancel-edit-tema').addEventListener('click', () => document.getElementById('edit-tema-modal').remove());
+    document.getElementById('edit-tema-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        submitEditTema(id_tema);
+    });
+}
+
+function submitEditTema(id_tema) {
+    const titulo = document.getElementById('edit-tema-title').value.trim();
+    if (!titulo) return alert('Título requerido');
+    fetch('php/temasEdit.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_tema, titulo })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Tema actualizado');
+            document.getElementById('edit-tema-modal').remove();
+            loadCourseModules(localStorage.getItem('current_course_id'));
+        } else {
+            alert('Error: ' + (data.message || data.mensaje || ''));
+        }
+    }).catch(err => { console.error(err); alert('Error editando tema'); });
+}
+
+function showEditTareaModal(id_tarea, titulo, descripcion, fecha_entrega, hora_entrega, fecha_emision, hora_emision) {
+    const modalHTML = `
+        <div id="edit-tarea-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Tarea</h3>
+                    <button class="modal-close" id="close-edit-tarea">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-tarea-form" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="edit-tarea-title">Título:</label>
+                            <input type="text" id="edit-tarea-title" value="${escapeHTML(titulo)}" required maxlength="150">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-tarea-desc">Descripción:</label>
+                            <textarea id="edit-tarea-desc" rows="4">${escapeHTML(descripcion||'')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-tarea-fecha-entrega">Fecha de Entrega:</label>
+                            <input type="date" id="edit-tarea-fecha-entrega" value="${fecha_entrega}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-tarea-hora-entrega">Hora de Entrega:</label>
+                            <input type="time" id="edit-tarea-hora-entrega" value="${hora_entrega}">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-edit-tarea">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    const editModal = document.getElementById('edit-tarea-modal');
+    // Store emisión values in dataset for validation on submit
+    if (fecha_emision) editModal.dataset.fechaEmision = fecha_emision;
+    if (hora_emision) editModal.dataset.horaEmision = hora_emision;
+
+    document.getElementById('close-edit-tarea').addEventListener('click', () => editModal.remove());
+    document.getElementById('cancel-edit-tarea').addEventListener('click', () => editModal.remove());
+    document.getElementById('edit-tarea-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        submitEditTarea(id_tarea);
+    });
+}
+
+function submitEditTarea(id_tarea) {
+    const titulo = document.getElementById('edit-tarea-title').value.trim();
+    const descripcion = document.getElementById('edit-tarea-desc').value.trim();
+    const fecha_entrega = document.getElementById('edit-tarea-fecha-entrega').value;
+    const hora_entrega = document.getElementById('edit-tarea-hora-entrega').value;
+    if (!titulo) return alert('Título requerido');
+    // validate date/time if provided: ensure entrega > emisión if emission data available
+    const editModal = document.getElementById('edit-tarea-modal');
+    const fecha_emision = editModal ? editModal.dataset.fechaEmision : null;
+    const hora_emision = editModal ? editModal.dataset.horaEmision : null;
+    if (fecha_entrega && hora_entrega && fecha_emision && hora_emision) {
+        const emission = new Date(fecha_emision + 'T' + hora_emision);
+        const entrega = new Date(fecha_entrega + 'T' + hora_entrega);
+        if (entrega <= emission) {
+            alert('La fecha/hora de entrega no puede ser menor o igual a la fecha/hora de emisión');
+            return;
+        }
+    }
+
+    const formData = new FormData();
+    formData.append('id_tarea', id_tarea);
+    formData.append('titulo', titulo);
+    formData.append('descripcion', descripcion);
+    formData.append('fecha_entrega', fecha_entrega);
+    formData.append('hora_entrega', hora_entrega);
+
+    fetch('php/tareaEdit.php', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Tarea actualizada');
+            document.getElementById('edit-tarea-modal').remove();
+            loadCourseModules(localStorage.getItem('current_course_id'));
+        } else {
+            alert('Error: ' + (data.message || data.mensaje || ''));
+        }
+    }).catch(err => { console.error(err); alert('Error editando tarea'); });
+}
+
+function showEditEvaluacionModal(id_eval, titulo, descripcion, fecha_inicio, hora_inicio, fecha_entrega, hora_entrega) {
+    const modalHTML = `
+        <div id="edit-eval-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Evaluación</h3>
+                    <button class="modal-close" id="close-edit-eval">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-eval-form">
+                        <div class="form-group">
+                            <label for="edit-eval-title">Título:</label>
+                            <input type="text" id="edit-eval-title" value="${escapeHTML(titulo)}" required maxlength="150">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-eval-desc">Descripción:</label>
+                            <textarea id="edit-eval-desc" rows="4">${escapeHTML(descripcion||'')}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-eval-fecha-inicio">Fecha Inicio:</label>
+                            <input type="date" id="edit-eval-fecha-inicio" value="${fecha_inicio}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-eval-hora-inicio">Hora Inicio:</label>
+                            <input type="time" id="edit-eval-hora-inicio" value="${hora_inicio}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-eval-fecha-entrega">Fecha Fin:</label>
+                            <input type="date" id="edit-eval-fecha-entrega" value="${fecha_entrega}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-eval-hora-entrega">Hora Fin:</label>
+                            <input type="time" id="edit-eval-hora-entrega" value="${hora_entrega}">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="back" id="cancel-edit-eval">Cancelar</button>
+                            <button type="submit" class="shiny">Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('close-edit-eval').addEventListener('click', () => document.getElementById('edit-eval-modal').remove());
+    document.getElementById('cancel-edit-eval').addEventListener('click', () => document.getElementById('edit-eval-modal').remove());
+    document.getElementById('edit-eval-form').addEventListener('submit', function(e){
+        e.preventDefault();
+        submitEditEvaluacion(id_eval);
+    });
+}
+
+function submitEditEvaluacion(id_eval) {
+    const titulo = document.getElementById('edit-eval-title').value.trim();
+    const descripcion = document.getElementById('edit-eval-desc').value.trim();
+    const fecha_inicio = document.getElementById('edit-eval-fecha-inicio').value;
+    const hora_inicio = document.getElementById('edit-eval-hora-inicio').value;
+    const fecha_entrega = document.getElementById('edit-eval-fecha-entrega').value;
+    const hora_entrega = document.getElementById('edit-eval-hora-entrega').value;
+
+    if (!titulo) return alert('Título requerido');
+    // Validate end > start if both provided
+    if (fecha_inicio && hora_inicio && fecha_entrega && hora_entrega) {
+        const start = new Date(fecha_inicio + 'T' + hora_inicio);
+        const end = new Date(fecha_entrega + 'T' + hora_entrega);
+        if (end <= start) return alert('La fecha/hora de fin debe ser mayor a la de inicio');
+    }
+
+    const formData = new FormData();
+    formData.append('id_evaluacion', id_eval);
+    formData.append('titulo', titulo);
+    formData.append('descripcion', descripcion);
+    formData.append('fecha_inicio', fecha_inicio);
+    formData.append('hora_inicio', hora_inicio);
+    formData.append('fecha_entrega', fecha_entrega);
+    formData.append('hora_entrega', hora_entrega);
+
+    fetch('php/evaluacionEdit.php', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Evaluación actualizada');
+            document.getElementById('edit-eval-modal').remove();
+            loadCourseModules(localStorage.getItem('current_course_id'));
+        } else {
+            alert('Error: ' + (data.message || data.mensaje || ''));
+        }
+    }).catch(err => { console.error(err); alert('Error editando evaluación'); });
 }

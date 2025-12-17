@@ -2,8 +2,8 @@
 include "conexion.php";
 header("Content-Type: application/json");
 
-$id_estudiante = $_GET["id_estudiante"];
-$id_periodo = $_GET["id_periodo_curso"];
+$id_estudiante = $_GET["id_estudiante"] ?? 0;
+$id_periodo = $_GET["id_periodo_curso"] ?? 0;
 
 $sql = "
     SELECT
@@ -22,11 +22,14 @@ $sql = "
     INNER JOIN PERIODO_CURSO pc ON ce.id_periodo_curso = pc.id_periodo_curso
     INNER JOIN USUARIO um ON pc.id_maestro = um.id_user
     INNER JOIN CURSO c ON pc.id_curso = c.id_curso
-    WHERE ce.id_estudiante = $id_estudiante
-    AND ce.id_periodo_curso = $id_periodo
+    WHERE ce.id_estudiante = ?
+    AND ce.id_periodo_curso = ?
 ";
 
-$res = $conexion->query($sql);
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param("ii", $id_estudiante, $id_periodo);
+$stmt->execute();
+$res = $stmt->get_result();
 
 if ($res && $res->num_rows > 0) {
     echo json_encode(['success' => true, 'data' => $res->fetch_assoc()]);

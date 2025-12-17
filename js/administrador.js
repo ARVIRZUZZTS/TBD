@@ -2,6 +2,7 @@ let botonesOriginal = "";
 let contenidoOriginal = "";
 
 const id_actual = localStorage.getItem("id_actual");
+const id_actual = localStorage.getItem("id_user");
 const usuario = localStorage.getItem("usuario");
 
 if (!id_actual || !usuario) {
@@ -9,15 +10,48 @@ if (!id_actual || !usuario) {
     window.location = "inicio.html";
 }
 
-document.addEventListener("DOMContentLoaded", function(){
+document.addEventListener("DOMContentLoaded", function () {
     const botones = document.getElementById("botones");
     const dinamic = document.getElementById("dinamic");
     botonesOriginal = botones.innerHTML;
     contenidoOriginal = dinamic.innerHTML;
+    
+    // Registrar inicio de sesión si no se ha registrado aún
+    registrarInicioSesion();
     setUs();
 });
 
-function setUs() { //esta funcion hacerla pero de manera general segun el rol que esta en el localstorage "rol"
+// Función para registrar el inicio de sesión en bitácora
+function registrarInicioSesion() {
+    if (!sessionStorage.getItem('bitacora_inicio_registrada')) {
+        const data = {
+            accion: "INICIO",
+            id_user: parseInt(id_actual)
+        };
+
+        fetch("php/bitUsuario.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.exito) {
+                console.log("Inicio de sesión registrado en bitácora");
+                sessionStorage.setItem('bitacora_inicio_registrada', 'true');
+            } else {
+                console.error("Error al registrar inicio:", result.mensaje);
+            }
+        })
+        .catch(error => {
+            console.error("Error en la conexión:", error);
+        });
+    }
+}
+
+function setUs() {
     const usInp = document.getElementById("user");
     usInp.textContent = usuario;
     const dina = document.getElementById("dinamic");
@@ -33,32 +67,32 @@ function curso() { // 25 Adm: CURSOS Reporte 0
         <button class="shiny" onclick="area()">Áreas</button>
         <button class="shiny" onclick="descuentos()">Descuentos</button>
         <button class="back" onclick="back()">Atrás</button>
-    `;  
-    
+    `;
+
     fetch("php/cursoGetAll.php", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
 
-        
-        const header = document.createElement("div");
-        header.className = "cursosActTitle";
-        header.innerHTML = `
+
+            const header = document.createElement("div");
+            header.className = "cursosActTitle";
+            header.innerHTML = `
             <h3>Lista de Cursos</h3>
             <button class="shiny" onclick="nuevoCurso()">Nuevo Curso</button>
         `;
-        dinamic.appendChild(header);
-        
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.style.overflowY = "auto";
-        tableContainer.style.maxHeight = "50vh";
-        tableContainer.innerHTML = `
+            dinamic.appendChild(header);
+
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.style.overflowY = "auto";
+            tableContainer.style.maxHeight = "50vh";
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -78,13 +112,13 @@ function curso() { // 25 Adm: CURSOS Reporte 0
                 </tbody>
             </table>
         `;
-        dinamic.appendChild(tableContainer);
-        
-        if (data.success && data.cursos && data.cursos.length > 0) {
-            const tbody = document.getElementById("tabla-cursos");
-            data.cursos.forEach(curso => {
-                const fila = document.createElement("tr");
-                fila.innerHTML = `
+            dinamic.appendChild(tableContainer);
+
+            if (data.success && data.cursos && data.cursos.length > 0) {
+                const tbody = document.getElementById("tabla-cursos");
+                data.cursos.forEach(curso => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
                     <td>${curso.id_curso}</td>
                     <td>${curso.titulo}</td>
                     <td>${curso.duracion}</td>
@@ -99,17 +133,17 @@ function curso() { // 25 Adm: CURSOS Reporte 0
                         </button>
                     </td>
                 `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.message || 'No se encontraron cursos'}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener cursos:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
-    });
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.message || 'No se encontraron cursos'}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener cursos:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML = `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+        });
 }
 function cursosActivos() { // 30 Adm: Reporte de Periodo Curso 25
     const dinamic = document.getElementById("dinamic");
@@ -202,6 +236,7 @@ function renderTablaPeriodos(periodos) {
         tbody.appendChild(tr);
     });
 }
+
 function masOpcionesPCurso(element, idPeriodoCurso, tituloCurso) {
     const menuExistente = document.getElementById('opcionesMenu');
     if (menuExistente) menuExistente.remove();
@@ -308,7 +343,6 @@ function masOpcionesPCurso(element, idPeriodoCurso, tituloCurso) {
         });
 }
 
-
 // ==================== FUNCIONES DE ÁREAS ====================
 function area() {
     const botones = document.getElementById("botones");
@@ -316,8 +350,8 @@ function area() {
         <button class="shiny" onclick="nuevaArea()">Nueva Área</button>
         <button class="shiny" onclick="verAreas()">Ver Áreas</button>
         <button class="back" onclick="curso()">Atrás</button>
-    `;  
-    
+    `;
+
     const dinamic = document.getElementById("dinamic");
     dinamic.style.justifyContent = "flex-start";
     dinamic.innerHTML = `
@@ -346,7 +380,7 @@ function nuevaArea() { // 34 Adm: Nueva Area 25
 
 function guardarArea() {
     const nombreArea = document.getElementById("nombreArea").value.trim();
-    
+
     if (nombreArea === "") {
         alert("Por favor, ingrese un nombre para el área");
         return;
@@ -357,17 +391,17 @@ function guardarArea() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombreArea: nombreArea })
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensaje);
-        if (data.exito) {
-            area();
-        }
-    })
-    .catch(err => {
-        console.error("Error al guardar área:", err);
-        alert("Error al guardar el área");
-    });
+        .then(res => res.json())
+        .then(data => {
+            alert(data.mensaje);
+            if (data.exito) {
+                area();
+            }
+        })
+        .catch(err => {
+            console.error("Error al guardar área:", err);
+            alert("Error al guardar el área");
+        });
 }
 
 function verAreas() { // 33 Adm: Reporte de Areas 25
@@ -375,22 +409,22 @@ function verAreas() { // 33 Adm: Reporte de Areas 25
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
-        
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de Áreas</h3>`;
-        dinamic.appendChild(titleM);
-        
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.style.overflowY = "auto";
-        tableContainer.style.maxHeight = "50vh";
-        tableContainer.innerHTML = `
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
+
+            const titleM = document.createElement("div");
+            titleM.id = "titleM";
+            titleM.innerHTML = `<h3>Lista de Áreas</h3>`;
+            dinamic.appendChild(titleM);
+
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.style.overflowY = "auto";
+            tableContainer.style.maxHeight = "50vh";
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -403,27 +437,27 @@ function verAreas() { // 33 Adm: Reporte de Areas 25
                 </tbody>
             </table>
         `;
-        dinamic.appendChild(tableContainer);
-        
-        if (data.exito) {
-            const tbody = document.getElementById("tabla-areas");
-            data.areas.forEach(area => {
-                const fila = document.createElement("tr");
-                fila.innerHTML = `
+            dinamic.appendChild(tableContainer);
+
+            if (data.exito) {
+                const tbody = document.getElementById("tabla-areas");
+                data.areas.forEach(area => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
                     <td>${area.id_area}</td>
                     <td>${area.nombre_area}</td>
                 `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener áreas:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
-    });
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener áreas:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+        });
 }
 
 function nuevoCurso() { // 26 Adm: Nuevo Curso 25
@@ -470,7 +504,7 @@ function nuevoCurso() { // 26 Adm: Nuevo Curso 25
             </div>
         </div>
     `;
-    
+
     cargarComboboxAreas();
     cargarComboboxGrados();
     cargarComboboxCategorias();
@@ -544,14 +578,14 @@ function guardarCurso() {
         inicio_gestion: document.getElementById("inicio_gestion").value,
         fin_gestion: document.getElementById("fin_gestion").value
     };
-    
-    if (datos.titulo === "" || datos.duracion === "" || datos.id_area === "" || 
+
+    if (datos.titulo === "" || datos.duracion === "" || datos.id_area === "" ||
         datos.id_grado === "" || datos.id_categoria === "" || datos.modalidad === "" ||
         datos.inicio_gestion === "" || datos.fin_gestion === "") {
         alert("Todos los campos son obligatorios.");
         return;
     }
-    
+
     if (new Date(datos.fin_gestion) <= new Date(datos.inicio_gestion)) {
         alert("La fecha de fin debe ser posterior a la fecha de inicio.");
         return;
@@ -562,16 +596,16 @@ function guardarCurso() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.exito) {
-            curso();
-        }
-    })
-    .catch(err => {
-        console.error("Error al guardar curso:", err);
-        alert("Error al guardar el curso");
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                curso();
+            }
+        })
+        .catch(err => {
+            console.error("Error al guardar curso:", err);
+            alert("Error al guardar el curso");
+        });
 }
 
 function eliminarCurso(idCurso, titulo) {
@@ -582,14 +616,14 @@ function eliminarCurso(idCurso, titulo) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idCurso })
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.message);
-        if (data.success) {
-            curso();
-        }
-    })
-    .catch(err => console.error("Error al eliminar curso:", err));
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            if (data.success) {
+                curso();
+            }
+        })
+        .catch(err => console.error("Error al eliminar curso:", err));
 }
 
 // ==================== FUNCIONES DE TRABAJADORES ========================================================================
@@ -599,25 +633,25 @@ function trabajador() { // esta funcion es // 1 Adm: TRABAJADORES reporte 0
         <button class="shiny" onclick="roles()">Roles</button>
         <button class="shiny" onclick="nuevoTra()">Nuevo Trabajador</button>
         <button class="back" onclick="back()">Atrás</button>
-    `;  
+    `;
     fetch("php/maestrosGet.php", {
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
-        
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de trabajadores</h3>`;
-        dinamic.appendChild(titleM);
-        
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.innerHTML = `
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
+
+            const titleM = document.createElement("div");
+            titleM.id = "titleM";
+            titleM.innerHTML = `<h3>Lista de trabajadores</h3>`;
+            dinamic.appendChild(titleM);
+
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -634,13 +668,13 @@ function trabajador() { // esta funcion es // 1 Adm: TRABAJADORES reporte 0
                 </tbody>
             </table>
         `;
-        dinamic.appendChild(tableContainer);
-        
-        if (data.exito) {
-            const tbody = document.getElementById("tabla-maestros");
-            data.maestros.forEach(m => {
-                const fila = document.createElement("tr");
-                fila.innerHTML = `
+            dinamic.appendChild(tableContainer);
+
+            if (data.exito) {
+                const tbody = document.getElementById("tabla-maestros");
+                data.maestros.forEach(m => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
                     <td>${m.nombre}</td>
                     <td>${m.apellido}</td>
                     <td>${m.ci}</td>
@@ -648,17 +682,17 @@ function trabajador() { // esta funcion es // 1 Adm: TRABAJADORES reporte 0
                     <td>${m.correo}</td>
                     <td>${m.edad}</td>
                 `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener maestros:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
-    });
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener maestros:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+        });
 }
 
 function roles() { // id = 2, nombre_permiso = Adm: Reporte de Roles subpermiso = 1
@@ -717,16 +751,16 @@ function nuevoRol() { // 5 Adm: Nuevo Rol 1
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombreRol: nombre })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.exito) {
-            document.getElementById("rolNuevo").value = "";
-            roles();
-        } else {
-            alert(data.mensaje);
-        }
-    })
-    .catch(err => console.error("Error al guardar rol:", err));
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                document.getElementById("rolNuevo").value = "";
+                roles();
+            } else {
+                alert(data.mensaje);
+            }
+        })
+        .catch(err => console.error("Error al guardar rol:", err));
 }
 
 function editarRol(idRol, nombreActual) { // 3 Adm: Editar Roles 1
@@ -756,11 +790,11 @@ function guardarEdicion(idRol) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idRol, nombreNuevo })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.exito) roles();
-    })
-    .catch(err => console.error("Error al editar rol:", err));
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) roles();
+        })
+        .catch(err => console.error("Error al editar rol:", err));
 }
 
 function eliminarRol(idRol, nombreRol) { // 4 Adm: Eliminar Roles 1
@@ -771,11 +805,11 @@ function eliminarRol(idRol, nombreRol) { // 4 Adm: Eliminar Roles 1
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idRol })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.exito) roles();
-    })
-    .catch(err => console.error("Error al eliminar rol:", err));
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) roles();
+        })
+        .catch(err => console.error("Error al eliminar rol:", err));
 }
 
 function nuevoTra() { // 6 Adm: Nuevo Trabajador 1
@@ -803,7 +837,7 @@ function nuevoTra() { // 6 Adm: Nuevo Trabajador 1
             </div>
         </div>
     `;
-    
+
     fetch("php/rolGetFil.php")
         .then(res => res.json())
         .then(data => {
@@ -818,7 +852,7 @@ function nuevoTra() { // 6 Adm: Nuevo Trabajador 1
                 console.error(data.mensaje);
             }
         })
-    .catch(err => console.error("Error al obtener roles:", err));
+        .catch(err => console.error("Error al obtener roles:", err));
 }
 
 function nuevoMaestro() {
@@ -847,14 +881,14 @@ function nuevoMaestro() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensaje);
-        if (data.exito) {
-            trabajador();
-        }
-    })
-    .catch(err => console.error("Error al guardar maestro:", err));
+        .then(res => res.json())
+        .then(data => {
+            alert(data.mensaje);
+            if (data.exito) {
+                trabajador();
+            }
+        })
+        .catch(err => console.error("Error al guardar maestro:", err));
 }
 
 // ==================== FUNCIONES GENERALES ====================
@@ -881,20 +915,20 @@ function estudiante() { // 9 Adm: ESTUDIANTES Reporte 0
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
 
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de Estudiantes</h3>`;
-        dinamic.appendChild(titleM);
+            const titleM = document.createElement("div");
+            titleM.id = "titleM";
+            titleM.innerHTML = `<h3>Lista de Estudiantes</h3>`;
+            dinamic.appendChild(titleM);
 
-        const filtro = document.createElement("div");
-        filtro.className = "selectBox";
-        filtro.innerHTML = `
+            const filtro = document.createElement("div");
+            filtro.className = "selectBox";
+            filtro.innerHTML = `
             <div>
                 <h4>Ordenar estudiantes según:</h4>
                 <select id="ordenSelect" onchange="cargarEstudiantes()">
@@ -905,11 +939,11 @@ function estudiante() { // 9 Adm: ESTUDIANTES Reporte 0
                 </select>
             </div>
         `;
-        dinamic.appendChild(filtro);
- 
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.innerHTML = `
+            dinamic.appendChild(filtro);
+
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -926,19 +960,19 @@ function estudiante() { // 9 Adm: ESTUDIANTES Reporte 0
                 <tbody id="tabla-estudiantes"></tbody>
             </table>
         `;
-        dinamic.appendChild(tableContainer);
+            dinamic.appendChild(tableContainer);
 
-        if (data.exito) {
-            cargarTablaEstudiantes(data.estudiantes);
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener estudiantes:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
-    });
+            if (data.exito) {
+                cargarTablaEstudiantes(data.estudiantes);
+            } else {
+                tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener estudiantes:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+        });
 }
 
 function cargarEstudiantes() {
@@ -982,31 +1016,31 @@ function ranking() { // 19 Adm: Reporte de Ranking 9
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
 
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de Rangos</h3>`;
-        dinamic.appendChild(titleM);
+            const titleM = document.createElement("div");
+            titleM.id = "titleM";
+            titleM.innerHTML = `<h3>Lista de Rangos</h3>`;
+            dinamic.appendChild(titleM);
 
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        dinamic.appendChild(tableContainer);
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            dinamic.appendChild(tableContainer);
 
-        if (!data.exito || !data.rankings || data.rankings.length === 0) {
-            tableContainer.innerHTML = `
+            if (!data.exito || !data.rankings || data.rankings.length === 0) {
+                tableContainer.innerHTML = `
                 <p style="padding: 20px; text-align: center; color: gray;">
                     No se encontraron rangos
                 </p>
             `;
-            return;
-        }
+                return;
+            }
 
-        tableContainer.innerHTML = `
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -1021,12 +1055,12 @@ function ranking() { // 19 Adm: Reporte de Ranking 9
             </table>
         `;
 
-        const tbody = document.getElementById("tabla-ranking");
-        tbody.innerHTML = "";
+            const tbody = document.getElementById("tabla-ranking");
+            tbody.innerHTML = "";
 
-        data.rankings.forEach(r => {
-            const fila = document.createElement("tr");
-            fila.innerHTML = `
+            data.rankings.forEach(r => {
+                const fila = document.createElement("tr");
+                fila.innerHTML = `
                 <td>${r.ranking}</td>
                 <td>${r.limite_inferior}</td>
                 <td>${r.limite_superior}</td>
@@ -1037,18 +1071,18 @@ function ranking() { // 19 Adm: Reporte de Ranking 9
                     </button>
                 </td>
             `;
-            tbody.appendChild(fila);
-        });
-    })
-    .catch(err => {
-        console.error("Error al obtener rankings:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `
+                tbody.appendChild(fila);
+            });
+        })
+        .catch(err => {
+            console.error("Error al obtener rankings:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML += `
             <p style="color: red; padding: 20px; text-align: center;">
                 Error al cargar los datos
             </p>
         `;
-    });
+        });
 }
 
 
@@ -1133,20 +1167,20 @@ function becas() { // 16 Adm: Reporte de Becas 9
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
 
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Lista de Becas</h3>`;
-        dinamic.appendChild(titleM);
+            const titleM = document.createElement("div");
+            titleM.id = "titleM";
+            titleM.innerHTML = `<h3>Lista de Becas</h3>`;
+            dinamic.appendChild(titleM);
 
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.innerHTML = `
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -1161,14 +1195,14 @@ function becas() { // 16 Adm: Reporte de Becas 9
                 <tbody id="tabla-becas"></tbody>
             </table>
         `;
-        dinamic.appendChild(tableContainer);
+            dinamic.appendChild(tableContainer);
 
-        if (data.exito) {
-            const tbody = document.getElementById("tabla-becas");
-            tbody.innerHTML = "";
-            data.becas.forEach(b => {
-                const fila = document.createElement("tr");
-                fila.innerHTML = `
+            if (data.exito) {
+                const tbody = document.getElementById("tabla-becas");
+                tbody.innerHTML = "";
+                data.becas.forEach(b => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
                     <td>${b.id_estudiante}</td>
                     <td>${b.nombre} ${b.apellido}</td>
                     <td>${b.nombre_area}</td>
@@ -1180,17 +1214,17 @@ function becas() { // 16 Adm: Reporte de Becas 9
                         </button>
                     </td>
                 `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener becas:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
-    });
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener becas:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+        });
 }
 
 function infoEst(id_user) { // 10 Adm-Est: Informacion de un Estudiante 9
@@ -1364,17 +1398,17 @@ function guardarBeca(id_user) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensaje);
-        if (data.exito) {
-            infoEst(id_user);
-        }
-    })
-    .catch(err => {
-        console.error("Error al guardar beca:", err);
-        alert("Error al guardar la beca");
-    });
+        .then(res => res.json())
+        .then(data => {
+            alert(data.mensaje);
+            if (data.exito) {
+                infoEst(id_user);
+            }
+        })
+        .catch(err => {
+            console.error("Error al guardar beca:", err);
+            alert("Error al guardar la beca");
+        });
 }
 function graficos() { // 21 Adm: Reporte Grafico Por Estado 9
     const botones = document.getElementById("botones");
@@ -1404,6 +1438,7 @@ function graficos() { // 21 Adm: Reporte Grafico Por Estado 9
                 <option value="ranking">Estudiantes por Ranking</option>
                 <option value="categorias">Cursos por Categoría</option>
                 <option value="promedios">Estudiantes por Promedio</option>
+                <option value="asistencia">Asistencia por Curso</option>
             </select>
         </div>
     `;
@@ -1421,11 +1456,11 @@ function graficos() { // 21 Adm: Reporte Grafico Por Estado 9
     chartContainer.style.backgroundColor = "white";
     chartContainer.style.borderRadius = "10px";
     chartContainer.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)";
-    
+
     const canvas = document.createElement("canvas");
     canvas.id = "graficoChart";
     chartContainer.appendChild(canvas);
-    
+
     const statsContainer = document.createElement("div");
     statsContainer.id = "stats-container";
     statsContainer.style.marginTop = "20px";
@@ -1444,49 +1479,49 @@ let graficoActual = null;
 function cargarGrafico() {
     const tipo = document.getElementById("tipoGrafico").value;
     const statsContainer = document.getElementById("stats-container");
-    
+
     statsContainer.innerHTML = '<p style="text-align: center;">Cargando datos...</p>';
-    
+
     fetch(`php/graficosGet.php?tipo=${tipo}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.exito) {
-            crearGraficoTarta(data);
-            mostrarEstadisticas(data);
-        } else {
-            statsContainer.innerHTML = `<p style="color: red; text-align: center;">${data.mensaje}</p>`;
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                crearGraficoTarta(data);
+                mostrarEstadisticas(data);
+            } else {
+                statsContainer.innerHTML = `<p style="color: red; text-align: center;">${data.mensaje}</p>`;
+                if (graficoActual) {
+                    graficoActual.destroy();
+                    graficoActual = null;
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Error al cargar gráfico:", err);
+            statsContainer.innerHTML = '<p style="color: red; text-align: center;">Error al cargar los datos del gráfico</p>';
             if (graficoActual) {
                 graficoActual.destroy();
                 graficoActual = null;
             }
-        }
-    })
-    .catch(err => {
-        console.error("Error al cargar gráfico:", err);
-        statsContainer.innerHTML = '<p style="color: red; text-align: center;">Error al cargar los datos del gráfico</p>';
-        if (graficoActual) {
-            graficoActual.destroy();
-            graficoActual = null;
-        }
-    });
+        });
 }
 
 function crearGraficoTarta(data) {
     const ctx = document.getElementById('graficoChart').getContext('2d');
-    
+
     if (graficoActual) {
         graficoActual.destroy();
     }
-    
+
     const colores = generarColores(data.labels.length);
-    
+
     let titulo = '';
     let opcionesPersonalizadas = {};
-    
-    switch(data.tipo) {
+
+    switch (data.tipo) {
         case 'estudiantes':
             titulo = 'Distribución de Estudiantes por Estado';
             break;
@@ -1503,13 +1538,13 @@ function crearGraficoTarta(data) {
                             padding: 10,
                             boxWidth: 12,
                             boxHeight: 12,
-                            generateLabels: function(chart) {
+                            generateLabels: function (chart) {
                                 const data = chart.data;
                                 if (data.labels.length && data.datasets.length) {
-                                    return data.labels.map(function(label, i) {
+                                    return data.labels.map(function (label, i) {
                                         const meta = chart.getDatasetMeta(0);
                                         const style = meta.controller.getStyle(i);
-                                        
+
                                         return {
                                             text: label,
                                             fillStyle: style.backgroundColor,
@@ -1540,15 +1575,24 @@ function crearGraficoTarta(data) {
             break;
         case 'promedios':
             titulo = 'Distribución de Estudiantes por Rango de Promedio';
+        case 'asistencia':
+            titulo = 'Asistencia por Curso';
             break;
     }
-    
+
+    // Determinar tipo de gráfico
+    let chartType = 'pie';
+    if (data.tipo === 'asistencia') {
+        chartType = 'bar';
+    }
+
+    // Configuración base
     const opcionesBase = {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'right',
+                position: chartType === 'pie' ? 'right' : 'top',
                 labels: {
                     font: {
                         size: 12
@@ -1572,12 +1616,15 @@ function crearGraficoTarta(data) {
             },
             tooltip: {
                 callbacks: {
-                    label: function(context) {
+                    label: function (context) {
                         const label = context.label || '';
                         const value = context.raw || 0;
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        const percentage = Math.round((value / total) * 100);
-                        return `${label}: ${value} (${percentage}%)`;
+                        if (chartType === 'pie') {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((value / total) * 100);
+                            return `${label}: ${value} (${percentage}%)`;
+                        }
+                        return `${label}: ${value}`;
                     }
                 }
             }
@@ -1591,18 +1638,24 @@ function crearGraficoTarta(data) {
     };
     
     const opcionesFinales = deepMerge(opcionesBase, opcionesPersonalizadas);
-    
+
     graficoActual = new Chart(ctx, {
-        type: 'pie',
+        type: chartType,
         data: {
             labels: data.labels,
             datasets: [{
+                label: chartType === 'bar' ? 'Asistencia' : '',
                 data: data.valores,
                 backgroundColor: colores,
                 borderColor: 'white',
                 borderWidth: 2,
                 hoverBorderWidth: 3,
                 hoverOffset: 10 
+                backgroundColor: chartType === 'bar' ? 'rgba(54, 162, 235, 0.6)' : colores,
+                borderColor: chartType === 'bar' ? 'rgba(54, 162, 235, 1)' : 'white',
+                borderWidth: chartType === 'bar' ? 1 : 2,
+                hoverBorderWidth: chartType === 'bar' ? 2 : 3,
+                hoverOffset: chartType === 'pie' ? 10 : 0  // Efecto hover solo para pie
             }]
         },
         options: opcionesFinales
@@ -1640,7 +1693,7 @@ function isObject(item) {
 
 function generarColores(cantidad, tipo = '') {
     const paleta = [
-        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
         '#9966FF', '#FF9F40', '#8AC926', '#1982C4',
         '#6A4C93', '#F15BB5', '#00BBF9', '#00F5D4',
         '#FF97B7', '#9B5DE5', '#FEE440', '#00F5D4'
@@ -1659,37 +1712,37 @@ function generarColores(cantidad, tipo = '') {
             'Gran Maestro': ['#FF6B6B', '#E65F5F', '#CC5454', '#B34949'],
             'Challenger': ['#FF4500', '#E63D00', '#CC3600', '#B32F00']
         };
-        
+
         const colores = [];
         for (let i = 0; i < cantidad; i++) {
             colores.push(paleta[i % paleta.length]);
         }
         return colores;
     }
-    
+
     const colores = [...paleta];
     while (colores.length < cantidad) {
-        colores.push(`#${Math.floor(Math.random()*16777215).toString(16)}`);
+        colores.push(`#${Math.floor(Math.random() * 16777215).toString(16)}`);
     }
-    
+
     return colores.slice(0, cantidad);
 }
 
 function mostrarEstadisticas(data) {
     const statsContainer = document.getElementById("stats-container");
     const total = data.valores.reduce((a, b) => a + b, 0);
-    
+
     let html = `<h4 style="margin-bottom: 15px; color: #333;">Estadísticas:</h4>`;
     html += `<p><strong>Total registros:</strong> ${total}</p>`;
-    
+
     const maxValor = Math.max(...data.valores);
     const minValor = Math.min(...data.valores.filter(v => v > 0));
     const maxIndex = data.valores.indexOf(maxValor);
     const minIndex = data.valores.indexOf(minValor);
-    
-    html += `<p><strong>Mayor cantidad:</strong> ${data.labels[maxIndex]} (${maxValor} - ${Math.round((maxValor/total)*100)}%)</p>`;
-    html += `<p><strong>Menor cantidad:</strong> ${data.labels[minIndex]} (${minValor} - ${Math.round((minValor/total)*100)}%)</p>`;
-    
+
+    html += `<p><strong>Mayor cantidad:</strong> ${data.labels[maxIndex]} (${maxValor} - ${Math.round((maxValor / total) * 100)}%)</p>`;
+    html += `<p><strong>Menor cantidad:</strong> ${data.labels[minIndex]} (${minValor} - ${Math.round((minValor / total) * 100)}%)</p>`;
+
     statsContainer.innerHTML = html;
 }
 function descuentos() { // 37 Adm: Reporte de Descuentos 25
@@ -1755,17 +1808,17 @@ function cargarDescuentos() {
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const tbody = document.getElementById("tabla-descuentos");
-        tbody.innerHTML = "";
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById("tabla-descuentos");
+            tbody.innerHTML = "";
 
-        if (data.exito && data.descuentos.length > 0) {
-            data.descuentos.forEach(d => {
-                const fila = document.createElement("tr");
-                const totalConDescuento = (d.costo * (1 - d.porcentaje_descuento / 100)).toFixed(2);
+            if (data.exito && data.descuentos.length > 0) {
+                data.descuentos.forEach(d => {
+                    const fila = document.createElement("tr");
+                    const totalConDescuento = (d.costo * (1 - d.porcentaje_descuento / 100)).toFixed(2);
 
-                fila.innerHTML = `
+                    fila.innerHTML = `
                     <td>${d.id_descuento}</td>
                     <td>${d.id_periodo_curso}: ${d.titulo}</td>
                     <td>${d.costo_canje}</td>
@@ -1774,17 +1827,17 @@ function cargarDescuentos() {
                     <td>${d.costo}$</td>
                     <td>${totalConDescuento}$</td>
                 `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px;">${data.mensaje || 'No hay descuentos disponibles.'}</td></tr>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener descuentos:", err);
-        const tbody = document.getElementById("tabla-descuentos");
-        tbody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Error al cargar los descuentos</td></tr>`;
-    });
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:15px;">${data.mensaje || 'No hay descuentos disponibles.'}</td></tr>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener descuentos:", err);
+            const tbody = document.getElementById("tabla-descuentos");
+            tbody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Error al cargar los descuentos</td></tr>`;
+        });
 }
 
 function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) { // 38 Adm: Nuevo Descuento 25
@@ -1877,7 +1930,6 @@ function nuevoDescuento(preSeleccionId = null, preSeleccionFechaFin = null) { //
         });
 }
 
-
 function registrarDescuento() {
     const idPeriodo = document.getElementById("idPeriodo").value.trim();
     const costoCanje = document.getElementById("costoCanje").value.trim();
@@ -1903,19 +1955,19 @@ function registrarDescuento() {
             porcentaje_descuento: porcentaje
         })
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.exito) {
-            alert("Descuento registrado con éxito.", true);
-            setTimeout(() => descuentos(), 1500);
-        } else {
-            alert(`Error: ${data.mensaje || "No se pudo registrar el descuento."}`);
-        }
-    })
-    .catch(err => {
-        console.error("Error:", err);
-        alert("Error en la conexión con el servidor.");
-    });
+        .then(res => res.json())
+        .then(data => {
+            if (data.exito) {
+                alert("Descuento registrado con éxito.", true);
+                setTimeout(() => descuentos(), 1500);
+            } else {
+                alert(`Error: ${data.mensaje || "No se pudo registrar el descuento."}`);
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            alert("Error en la conexión con el servidor.");
+        });
 }
 
 
@@ -2056,20 +2108,19 @@ function showCertificado(element, id_estudiante, id_periodo_curso) {
 }
 
 function certificado(id_estudiante, id_periodo_curso, accion) {
-
     fetch(`php/getCertificadoData.php?id_estudiante=${id_estudiante}&id_periodo_curso=${id_periodo_curso}`)
-    .then(r => r.json())
-    .then(data => {
+        .then(r => r.json())
+        .then(data => {
 
-        if (!data.success) {
-            alert("No se pudo generar el certificado");
-            return;
-        }
+            if (!data.success) {
+                alert("No se pudo generar el certificado");
+                return;
+            }
 
-        const d = data.data;
-        const div = document.getElementById("printy");
+            const d = data.data;
+            const div = document.getElementById("printy");
 
-        div.innerHTML = `
+            div.innerHTML = `
             <div>
                 <img src="img/logo.png" id="certLogo">
                 <h1>CERTIFICADO DE FINALIZACIÓN<br>${d.titulo}</h1>
@@ -2088,39 +2139,40 @@ function certificado(id_estudiante, id_periodo_curso, accion) {
             </p>
         `;
 
-        const imgs = div.querySelectorAll("img");
-        let cargas = 0;
+            const imgs = div.querySelectorAll("img");
+            let cargas = 0;
 
-        imgs.forEach(img => {
-            const loader = new Image();
-            loader.onload = () => {
-                cargas++;
-                if (cargas === imgs.length) {
-                    if (accion === "print") {
-                        setTimeout(() => window.print(), 200);
+            imgs.forEach(img => {
+                const loader = new Image();
+                loader.onload = () => {
+                    cargas++;
+                    if (cargas === imgs.length) {
+                        if (accion === "print") {
+                            setTimeout(() => window.print(), 200);
+                        }
+                        if (accion === "pdf") {
+                            descargarPDFCert(div.innerHTML);
+                        }
                     }
-                    if (accion === "pdf") {
-                        descargarPDFCert(div.innerHTML);
+                };
+                loader.onerror = () => {
+                    cargas++;
+                    if (cargas === imgs.length) {
+                        if (accion === "print") {
+                            setTimeout(() => window.print(), 200);
+                        }
+                        if (accion === "pdf") {
+                            descargarPDFCert(div.innerHTML);
+                        }
                     }
-                }
-            };
-            loader.onerror = () => {
-                cargas++;
-                if (cargas === imgs.length) {
-                    if (accion === "print") {
-                        setTimeout(() => window.print(), 200);
-                    }
-                    if (accion === "pdf") {
-                        descargarPDFCert(div.innerHTML);
-                    }
-                }
-            };
-            loader.src = img.src;
-        });
+                };
+                loader.src = img.src;
+            });
 
-    })
-    .catch(e => console.error(e));
+        })
+        .catch(e => console.error(e));
 }
+
 function descargarPDFCert(html) {
     const w = window.open("", "_blank");
     w.document.write(`
@@ -2139,42 +2191,102 @@ function recompensas(id_user) { // 15 Adm-Est: Reporte de Recompensas de UN Estu
 }
 
 function darBaja(id_user) {
-    
+
 }
+
+// ==================== FUNCIÓN PARA CERRAR SESIÓN ====================
 
 function cerrarSesion() {
-    window.location = "inicio.html";
+    if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+        // Obtener el ID del estudiante
+        let idEstudiante = localStorage.getItem('id_user') || sessionStorage.getItem('id_user');
+        
+        if (idEstudiante) {
+            // ✅ Registrar CIERRE - ESPERAR a que se complete
+            fetch("php/bitUsuario.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    accion: "CIERRE",
+                    id_user: idEstudiante
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log("Cierre registrado:", result);
+            })
+            .catch(error => {
+                console.error("Error en bitácora:", error);
+            })
+            .finally(() => {
+                // ✅ Esto se ejecuta DESPUÉS de intentar registrar bitácora
+                localStorage.removeItem('id_user');
+                sessionStorage.removeItem('id_user');
+                window.location.href = "inicio.html";
+            });
+        } else {
+            // Si no hay ID, simplemente redirigir
+            localStorage.removeItem('id_user');
+            sessionStorage.removeItem('id_user');
+            window.location.href = "inicio.html";
+        }
+    }
 }
+// Esta función ya existe y está bien
+function inicioCierre(accion, id_user) {
+    const data = {
+        accion: accion.toUpperCase(),
+        id_user: id_user
+    };
 
-//---------------------------------------------------------------------------------------
+    fetch("php/bitUsuario.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.exito) {
+            console.log("Bitácora registrada:", result.mensaje);
+        } else {
+            console.error("Error al registrar bitácora:", result.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error("Error en la conexión con el servidor:", error);
+    });
+}
+// ==================== FUNCIONES DEL MENÚ DE OPCIONES ====================
 function masOpciones(element, idCurso, tituloCurso) {
     const menuExistente = document.getElementById('opcionesMenu');
-    
+
     if (menuExistente && menuExistente.classList.contains('mostrar')) {
         const rectExistente = menuExistente.getBoundingClientRect();
         const rectActual = element.getBoundingClientRect();
-        
-        if (Math.abs(rectExistente.top - rectActual.bottom) < 10 && 
+
+        if (Math.abs(rectExistente.top - rectActual.bottom) < 10 &&
             Math.abs(rectExistente.left - rectActual.left) < 10) {
             menuExistente.remove();
-            return; 
+            return;
         }
     }
-    
+
     if (menuExistente) {
         menuExistente.remove();
     }
-    
+
     const menu = document.createElement('div');
     menu.id = 'opcionesMenu';
     menu.className = 'menu-opciones';
-    
+
     const opciones = [
         { texto: 'Editar', accion: 'editarCurso' },
         { texto: 'Eliminar', accion: 'eliminarCurso' },
-        {texto: "Asignar Maestro", accion: "asignarMaestro"}
+        { texto: "Asignar Maestro", accion: "asignarMaestro" }
     ];
-    
+
     opciones.forEach(opcion => {
         const botonOpcion = document.createElement('button');
         botonOpcion.className = 'opcion-menu';
@@ -2185,13 +2297,13 @@ function masOpciones(element, idCurso, tituloCurso) {
         };
         menu.appendChild(botonOpcion);
     });
-    
+
     document.body.appendChild(menu);
-    
+
     const rect = element.getBoundingClientRect();
     const scrollY = window.scrollY || window.pageYOffset;
     const scrollX = window.scrollX || window.pageXOffset;
-    
+
     menu.style.top = (rect.bottom + scrollY) + 'px';
     menu.style.left = (rect.left + scrollX) + 'px';
     menu.classList.add('mostrar');
@@ -2202,7 +2314,7 @@ function masOpciones(element, idCurso, tituloCurso) {
             document.removeEventListener('click', cerrarMenu);
         }
     };
-    
+
     setTimeout(() => {
         document.addEventListener('click', cerrarMenu);
     }, 0);
@@ -2210,14 +2322,14 @@ function masOpciones(element, idCurso, tituloCurso) {
 
 function ejecutarAccion(accion, idCurso, tituloCurso) {
     console.log('Ejecutando:', accion, 'para:', tituloCurso);
-    
-    switch(accion) {
+
+    switch (accion) {
         case 'editarCurso':
             alert(`Editando: ${tituloCurso}`);
             break;
         case 'eliminarCurso':
             if (confirm(`¿Eliminar ${tituloCurso}?`)) {
-                eliminarCurso( idCurso, tituloCurso);
+                eliminarCurso(idCurso, tituloCurso);
             }
             break;
         case 'asignarMaestro':
@@ -2226,7 +2338,7 @@ function ejecutarAccion(accion, idCurso, tituloCurso) {
         default:
             break;
     }
-    
+
     const menu = document.getElementById('opcionesMenu');
     if (menu) menu.classList.remove('mostrar');
 }
@@ -2242,26 +2354,26 @@ function asignarMaestro(idCurso, tituloCurso) { // 29 Adm: Asignar Maestro a Cur
         method: "GET",
         headers: { "Content-Type": "application/json" }
     })
-    .then(res => res.json())
-    .then(data => {
-        const dinamic = document.getElementById("dinamic");
-        dinamic.style.justifyContent = "flex-start";
-        dinamic.innerHTML = "";
+        .then(res => res.json())
+        .then(data => {
+            const dinamic = document.getElementById("dinamic");
+            dinamic.style.justifyContent = "flex-start";
+            dinamic.innerHTML = "";
 
-        const titleM = document.createElement("div");
-        titleM.id = "titleM";
-        titleM.innerHTML = `<h3>Seleccionar Maestro para: ${tituloCurso}</h3>`;
-        dinamic.appendChild(titleM);
+            const titleM = document.createElement("div");
+            titleM.id = "titleM";
+            titleM.innerHTML = `<h3>Seleccionar Maestro para: ${tituloCurso}</h3>`;
+            dinamic.appendChild(titleM);
 
-        const infoText = document.createElement("p");
-        infoText.innerHTML = `<strong>Selecciona UN maestro para impartir este curso</strong>`;
-        dinamic.appendChild(infoText);
+            const infoText = document.createElement("p");
+            infoText.innerHTML = `<strong>Selecciona UN maestro para impartir este curso</strong>`;
+            dinamic.appendChild(infoText);
 
-        const tableContainer = document.createElement("div");
-        tableContainer.className = "table-container";
-        tableContainer.style.overflowY = "auto";
-        tableContainer.style.maxHeight = "50vh";
-        tableContainer.innerHTML = `
+            const tableContainer = document.createElement("div");
+            tableContainer.className = "table-container";
+            tableContainer.style.overflowY = "auto";
+            tableContainer.style.maxHeight = "50vh";
+            tableContainer.innerHTML = `
             <table class="data-table">
                 <thead>
                     <tr>
@@ -2277,18 +2389,17 @@ function asignarMaestro(idCurso, tituloCurso) { // 29 Adm: Asignar Maestro a Cur
                 <tbody id="tabla-maestros"></tbody>
             </table>
         `;
-        dinamic.appendChild(tableContainer);
+            dinamic.appendChild(tableContainer);
 
-        if (data.exito && data.maestros) {
-            const tbody = document.getElementById("tabla-maestros");
-            tbody.innerHTML = "";
+            if (data.exito && data.maestros) {
+                const tbody = document.getElementById("tabla-maestros");
+                tbody.innerHTML = "";
 
-            data.maestros.forEach(maestro => {
-                const fila = document.createElement("tr");
-                fila.innerHTML = `
+                data.maestros.forEach(maestro => {
+                    const fila = document.createElement("tr");
+                    fila.innerHTML = `
                     <td>
                         <input type="radio" name="maestroSeleccionado" value="${maestro.id_user}" class="radio-maestro">
-
                     </td>
                     <td>${maestro.nombre || '-'}</td>
                     <td>${maestro.apellido || '-'}</td>
@@ -2297,22 +2408,22 @@ function asignarMaestro(idCurso, tituloCurso) { // 29 Adm: Asignar Maestro a Cur
                     <td>${maestro.correo || '-'}</td>
                     <td>${maestro.telefono || '-'}</td>
                 `;
-                tbody.appendChild(fila);
-            });
-        } else {
-            tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje || 'No se encontraron maestros'}</p>`;
-        }
-    })
-    .catch(err => {
-        console.error("Error al obtener maestros:", err);
-        const dinamic = document.getElementById("dinamic");
-        dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
-    });
+                    tbody.appendChild(fila);
+                });
+            } else {
+                tableContainer.innerHTML += `<p style="padding: 20px; text-align: center;">${data.mensaje || 'No se encontraron maestros'}</p>`;
+            }
+        })
+        .catch(err => {
+            console.error("Error al obtener maestros:", err);
+            const dinamic = document.getElementById("dinamic");
+            dinamic.innerHTML += `<p style="color: red; padding: 20px; text-align: center;">Error al cargar los datos</p>`;
+        });
 }
 
 function guardarMaestroCurso(idCurso) {
     const radioSeleccionado = document.querySelector('input[name="maestroSeleccionado"]:checked');
-    
+
     if (!radioSeleccionado) {
         alert("Por favor, selecciona un maestro para este curso");
         return;
@@ -2331,13 +2442,35 @@ function guardarMaestroCurso(idCurso) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datos)
     })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensaje || data.message);
-        if (data.exito || data.success) curso();
-    })
-    .catch(err => {
-        console.error("Error al asignar maestro:", err);
-        alert("Error al asignar el maestro al curso");
-    });
+        .then(res => res.json())
+        .then(data => {
+            alert(data.mensaje || data.message);
+            if (data.exito || data.success) curso();
+        })
+        .catch(err => {
+            console.error("Error al asignar maestro:", err);
+            alert("Error al asignar el maestro al curso");
+        });
+}
+
+// Función para ejecutar acciones en cursos de periodo
+function ejecutarAccionPCurso(accion, idPeriodoCurso, tituloCurso) {
+    console.log('Ejecutando:', accion, 'para:', tituloCurso);
+    
+    switch(accion) {
+        case 'darDeBaja':
+            if (confirm(`¿Dar de baja el curso "${tituloCurso}"?`)) {
+                // Implementar lógica para dar de baja
+                alert(`Curso "${tituloCurso}" dado de baja`);
+            }
+            break;
+        case 'verCertificados':
+            alert(`Mostrando certificados para: ${tituloCurso}`);
+            break;
+        default:
+            break;
+    }
+    
+    const menu = document.getElementById('opcionesMenu');
+    if (menu) menu.classList.remove('mostrar');
 }

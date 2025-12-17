@@ -1048,11 +1048,18 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjeada` FOR EACH ROW BEGIN
 	DECLARE costo DECIMAL(10,2);
+    DECLARE id_item INT;
+    
+    -- Extraer el ID numérico del string (ej: 'RC-2' -> 2)
+    SET id_item = CAST(SUBSTRING(NEW.recompensa, 4) AS UNSIGNED);
+    
     IF LEFT(NEW.recompensa, 3) = 'RC-' THEN
+        -- Buscar costo del cosmético usando el ID numérico
     	SELECT costo_canje INTO costo
         FROM cosmetico
-        WHERE id_cosmetico = NEW.recompensa;
+        WHERE id_cosmetico = id_item;
 	ELSEIF LEFT(NEW.recompensa, 3) = 'RD-' THEN
+        -- Para descuentos, el id_descuento es VARCHAR así que se puede comparar directamente
     	SELECT costo_canje INTO costo
         FROM descuento
         WHERE id_descuento = NEW.recompensa;
@@ -1067,3 +1074,31 @@ CREATE TRIGGER `a_resta_recompensa_canjeada` AFTER INSERT ON `recompensa_canjead
 END
 $$
 DELIMITER ;
+
+DELIMITER $$
+
+CREATE TRIGGER tr_usuario_registro
+AFTER INSERT ON usuario
+FOR EACH ROW
+BEGIN
+    DECLARE v_descripcion TEXT;
+
+    SELECT CONCAT(
+        NEW.id_user, ': ',
+        NEW.nombre, ' ',
+        NEW.apellido, ' - ',
+        NEW.username, ' - Rol: ',
+        IFNULL(GROUP_CONCAT(r.nombre_rol SEPARATOR ', '), 'Sin rol')
+    )
+    INTO v_descripcion
+    FROM rol_usuario ru
+    LEFT JOIN rol r ON ru.id_rol = r.id_rol
+    WHERE ru.id_user = NEW.id_user;
+
+    INSERT INTO xb_inicio_cierre_usuario (accion, descripcion, Fecha_Hora)
+    VALUES ('REGISTRO', v_descripcion, NOW());
+
+END$$
+
+DELIMITER ;
+

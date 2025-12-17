@@ -52,6 +52,17 @@ switch($tipo) {
                 GROUP BY FLOOR(ce.nota/10)
                 ORDER BY FLOOR(ce.nota/10)";
         break;
+
+    case 'asistencia':
+        $sql = "SELECT 
+                    c.titulo,
+                    SUM(ce.asistencia) as cantidad
+                FROM CURSO_ESTUDIANTE ce
+                INNER JOIN PERIODO_CURSO pc ON ce.id_periodo_curso = pc.id_periodo_curso
+                INNER JOIN CURSO c ON pc.id_curso = c.id_curso
+                GROUP BY c.id_curso, c.titulo
+                ORDER BY cantidad DESC";
+        break;
         
     default:
         echo json_encode(['exito' => false, 'mensaje' => 'Tipo de gráfico no válido']);
@@ -76,6 +87,8 @@ if ($result) {
             } else {
                 $labels[] = $rango;
             }
+        } else if ($tipo == 'asistencia') {
+            $labels[] = $row['titulo'];
         } else {
             $labels[] = $row[$tipo == 'ranking' ? 'ranking' : ($tipo == 'categorias' ? 'nombre_categoria' : 'estado')];
         }

@@ -23,7 +23,7 @@
             <button class="nav-btn" data-tab="cursos">
                 <span> Mis Cursos</span>
             </button>
-           <button class="nav-btn" data-tab="inscripcion">
+            <button class="nav-btn" data-tab="inscripcion">
                 <span>Inscripciones</span>
             </button>
             <button class="nav-btn" data-tab="horarios">
@@ -32,9 +32,9 @@
             <button class="nav-btn" data-tab="tienda">
                 <span>Tienda</span>
             </button>
-           <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
+            <button class="nav-btn cerrar-sesion-btn" onclick="cerrarSesion()">
                 <span>Cerrar Sesión</span>
-           </button>
+            </button>
         </nav>
     </header>
 
@@ -60,30 +60,16 @@
 
                     </div>
                     <div class="profile-actions">
-                        <button class="shiny">Editar Perfil</button>
-                        <button class="shiny">Cambiar Contraseña</button>
-                        <button class="shiny">Configuración</button>
+                        <button id="btn-editar-perfil" class="shiny">Editar Perfil</button>
+                        <button id="btn-cambiar-password" class="shiny">Cambiar Contraseña</button>
+                        <button id="btn-insignias" class="shiny">Insignias </button>
+                        <button id="btn-reporte-gastos" class="shiny">Gastos </button>
                     </div>
                 </div>
 
 
                 <div class="content-grid">
-                    <div class="content-card">
-                        <h3> Próximas Actividades</h3>
-                        <ul>
-                            <li>Tarea de Matemáticas - 15 de Octubre</li>
-                            <li>Examen de Ciencias - 20 de Octubre</li>
-                            <li>Proyecto Final - 30 de Octubre</li>
-                        </ul>
-                    </div>
-                    <div class="content-card">
-                        <h3> Anuncios Recientes</h3>
-                        <ul>
-                            <li>Nuevo material disponible</li>
-                            <li>Reunión de padres el viernes</li>
-                            <li>Actualización del calendario</li>
-                        </ul>
-                    </div>
+
                     <div class="content-card">
                         <h3> Tus Puntos</h3>
                         <div class="puntos-info">
@@ -170,6 +156,151 @@
             </div>
         </div>
     </main>
+
+    <!-- Modales -->
+    <div id="modal-editar-perfil" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Perfil</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-editar-perfil">
+                    <div class="form-group">
+                        <label for="edit-nombre">Nombre:</label>
+                        <input type="text" id="edit-nombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-apellido">Apellido:</label>
+                        <input type="text" id="edit-apellido" name="apellido" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny" type="submit" form="form-editar-perfil">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-cambiar-password" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cambiar Contraseña</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="form-cambiar-password">
+                    <div class="form-group">
+                        <label for="current-password">Contraseña Actual:</label>
+                        <input type="password" id="current-password" name="old_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">Nueva Contraseña:</label>
+                        <input type="password" id="new-password" name="new_password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirmar Contraseña:</label>
+                        <input type="password" id="confirm-password" name="confirm_password" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny" type="submit" form="form-cambiar-password">Cambiar Contraseña</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Certificado -->
+    <div id="modal-certificado" class="modal">
+        <div class="modal-content modal-content-certificado">
+            <div class="modal-header">
+                <h2>Certificado de Aprobación</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="certificado-body">
+                <!-- El contenido del certificado se generará dinámicamente -->
+                <div class="certificado-container">
+                    <h1 class="certificado-titulo">Certificado de Excelencia</h1>
+                    <p class="certificado-texto">Se otorga el presente reconocimiento a:</p>
+                    <h2 id="cert-nombre-estudiante" class="certificado-nombre"></h2>
+                    <p class="certificado-texto">Por haber aprobado satisfactoriamente el curso:</p>
+                    <h2 id="cert-curso" class="certificado-curso"></h2>
+                    <p class="certificado-texto">Con una calificación final de:</p>
+                    <h3 id="cert-nota" class="certificado-nota"></h3>
+                    <div class="certificado-firmas">
+                        <div class="certificado-firma-block">
+                            <div class="certificado-linea"></div>
+                            <p id="cert-maestro"></p>
+                            <small>Instructor</small>
+                        </div>
+                        <div class="certificado-firma-block">
+                            <img src="img/logo.png" alt="Sello" class="certificado-logo">
+                            <p>TBD Academy</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny" onclick="window.print()">Imprimir</button>
+                <button class="shiny close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Insignias -->
+    <div id="modal-insignias" class="modal">
+        <div class="modal-content modal-content-insignias">
+            <div class="modal-header">
+                <h2>Mis Insignias 🏆</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="insignias-grid" class="insignias-grid">
+                    <!-- Las insignias se cargarán aquí -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reporte Gastos -->
+    <div id="modal-reporte-gastos" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Reporte de Gastos </h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="table-container">
+                    <table class="gastos-table">
+                        <thead>
+                            <tr>
+                                <th>Curso</th>
+                                <th>Fecha</th>
+                                <th>Costo Original</th>
+                                <th>Descuento</th>
+                                <th>Total Pagado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-gastos">
+                            <!-- JS fill -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" style="text-align: right; font-weight: bold;">TOTAL GASTADO:</td>
+                                <td id="total-gastos" style="font-weight: bold;">0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Cambiar la línea del script -->
     <script type="module" src="js/estudiante/main.js"></script>

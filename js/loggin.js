@@ -128,6 +128,7 @@ function iniciar() {
     .then(data => {
         if (data.exito) {
             localStorage.setItem("id_user", data.id_user);
+            inicioCierre("INICIO", data.id_user);
             window.location = "estudiante.html";
         }
     })
@@ -151,7 +152,6 @@ function registrar() {
         return;
     }
 
-
     fetch("php/estudianteRegistrar.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,15 +162,48 @@ function registrar() {
     })
     .then(res => res.json())
     .then(data => {
-    if (data.exito) {
-        localStorage.setItem("id_user", data.id_user);
-        window.location = "estudiante.html";
-    } else {
-        mostrarModal(data.mensaje || "Error al registrar el estudiante");
-    }
-    }) .catch(err => {
+        if (data.exito) {
+            localStorage.setItem("id_user", data.id_user);
+            // ✅ El INICIO ya se registró en el PHP, solo redirigir
+            window.location = "estudiante.html";
+        } else {
+            mostrarModal(data.mensaje || "Error al registrar el estudiante");
+        }
+    }) 
+    .catch(err => {
         console.error("Error al registrar estudiante:", err);
         mostrarModal("Error de conexión con el servidor.");
+    });
+}
+function inicioCierre(accion, id_user) {
+
+    if (!accion || !id_user) {
+        console.error("Faltan parámetros para registrar la bitácora");
+        return;
+    }
+
+    const data = {
+        accion: accion.toUpperCase(), 
+        id_user: id_user
+    };
+
+    fetch("php/bitUsuario.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data) 
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.exito) {
+            console.log("Bitácora registrada:", result.mensaje);
+        } else {
+            console.error("Error al registrar bitácora:", result.mensaje);
+        }
+    })
+    .catch(error => {
+        console.error("Error en la conexión con el servidor:", error);
     });
 }
 
@@ -216,5 +249,3 @@ function home() {
 function mae() {
     window.location = "logginMaestro.html";
 }
-
-localStorage.setItem('id_estudiante', idDelEstudiante);
