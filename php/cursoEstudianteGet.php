@@ -16,6 +16,7 @@ $sql = "
         u.apellido as apellido_profesor,
         ce.nota, 
         ce.asistencia,
+        ce.estado,
         COALESCE(ce.deskPoints, 0) as deskPoints,  -- Usar COALESCE para evitar NULL
         COALESCE(ce.rankingPoints, 0) as rankingPoints,  -- Usar COALESCE para evitar NULL
         pc.fecha_inicio,

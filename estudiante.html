@@ -224,6 +224,43 @@
         </div>
     </div>
 
+    <!-- Modal Certificado -->
+    <div id="modal-certificado" class="modal">
+        <div class="modal-content modal-content-certificado">
+            <div class="modal-header">
+                <h2>Certificado de Aprobación</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="certificado-body">
+                <!-- El contenido del certificado se generará dinámicamente -->
+                <div class="certificado-container">
+                    <h1 class="certificado-titulo">Certificado de Excelencia</h1>
+                    <p class="certificado-texto">Se otorga el presente reconocimiento a:</p>
+                    <h2 id="cert-nombre-estudiante" class="certificado-nombre"></h2>
+                    <p class="certificado-texto">Por haber aprobado satisfactoriamente el curso:</p>
+                    <h2 id="cert-curso" class="certificado-curso"></h2>
+                    <p class="certificado-texto">Con una calificación final de:</p>
+                    <h3 id="cert-nota" class="certificado-nota"></h3>
+                    <div class="certificado-firmas">
+                        <div class="certificado-firma-block">
+                            <div class="certificado-linea"></div>
+                            <p id="cert-maestro"></p>
+                            <small>Instructor</small>
+                        </div>
+                        <div class="certificado-firma-block">
+                            <img src="img/logo.png" alt="Sello" class="certificado-logo">
+                            <p>TBD Academy</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="shiny" onclick="window.print()">Imprimir</button>
+                <button class="shiny close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Cambiar la línea del script -->
     <script type="module" src="js/estudiante/main.js"></script>
 </body>
